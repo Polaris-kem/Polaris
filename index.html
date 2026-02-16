@@ -186,85 +186,99 @@
 
             <!-- 一覧表示ページ -->
             <div id="list-page" class="page">
-                <div class="page-title">
-                    <h2 id="current-table-title">機械コード管理 - 一覧表示</h2>
-                </div>
-
-                <!-- 検索・フィルターセクション -->
-                <div class="search-section">
-                    <div class="search-field-full">
-                        <label>🔍 検索</label>
-                        <div class="search-row">
-                            <select id="filter-column-select" class="column-filter-select">
-                                <option value="">すべての項目を検索</option>
-                            </select>
-                            <input type="text" id="filter-global-search" class="search-input" placeholder="キーワードを入力して検索">
-                            <div id="filter-date-range" class="date-range-container" style="display: none; align-items: center; gap: 8px;">
-                                <div class="date-input-wrapper" style="position: relative; display: flex; align-items: center; height: 42px;">
-                                    <input type="text" id="filter-date-start" class="date-input" placeholder="YYYY/MM/DD" style="width: 140px; padding-right: 35px; height: 100%;">
-                                    <i class="fas fa-calendar-alt" style="position: absolute; right: 12px; color: var(--primary); cursor: pointer; font-size: 16px;" onclick="openCustomCalendar(document.getElementById('filter-date-start'))"></i>
-                                </div>
-                                <span style="color: var(--text-secondary); font-weight: bold;">～</span>
-                                <div class="date-input-wrapper" style="position: relative; display: flex; align-items: center; height: 42px;">
-                                    <input type="text" id="filter-date-end" class="date-input" placeholder="YYYY/MM/DD" style="width: 140px; padding-right: 35px; height: 100%;">
-                                    <i class="fas fa-calendar-alt" style="position: absolute; right: 12px; color: var(--primary); cursor: pointer; font-size: 16px;" onclick="openCustomCalendar(document.getElementById('filter-date-end'))"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="search-actions">
-                        <button id="execute-search" class="btn-primary">検索実行</button>
-                        <button id="clear-search" class="btn-secondary">クリア</button>
-                    </div>
-                </div>
-
-                <!-- データ操作ボタン -->
-                <div class="data-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 16px;">
-                    <div class="data-actions-left" style="display: flex; align-items: center; gap: 12px; flex: 1;">
-                        <button id="new-register" class="btn-primary" style="white-space: nowrap;">新規登録</button>
-                        <button id="refresh-table" class="btn-secondary" title="テーブルデータを更新" style="white-space: nowrap;">
-                            <i class="fas fa-sync-alt"></i> 更新
+                <div class="page-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 id="current-table-title">テーブル一覧</h2>
+                    <div id="list-page-back-btn" style="display: none;">
+                        <button class="btn-secondary" onclick="showTableSelection()">
+                            <i class="fas fa-arrow-left"></i> テーブル一覧に戻る
                         </button>
-                        <button id="csv-export" class="btn-secondary" style="white-space: nowrap;">CSV出力</button>
-                        <button id="csv-import" class="btn-secondary" style="white-space: nowrap;">CSVインポート</button>
-                        <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- テーブル選択セクション -->
+                <div id="table-selection-section" class="search-section" style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+                    <div style="display: flex; gap: 12px; align-items: center; background: white; padding: 16px; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                        <i class="fas fa-search" style="color: var(--primary); font-size: 18px;"></i>
+                        <input type="text" id="list-table-search" class="search-input" placeholder="テーブル名で検索..." style="flex: 1; border: none; font-size: 16px; outline: none;" oninput="filterListTableSelection()">
+                        <div class="record-badge">
+                            <span class="badge-label">全テーブル</span>
+                            <span id="list-table-count" class="badge-value">0</span>
+                        </div>
                     </div>
                     
-                    <div class="selection-controls" style="margin: 0; display: flex; align-items: center; gap: 12px;">
-                        <div class="record-badge" style="margin: 0;">
-                            <span class="badge-label"><i class="fas fa-filter"></i> 検索結果</span>
-                            <span id="page-info" class="badge-value">0 / 0</span>
+                    <div id="list-table-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; overflow-y: auto; padding: 4px;">
+                        <!-- テーブルカードが動的に生成されます -->
+                    </div>
+                </div>
+
+                <!-- データ表示セクション (初期状態は非表示) -->
+                <div id="table-data-section" style="display: none; flex-direction: column; flex: 1; min-height: 0;">
+                    <!-- 検索・フィルターセクション -->
+                    <div class="search-section">
+                        <div class="search-field-full">
+                            <label>🔍 検索</label>
+                            <div class="search-row">
+                                <select id="filter-column-select" class="column-filter-select">
+                                    <option value="">すべての項目を検索</option>
+                                </select>
+                                <input type="text" id="filter-global-search" class="search-input" placeholder="キーワードを入力して検索">
+                                <div id="filter-date-range" class="date-range-container" style="display: none; align-items: center; gap: 8px;">
+                                    <div class="date-input-wrapper" style="position: relative; display: flex; align-items: center; height: 42px;">
+                                        <input type="text" id="filter-date-start" class="date-input" placeholder="YYYY/MM/DD" style="width: 140px; padding-right: 35px; height: 100%;">
+                                        <i class="fas fa-calendar-alt" style="position: absolute; right: 12px; color: var(--primary); cursor: pointer; font-size: 16px;" onclick="openCustomCalendar(document.getElementById('filter-date-start'))"></i>
+                                    </div>
+                                    <span style="color: var(--text-secondary); font-weight: bold;">～</span>
+                                    <div class="date-input-wrapper" style="position: relative; display: flex; align-items: center; height: 42px;">
+                                        <input type="text" id="filter-date-end" class="date-input" placeholder="YYYY/MM/DD" style="width: 140px; padding-right: 35px; height: 100%;">
+                                        <i class="fas fa-calendar-alt" style="position: absolute; right: 12px; color: var(--primary); cursor: pointer; font-size: 16px;" onclick="openCustomCalendar(document.getElementById('filter-date-end'))"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="selection-group" style="margin: 0; display: flex; align-items: center; gap: 8px;">
-                            <span id="selection-count" class="selection-count" style="white-space: nowrap;">選択: 0</span>
-                            <div class="selection-buttons" style="display: flex; gap: 4px;">
-                                <button id="select-all-btn" class="btn-selection-pill">
-                                    <i class="fas fa-check-double"></i> 全選択
-                                </button>
-                                <button id="deselect-all-btn" class="btn-selection-pill">
-                                    <i class="fas fa-times"></i> 解除
-                                </button>
+                        <div class="search-actions">
+                            <button id="execute-search" class="btn-primary">検索実行</button>
+                            <button id="clear-search" class="btn-secondary">クリア</button>
+                        </div>
+                    </div>
+
+                    <!-- データ操作ボタン -->
+                    <div class="data-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 16px;">
+                        <div class="data-actions-left" style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                            <button id="new-register" class="btn-primary" style="white-space: nowrap;">新規登録</button>
+                            <button id="refresh-table" class="btn-secondary" title="テーブルデータを更新" style="white-space: nowrap;">
+                                <i class="fas fa-sync-alt"></i> 更新
+                            </button>
+                            <button id="csv-export" class="btn-secondary" style="white-space: nowrap;">CSV出力</button>
+                            <button id="csv-import" class="btn-secondary" style="white-space: nowrap;">CSVインポート</button>
+                            <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+                        </div>
+                        
+                        <div class="selection-controls" style="margin: 0; display: flex; align-items: center; gap: 12px;">
+                            <div class="record-badge" style="margin: 0;">
+                                <span class="badge-label"><i class="fas fa-filter"></i> 検索結果</span>
+                                <span id="page-info" class="badge-value">0 / 0</span>
+                            </div>
+                            <div class="selection-group" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                                <span id="selection-count" class="selection-count" style="white-space: nowrap;">選択: 0</span>
+                                <div class="selection-buttons" style="display: flex; gap: 4px;">
+                                    <button id="select-all-btn" class="btn-selection-pill">
+                                        <i class="fas fa-check-double"></i> 全選択
+                                    </button>
+                                    <button id="deselect-all-btn" class="btn-selection-pill">
+                                        <i class="fas fa-times"></i> 解除
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- ページネーション情報（非表示） -->
-                <div class="pagination-info" style="display: none;">
-                    <div class="pagination-controls">
-                        <button id="first-page" class="page-btn">|<</button>
-                        <button id="prev-page" class="page-btn"><</button>
-                        <button id="next-page" class="page-btn">></button>
-                        <button id="last-page" class="page-btn">>|</button>
+                    <!-- データテーブル -->
+                    <div class="table-container">
+                        <table id="data-table" class="data-table">
+                            <thead id="table-head"></thead>
+                            <tbody id="table-body"></tbody>
+                        </table>
                     </div>
-                </div>
-
-                <!-- データテーブル -->
-                <div class="table-container">
-                    <table id="data-table" class="data-table">
-                        <thead id="table-head"></thead>
-                        <tbody id="table-body"></tbody>
-                    </table>
                 </div>
             </div>
 

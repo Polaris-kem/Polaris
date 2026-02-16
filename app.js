@@ -1559,60 +1559,109 @@ function showPage(pageName) {
     }
 
     if (pageName === 'work-ticket') {
-        // 作業票登録ページを開いた時の初期化
-        console.log('作業票登録ページを表示します');
-        setTimeout(() => {
-            console.log('generateWorkTicketFormPageを呼び出します');
-            const container = document.getElementById('work-ticket-page-content');
-            if (container) {
-                generateWorkTicketFormPage(container);
-            } else {
-                console.error('work-ticket-page-content要素が見つかりません');
-            }
-        }, 100);
-    } else if (pageName === 'construct-number') {
-        // 工事番号採番ページを開いた時の初期化
-        console.log('工事番号採番ページを表示します');
-        setTimeout(() => {
-            console.log('initializeConstructNumberPageを呼び出します');
-            initializeConstructNumberPage();
-        }, 100);
-    } else if (pageName === 'drawing-number') {
-        // 図面番号採番ページを開いた時の初期化
-        console.log('図面番号採番ページを表示します');
-        setTimeout(() => {
-            initializeDrawingNumberPage();
-        }, 100);
-    } else if (pageName === 'processing-progress') {
-        // 加工進捗ページを開いた時の初期化
-        console.log('加工進捗ページを表示します');
-        setTimeout(() => {
-            initializeProcessingProgressPage();
-        }, 100);
+        // ... (省略)
+    } else if (pageName === 'list') {
+        showTableSelection();
     } else if (pageName === 'dashboard') {
-        // 少し遅延してからupdateDashboardを呼ぶ（DOMが確実に更新されるまで待つ）
-        setTimeout(() => {
-            updateDashboard();
-            // カレンダーを確実に表示するためにgoToToday()も呼ぶ
-            setTimeout(() => {
-                if (typeof goToToday === 'function') {
-                    goToToday();
-                }
-            }, 200);
-        }, 100);
-    } else if (pageName === 'bulletin') {
-        // 掲示板ページを開いた時の初期化
-        setTimeout(() => {
-            renderBulletinsFull();
-        }, 100);
-    } else if (pageName === 'todo') {
-        if (typeof renderTodos === 'function') {
-            renderTodos();
-        }
-    } else if (pageName === 'list' && currentTable) {
-            loadTableData(currentTable);
+        // ... (省略)
+    }
+}
+
+// テーブル選択画面を表示
+function showTableSelection() {
+    const selectionSection = document.getElementById('table-selection-section');
+    const dataSection = document.getElementById('table-data-section');
+    const backBtn = document.getElementById('list-page-back-btn');
+    const titleEl = document.getElementById('current-table-title');
+    
+    if (selectionSection) selectionSection.style.display = 'flex';
+    if (dataSection) dataSection.style.display = 'none';
+    if (backBtn) backBtn.style.display = 'none';
+    if (titleEl) titleEl.textContent = 'テーブル一覧';
+    
+    renderTableGrid();
+}
+
+// テーブルグリッドを描画
+function renderTableGrid() {
+    const grid = document.getElementById('list-table-grid');
+    const countEl = document.getElementById('list-table-count');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    if (countEl) countEl.textContent = availableTables.length;
+    
+    availableTables.forEach(table => {
+        const displayName = getTableDisplayName(table);
+        const card = document.createElement('div');
+        card.className = 'dashboard-card';
+        card.style.cssText = 'padding: 20px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 12px; border: 1px solid #e2e8f0;';
+        card.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                    <i class="fas fa-table"></i>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 700; color: var(--text-primary); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</div>
+                    <div style="font-size: 11px; color: var(--text-tertiary); font-family: monospace;">${table}</div>
+                </div>
+            </div>
+        `;
+        
+        card.onmouseover = () => {
+            card.style.transform = 'translateY(-4px)';
+            card.style.boxShadow = 'var(--shadow-lg)';
+            card.style.borderColor = 'var(--primary-light)';
+        };
+        card.onmouseout = () => {
+            card.style.transform = 'translateY(0)';
+            card.style.boxShadow = 'var(--shadow-sm)';
+            card.style.borderColor = '#e2e8f0';
+        };
+        
+        card.onclick = () => selectListTable(table);
+        grid.appendChild(card);
+    });
+}
+
+// テーブルを選択してデータ表示
+function selectListTable(tableName) {
+    currentTable = tableName;
+    const selectionSection = document.getElementById('table-selection-section');
+    const dataSection = document.getElementById('table-data-section');
+    const backBtn = document.getElementById('list-page-back-btn');
+    const titleEl = document.getElementById('current-table-title');
+    
+    if (selectionSection) selectionSection.style.display = 'none';
+    if (dataSection) dataSection.style.display = 'flex';
+    if (backBtn) backBtn.style.display = 'block';
+    if (titleEl) titleEl.textContent = getTableDisplayName(tableName) + ' - 一覧表示';
+    
+    loadTableData(tableName);
+}
+
+// テーブル選択のフィルタリング
+function filterListTableSelection() {
+    const searchTerm = document.getElementById('list-table-search').value.toLowerCase();
+    const grid = document.getElementById('list-table-grid');
+    if (!grid) return;
+    
+    const cards = grid.children;
+    for (let card of cards) {
+        const text = card.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            card.style.display = 'flex';
+        } else {
+            card.style.display = 'none';
         }
     }
+}
+
+// グローバルに公開
+window.showTableSelection = showTableSelection;
+window.selectListTable = selectListTable;
+window.filterListTableSelection = filterListTableSelection;
+
 
 // ダッシュボードの更新
 async function updateDashboard() {
@@ -4649,8 +4698,8 @@ function updateTableList() {
             currentTable = table;
             document.querySelectorAll('.table-list-item').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
-            loadTableData(table);
             showPage('list');
+            selectListTable(table);
         });
         if (table === currentTable) {
             item.classList.add('active');
