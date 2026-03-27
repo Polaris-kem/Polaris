@@ -1,13 +1,37 @@
-// 図面番号採番システム（Supabase直接接続版・VB.NETロジック完全再現）
+// 図面番号採番システム（Supabase直接接続版）
+//
+// === 運用ルール（資料に基づく） ===
+// ・必須入力: 工事番号、採番者名、採番日、機種記号の4項目
+// ・図面番号(drawingno): 10文字以上、6文字目に「i」「o」は使用不可、重複登録不可
+// ・工事チェック: 工事番号がDBに存在し、完了(finisheddateが未入力)であること
+// ・図面分類: 8文字目または9文字目で判別
+//    部品図: /, a, b, n  ／  組図(ユニット図): u, r, l
+// ・自動連番: 9の次はa,b... だが「i」「o」はスキップ
+//
+// === 使用テーブル・カラム（すべて小文字で紐づけ） ===
+// kemmaster: t_saiban(drawingno, description, orderno, material, materialweight, finishedweight,
+//   history1～history10, designer, saibandate, keydate),
+//   t_machinemarkforsaiban(machinemark, machinename),
+//   t_staffcode(staffcode, staffname, loginid, depacode, ...),
+//   t_computerdevice(tcpip, staffcode, staffname, depacode, workdepa, loginid, ...)
+// kemorder: t_acceptorder(constructno, cancelflg, finisheddate, registerdate, ...)
+
+// t_saiban テーブル名を解決（紐づけはここで統一）
+async function getSaibanTableName() {
+    const findTable = typeof findTableName === 'function' ? findTableName : (typeof window !== 'undefined' && window.findTableName);
+    if (typeof findTable !== 'function') return null;
+    return await findTable(['t_saiban', 'T_Saiban', 't_Saiban', 'saiban', 't saiban']);
+}
 
 // 図面番号採番ページの初期化
 async function initializeDrawingNumberPage() {
     console.log('図面番号採番ページを初期化します');
     
-    // 採番者リストを読み込む
+    setupDrawingTypeButtons();
     await loadDesigners();
+    await loadMachineMarksFromSaiban();
+    setupMachineCodeComboOnClick();
     
-    // 採番日に現在日時を設定
     const saibanDateInput = document.getElementById('saiban-date-input');
     if (saibanDateInput) {
         const now = new Date();
@@ -19,40 +43,154 @@ async function initializeDrawingNumberPage() {
         saibanDateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
     }
     
-    // 図面一覧を読み込む
     await loadDrawingList();
 }
 
-// 採番者リストを読み込む（T Computer DeviceテーブルのDepaCode='325'または'320'のみ）
+// 図面種類：部品図／組立図をボタンで選択（従来の図番台帳登録と同じUI）
+function setupDrawingTypeButtons() {
+    const hiddenInput = document.getElementById('drawing-type-select');
+    const buttons = document.querySelectorAll('.drawing-number-type-btn');
+    if (!hiddenInput || !buttons.length) return;
+    buttons.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const value = this.getAttribute('data-type') || '';
+            hiddenInput.value = value;
+            buttons.forEach(b => {
+                const pressed = b === this;
+                b.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+                b.classList.toggle('selected', pressed);
+            });
+        });
+    });
+}
+
+// 機種記号コンボ：クリック時に t_machinemarkforsaiban から一覧を読み込み、手入力は大文字変換＋DB存在チェック
+function setupMachineCodeComboOnClick() {
+    const inputEl = document.getElementById('machine-code-input');
+    const datalistEl = document.getElementById('machine-mark-datalist');
+    const nameEl = document.getElementById('machine-name-display');
+    if (!inputEl || !datalistEl) return;
+    
+    window._machineMarkNameMap = window._machineMarkNameMap || {};
+    
+    inputEl.addEventListener('input', function () {
+        this.value = this.value.toUpperCase();
+        const name = window._machineMarkNameMap[this.value.trim()];
+        if (nameEl) nameEl.textContent = name || '';
+        if (window._drawingListInputTimer) clearTimeout(window._drawingListInputTimer);
+        window._drawingListInputTimer = setTimeout(function () { loadDrawingList(); }, 400);
+    });
+    
+    inputEl.addEventListener('blur', async function () {
+        const v = this.value.trim().toUpperCase();
+        if (v) this.value = v;
+        if (!v) {
+            if (nameEl) nameEl.textContent = '';
+            await loadDrawingList();
+            return;
+        }
+        if (window._machineMarkNameMap[v]) {
+            if (nameEl) nameEl.textContent = window._machineMarkNameMap[v] || '';
+        } else {
+            const exists = await checkMachineCodeExists(v);
+            if (nameEl) nameEl.textContent = exists ? '（DBに登録済み）' : '（DBに未登録の記号です）';
+            if (!exists && nameEl) nameEl.style.color = 'var(--error, #dc2626)';
+            else if (nameEl) nameEl.style.color = '';
+        }
+        await loadDrawingList();
+    });
+}
+
+// クリック時に呼ばれる：t_machinemarkforsaiban から全件取得し datalist と機種名マップを更新
+async function loadMachineMarksFromSaiban() {
+    const inputEl = document.getElementById('machine-code-input');
+    const datalistEl = document.getElementById('machine-mark-datalist');
+    const nameEl = document.getElementById('machine-name-display');
+    if (!datalistEl) return;
+    const supabase = typeof getSupabaseClient === 'function' ? getSupabaseClient() : (window.getSupabaseClient && window.getSupabaseClient());
+    if (!supabase) {
+        console.warn('loadMachineMarksFromSaiban: Supabase未接続');
+        return;
+    }
+    try {
+        const findTable = typeof findTableName === 'function' ? findTableName : window.findTableName;
+        const tableName = typeof findTable === 'function'
+            ? await findTable(['t_machinemarkforsaiban', 'T_MachineMarkForSaiban', 't machinemarkforsaiban'])
+            : null;
+        if (!tableName) {
+            console.warn('t_machinemarkforsaiban が見つかりません');
+            return;
+        }
+        
+        const { data, error } = await supabase
+            .from(tableName)
+            .select('machinemark, machinename')
+            .order('machinemark');
+        
+        let rows = data;
+        if (error || !rows || rows.length === 0) {
+            const alt = await supabase.from(tableName).select('*').order('machinemark');
+            rows = alt.error ? null : alt.data;
+        }
+        
+        datalistEl.innerHTML = '';
+        window._machineMarkNameMap = {};
+        
+        if (rows && rows.length > 0) {
+            rows.forEach(row => {
+                const mark = (row.machinemark || row.MachineMark || '').toString().trim().toUpperCase();
+                const name = (row.machinename || row.MachineName || '').toString().trim();
+                if (mark) {
+                    const opt = document.createElement('option');
+                    opt.value = mark;
+                    opt.textContent = name ? `${mark} - ${name}` : mark;
+                    datalistEl.appendChild(opt);
+                    window._machineMarkNameMap[mark] = name;
+                }
+            });
+            console.log('機種記号を t_machinemarkforsaiban から読み込みました（クリック時）:', rows.length, '件');
+        }
+        
+        if (inputEl && inputEl.value.trim()) {
+            const v = inputEl.value.trim().toUpperCase();
+            const name = window._machineMarkNameMap[v];
+            if (nameEl) nameEl.textContent = name || '';
+        }
+    } catch (err) {
+        console.error('機種記号リストの読み込みエラー:', err);
+    }
+}
+
+// 採番者リストを読み込む（t_computerdevice のみから取得。DepaCode='325'または'320'を表示）
 async function loadDesigners() {
     const designerSelect = document.getElementById('designer-select');
     if (!designerSelect) return;
-    
+    const supabase = typeof getSupabaseClient === 'function' ? getSupabaseClient() : (window.getSupabaseClient && window.getSupabaseClient());
+    if (!supabase) {
+        designerSelect.innerHTML = '<option value="">DB未接続</option>';
+        return;
+    }
     designerSelect.innerHTML = '<option value="">読み込み中...</option>';
     
     try {
-        const tableNames = ['T_ComputerDevice', 't_computerdevice', 't_computer_device', 'ComputerDevice'];
-        let data = null;
-        
-        for (const tableName of tableNames) {
-            try {
-                // T Computer DeviceテーブルのDepaCodeでフィルタリング
-                const result = await getSupabaseClient()
-                    .from(tableName)
-                    .select('*')
-                    .or('DepaCode.eq.325,DepaCode.eq.320');
-                
-                if (!result.error && result.data && result.data.length > 0) {
-                    data = result.data;
-                    break;
-                }
-            } catch (e) {
-                // 次のテーブルを試す
-            }
+        const findTable = typeof findTableName === 'function' ? findTableName : window.findTableName;
+        const tableName = typeof findTable === 'function'
+            ? await findTable(['t_computerdevice', 'T_ComputerDevice', 't computerdevice', 'computerdevice'])
+            : null;
+        if (!tableName) {
+            console.warn('t_computerdevice テーブルが見つかりません');
+            designerSelect.innerHTML = '<option value="">t_computerdevice が見つかりません</option>';
+            return;
         }
-        
+
+        let result = await supabase.from(tableName).select('*').or('depacode.eq.325,depacode.eq.320');
+        if (result.error && result.data === null) {
+            result = await supabase.from(tableName).select('*').or('DepaCode.eq.325,DepaCode.eq.320');
+        }
+        const data = result.error ? null : result.data;
+
         if (!data || data.length === 0) {
-            console.warn('採番者が見つかりませんでした');
+            console.warn('採番者が見つかりませんでした（depacode 325/320）');
             designerSelect.innerHTML = '<option value="">採番者が見つかりません</option>';
             return;
         }
@@ -60,10 +198,9 @@ async function loadDesigners() {
         designerSelect.innerHTML = '<option value="">選択してください</option>';
         
         data.forEach(staff => {
-            const staffName = staff.StaffName || staff.staffName || staff.staff_name || '';
+            const staffName = staff.staffname || staff.StaffName || staff.staffName || staff.staff_name || '';
             if (staffName) {
                 const option = document.createElement('option');
-                // VB.NETのロジック: UserName() = UserFullName.Split("　")
                 const userName = staffName.split('　')[0] || staffName.split(' ')[0] || staffName;
                 option.value = userName;
                 option.textContent = staffName;
@@ -71,7 +208,7 @@ async function loadDesigners() {
             }
         });
         
-        console.log(`採番者 ${data.length} 名を読み込みました`);
+        console.log(`採番者を t_computerdevice から ${data.length} 名読み込みました`);
     } catch (error) {
         console.error('採番者リストの読み込みエラー:', error);
         designerSelect.innerHTML = '<option value="">読み込みエラー</option>';
@@ -82,26 +219,46 @@ async function loadDesigners() {
 async function loadDrawingList() {
     const tbody = document.getElementById('drawing-list-page');
     if (!tbody) return;
-    
+    const supabase = typeof getSupabaseClient === 'function' ? getSupabaseClient() : (window.getSupabaseClient && window.getSupabaseClient());
+    if (!supabase) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 24px; color: var(--text-tertiary);">データベースに接続されていません。ページを再読み込みしてください。</td></tr>';
+        return;
+    }
     try {
-        const tableNames = ['t_saiban', 'T_Saiban', 't_Saiban', 'saiban'];
-        let data = null;
-        
-        for (const tableName of tableNames) {
-            try {
-                const result = await getSupabaseClient()
-                    .from(tableName)
-                    .select('DrawingNo, Description, SaibanDate, OrderNo')
-                    .order('SaibanDate', { ascending: false })
-                    .limit(100);
-                
-                if (!result.error && result.data) {
-                    data = result.data;
-                    break;
-                }
-            } catch (e) {
-                // 次のテーブルを試す
-            }
+        const tableName = await getSaibanTableName();
+        if (!tableName) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="3" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
+                        <i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 12px; opacity: 0.3; display: block;"></i>
+                        <span style="font-size: 13px;">t_saiban テーブルが見つかりません</span>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        // 機種記号で絞り込み（入力されていればその機種の図面のみ表示）
+        const machineCodeInput = document.getElementById('machine-code-input');
+        const machineCode = machineCodeInput ? (machineCodeInput.value || '').trim().toUpperCase().replace(/\s*-\s*.*$/, '') : '';
+        const filterBadge = document.getElementById('drawing-list-filter-badge');
+        if (filterBadge) filterBadge.textContent = machineCode ? `「${machineCode}」で絞り込み` : '';
+        // カラム名がDBで大文字混じり(drawingNo等)の可能性があるため、まず全件取得してクライアントで絞る
+        let result = await supabase.from(tableName).select('*').limit(500);
+        if (result.error) {
+            result = await supabase.from(tableName).select('drawingno, description, saibandate, orderno').limit(500);
+        }
+        let data = result.error ? null : result.data;
+        if (data && data.length > 0 && machineCode) {
+            const getDrawingNo = (d) => (d.drawingno || d.DrawingNo || d.drawingNo || d.drawing_no || '').toString().trim().toUpperCase();
+            data = data.filter(d => getDrawingNo(d).startsWith(machineCode));
+        }
+        if (data && data.length > 0) {
+            const orderKey = data[0].saibandate != null ? 'saibandate' : (data[0].SaibanDate != null ? 'SaibanDate' : 'saibandate');
+            data.sort((a, b) => {
+                const da = a[orderKey] || a.saibandate || a.SaibanDate || '';
+                const db = b[orderKey] || b.saibandate || b.SaibanDate || '';
+                return new Date(db) - new Date(da);
+            });
         }
         
         if (!data || data.length === 0) {
@@ -118,9 +275,9 @@ async function loadDrawingList() {
         
         tbody.innerHTML = '';
         data.forEach(drawing => {
-            const drawingNo = drawing.DrawingNo || drawing.drawingNo || drawing.drawing_no || '';
-            const description = drawing.Description || drawing.description || '';
-            const saibanDate = drawing.SaibanDate || drawing.saibanDate || drawing.saiban_date || '';
+            const drawingNo = drawing.drawingno || drawing.DrawingNo || drawing.drawingNo || drawing.drawing_no || '';
+            const description = drawing.description || drawing.Description || '';
+            const saibanDate = drawing.saibandate || drawing.SaibanDate || drawing.saibanDate || drawing.saiban_date || '';
             const dateStr = saibanDate ? new Date(saibanDate).toLocaleDateString('ja-JP') : '';
             
             const row = document.createElement('tr');
@@ -151,7 +308,8 @@ async function loadDrawingList() {
 // 最初の図面番号を自動生成
 async function generateFirstDrawingNumber() {
     const drawingType = document.getElementById('drawing-type-select').value;
-    const machineCode = document.getElementById('machine-code-input').value.trim().toUpperCase();
+    let machineCode = document.getElementById('machine-code-input').value.trim().toUpperCase();
+    if (machineCode.indexOf(' - ') !== -1) machineCode = machineCode.split(' - ')[0].trim();
     const baseDrawingNoInput = document.getElementById('base-drawing-no-input');
     
     if (!drawingType || !machineCode) {
@@ -164,12 +322,11 @@ async function generateFirstDrawingNumber() {
         const nextDrawingNo = await findNextDrawingNumber(machineCode, drawingType);
         if (nextDrawingNo) {
             baseDrawingNoInput.value = nextDrawingNo;
-            showDrawingNumberSuccess(`最初の図面番号を生成しました: ${nextDrawingNo}`);
+            showDrawingNumberSuccess(`基準図面番号を設定しました: ${nextDrawingNo}（登録は「図面番号を採番して登録」ボタンで実行）`);
         } else {
-            // 既存の図面がない場合、最初の番号を生成
             const firstDrawingNo = generateInitialDrawingNumber(machineCode, drawingType);
             baseDrawingNoInput.value = firstDrawingNo;
-            showDrawingNumberSuccess(`最初の図面番号を生成しました: ${firstDrawingNo}`);
+            showDrawingNumberSuccess(`基準図面番号を設定しました: ${firstDrawingNo}（登録は「図面番号を採番して登録」ボタンで実行）`);
         }
     } catch (error) {
         console.error('図面番号生成エラー:', error);
@@ -177,63 +334,72 @@ async function generateFirstDrawingNumber() {
     }
 }
 
+// 行から図面番号を取得（DBのカラム名のゆれに対応）
+function getDrawingNoFromRow(d) {
+    return (d.drawingno || d.DrawingNo || d.drawingNo || d.drawing_no || '').toString().trim().toUpperCase();
+}
+
 // 次の図面番号を検索
 async function findNextDrawingNumber(machineCode, drawingType) {
     try {
-        const tableNames = ['t_saiban', 'T_Saiban', 't_Saiban', 'saiban'];
+        const tableName = await getSaibanTableName();
+        if (!tableName) return null;
+        const supabase = typeof getSupabaseClient === 'function' ? getSupabaseClient() : (window.getSupabaseClient && window.getSupabaseClient());
+        if (!supabase) return null;
+        
         let maxDrawingNo = null;
         
-        // 図面種類に応じた検索条件
-        let typeCondition = '';
-        if (drawingType === 'parts') {
-            // 部品図: 8桁目または9桁目が /, A, B, N
-            typeCondition = `(SUBSTRING(DrawingNo,8,1) IN ('/', 'A', 'B', 'N') OR SUBSTRING(DrawingNo,9,1) IN ('/', 'A', 'B', 'N'))`;
-        } else if (drawingType === 'unit') {
-            // 組図: 8桁目または9桁目が U, R, L
-            typeCondition = `(SUBSTRING(DrawingNo,8,1) IN ('U', 'R', 'L') OR SUBSTRING(DrawingNo,9,1) IN ('U', 'R', 'L'))`;
+        // 機種記号で始まる図面番号だけを取得（FL 選択時は FL* のみ。他機種の YM 等が混ざらないよう必ず機種で絞る）
+        const code = (machineCode || '').toString().toUpperCase();
+        let rawRows = [];
+        let result = await supabase.from(tableName).select('*').ilike('drawingno', code + '%').limit(500);
+        if (result.error) {
+            const fallback = await supabase.from(tableName).select('*').limit(500);
+            rawRows = (fallback.data || []).map(d => ({ drawingno: getDrawingNoFromRow(d) })).filter(d => d.drawingno && d.drawingno.length >= 9);
+            rawRows = rawRows.filter(d => d.drawingno.toUpperCase().startsWith(code));
+        } else {
+            rawRows = (result.data || []).map(d => ({ drawingno: getDrawingNoFromRow(d) })).filter(d => d.drawingno && d.drawingno.length >= 9);
+        }
+        const data = rawRows;
+        if (data.length === 0) return null;
+        
+        const filtered = data.filter(d => {
+            const drawingNo = d.drawingno;
+            const char8 = drawingNo.charAt(7).toUpperCase();
+            const char9 = drawingNo.charAt(8).toUpperCase();
+            if (drawingType === 'parts') {
+                return char8 === '/' || char8 === 'A' || char8 === 'B' || char8 === 'N' ||
+                       char9 === '/' || char9 === 'A' || char9 === 'B' || char9 === 'N';
+            } else if (drawingType === 'unit') {
+                return char8 === 'U' || char8 === 'R' || char8 === 'L' ||
+                       char9 === 'U' || char9 === 'R' || char9 === 'L';
+            }
+            return false;
+        });
+        
+        // 同じ種類の図面が既にある場合：その最大の次を返す
+        if (filtered.length > 0) {
+            const sorted = [...filtered].sort((a, b) => (a.drawingno < b.drawingno ? 1 : a.drawingno > b.drawingno ? -1 : 0));
+            maxDrawingNo = sorted[0].drawingno;
         }
         
-        for (const tableName of tableNames) {
-            try {
-                // 機種記号で始まる図面番号を検索
-                const { data, error } = await getSupabaseClient()
-                    .from(tableName)
-                    .select('DrawingNo')
-                    .like('DrawingNo', `${machineCode}%`)
-                    .order('DrawingNo', { ascending: false })
-                    .limit(100);
-                
-                if (!error && data && data.length > 0) {
-                    // 図面種類でフィルタリング
-                    const filtered = data.filter(d => {
-                        const drawingNo = d.DrawingNo || d.drawingNo || d.drawing_no || '';
-                        if (drawingNo.length < 9) return false;
-                        const char8 = drawingNo.charAt(7).toUpperCase();
-                        const char9 = drawingNo.charAt(8).toUpperCase();
-                        
-                        if (drawingType === 'parts') {
-                            return char8 === '/' || char8 === 'A' || char8 === 'B' || char8 === 'N' ||
-                                   char9 === '/' || char9 === 'A' || char9 === 'B' || char9 === 'N';
-                        } else if (drawingType === 'unit') {
-                            return char8 === 'U' || char8 === 'R' || char8 === 'L' ||
-                                   char9 === 'U' || char9 === 'R' || char9 === 'L';
-                        }
-                        return false;
-                    });
-                    
-                    if (filtered.length > 0) {
-                        // 最大の図面番号を取得
-                        maxDrawingNo = filtered[0].DrawingNo || filtered[0].drawingNo || filtered[0].drawing_no;
-                        break;
+        // 同じ種類が1件もなくても、同じ機種の「最後の図面番号」を基準に次を出す（MU001001U01 にしない）
+        if (!maxDrawingNo && data.length > 0) {
+            const allSorted = data.map(d => d.drawingno).sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+            const lastNo = allSorted[0];
+            if (lastNo && lastNo.length >= 10) {
+                const next = incrementDrawingNumberForGeneration(lastNo, 'parts');
+                if (next) {
+                    const s = next.toUpperCase();
+                    if (s.length >= 9) {
+                        const suffix = drawingType === 'unit' ? 'U01' : 'N01';
+                        return s.substring(0, 7) + suffix;
                     }
                 }
-            } catch (e) {
-                // 次のテーブルを試す
             }
         }
         
         if (maxDrawingNo) {
-            // 次の番号を生成（インクリメント）
             return incrementDrawingNumberForGeneration(maxDrawingNo, drawingType);
         }
         
@@ -247,42 +413,52 @@ async function findNextDrawingNumber(machineCode, drawingType) {
 // 最初の図面番号を生成（既存の図面がない場合）
 function generateInitialDrawingNumber(machineCode, drawingType) {
     // 機種記号（2桁）+ サイズ/ユニット（3桁: 001）+ 部品番号（3桁: 001）+ 図面種類（2桁）
-    // 例: MU001001/01 (部品図) または MU001001U01 (組図)
+    // 既存DB形式に合わせる: 部品図 N01、組図 U01（例: MU51569N01, MU51570U01）
     
     const sizeUnit = '001'; // デフォルトのサイズ/ユニット
-    const partNo = '001'; // デフォルトの部品番号
+    const partNo = '001';   // デフォルトの部品番号
     
     let typeSuffix = '';
     if (drawingType === 'parts') {
-        typeSuffix = '/01'; // 部品図のデフォルト
+        typeSuffix = 'N01'; // 部品図（既存の MU51569N01 形式に合わせる）
     } else if (drawingType === 'unit') {
-        typeSuffix = 'U01'; // 組図のデフォルト
+        typeSuffix = 'U01'; // 組図
     }
     
     return machineCode + sizeUnit + partNo + typeSuffix;
 }
 
-// 図面番号をインクリメント（生成用の簡易版）
+// 図面番号をインクリメント（生成用）
+// 既存形式: MU51569N01(5桁数字), FL56120/01(5桁数字), FL5W046U01/FL5P438N01(数字1+英字1+3桁数字), MU001001N01(3+3桁)
+// 部品図は常に N01、組図は U01 に統一
 function incrementDrawingNumberForGeneration(drawingNo, drawingType) {
-    if (drawingNo.length < 10) {
-        // 10桁未満の場合は最初の番号を生成
-        return generateInitialDrawingNumber(drawingNo.substring(0, 2), drawingType);
+    const s = (drawingNo || '').toString().toUpperCase();
+    const typeSuffix = drawingType === 'unit' ? 'U01' : 'N01';
+    if (s.length < 10) {
+        return generateInitialDrawingNumber(s.substring(0, 2), drawingType);
     }
-    
-    // 4-6桁目（部品番号部分）をインクリメント
-    const partNum = parseInt(drawingNo.substring(3, 6));
-    if (!isNaN(partNum)) {
-        const newPartNum = partNum + 1;
-        if (newPartNum >= 800 && drawingType === 'parts') {
-            // 部品図の場合、800に達したら次のサイズ/ユニットに
-            const sizeUnit = parseInt(drawingNo.substring(2, 5)) || 1;
-            return drawingNo.substring(0, 2) + String(sizeUnit + 1).padStart(3, '0') + '001' + drawingNo.substring(6);
+    // 形式1: 3-7桁目が5桁の数字（FL56120, MU51569 など）
+    const fiveDigit = s.substring(2, 7);
+    if (/^\d{5}$/.test(fiveDigit)) {
+        const num = parseInt(fiveDigit, 10) + 1;
+        return s.substring(0, 2) + String(num).padStart(5, '0') + typeSuffix;
+    }
+    // 形式2: FL5W046U01, FL5P438N01 など（3桁目=数字1、4桁目=英字1、5-7桁目=数字3）
+    if (s.length >= 10 && /\d/.test(s.charAt(2)) && /[A-Z]/.test(s.charAt(3)) && /^\d{3}$/.test(s.substring(4, 7))) {
+        const num = parseInt(s.substring(4, 7), 10) + 1;
+        return s.substring(0, 4) + String(num).padStart(3, '0') + typeSuffix;
+    }
+    // 形式3: MU001001N01 など（3-5桁目が3桁、6-8桁目が3桁）
+    const threeDigit = s.substring(3, 6);
+    if (/^\d{3}$/.test(threeDigit)) {
+        const partNum = parseInt(threeDigit, 10) + 1;
+        if (partNum >= 800 && drawingType === 'parts') {
+            const sizeUnit = parseInt(s.substring(2, 5), 10) || 1;
+            return s.substring(0, 2) + String(sizeUnit + 1).padStart(3, '0') + '001' + typeSuffix;
         }
-        return drawingNo.substring(0, 3) + String(newPartNum).padStart(3, '0') + drawingNo.substring(6);
+        return s.substring(0, 3) + String(partNum).padStart(3, '0') + typeSuffix;
     }
-    
-    // パースできない場合は最初の番号を生成
-    return generateInitialDrawingNumber(drawingNo.substring(0, 2), drawingType);
+    return generateInitialDrawingNumber(s.substring(0, 2), drawingType);
 }
 
 // 図面番号採番の実行（VB.NETのロジックを完全再現）
@@ -292,9 +468,10 @@ async function getDrawingNumberPage() {
     // エラーメッセージを非表示
     hideDrawingNumberMessage();
     
-    // 必須項目の取得
+    // 必須項目の取得（機種記号は "M - コイルカー" 形式のとき先頭の記号のみ使用）
     const drawingType = document.getElementById('drawing-type-select').value;
-    const machineCode = document.getElementById('machine-code-input').value.trim().toUpperCase();
+    let machineCode = document.getElementById('machine-code-input').value.trim().toUpperCase();
+    if (machineCode.indexOf(' - ') !== -1) machineCode = machineCode.split(' - ')[0].trim();
     const orderNo = document.getElementById('order-no-input').value.trim().toUpperCase();
     const designer = document.getElementById('designer-select').value.trim();
     const saibanDate = document.getElementById('saiban-date-input').value;
@@ -423,24 +600,22 @@ async function getDrawingNumberPage() {
     }
 }
 
-// 機種記号の存在確認
+// 機種記号の存在確認（t_machinemarkforsaiban。値は "M - コイルカー" の場合は "M" に正規化してから呼ぶこと）
 async function checkMachineCodeExists(machineCode) {
+    let code = (machineCode || '').toString().trim().toUpperCase();
+    if (code.indexOf(' - ') !== -1) code = code.split(' - ')[0].trim();
+    if (!code) return false;
     try {
-        const tableNames = ['T_MachineMarkForSaiban', 't_machinemarkforsaiban', 'T_MachineCode', 't_machinecode', 't_machine_code', 'MachineCode'];
+        const tableNames = ['t_machinemarkforsaiban', 'T_MachineMarkForSaiban', 't_machinecode', 't_machine_code'];
         for (const tableName of tableNames) {
             try {
-                const { data, error } = await getSupabaseClient()
-                    .from(tableName)
-                    .select('*')
-                    .or(`MachineMark.eq.${machineCode},machineMark.eq.${machineCode},machine_mark.eq.${machineCode},MachineCode.eq.${machineCode},machineCode.eq.${machineCode}`)
-                    .limit(1);
-                
-                if (!error && data && data.length > 0) {
-                    return true;
-                }
-            } catch (e) {
-                // 次のテーブルを試す
-            }
+                let res = await getSupabaseClient().from(tableName).select('*').eq('machinemark', code).limit(1);
+                if (!res.error && res.data && res.data.length > 0) return true;
+                res = await getSupabaseClient().from(tableName).select('*').eq('machinename', code).limit(1);
+                if (!res.error && res.data && res.data.length > 0) return true;
+                res = await getSupabaseClient().from(tableName).select('*').eq('MachineMark', code).limit(1);
+                if (!res.error && res.data && res.data.length > 0) return true;
+            } catch (e) { /* 次のテーブルを試す */ }
         }
         return false;
     } catch (error) {
@@ -449,42 +624,39 @@ async function checkMachineCodeExists(machineCode) {
     }
 }
 
-// 工事番号の有効性確認（VB.NETのSqlAcceptOrderロジック）
+// 工事番号の有効性確認（t_acceptorder: 存在し、finisheddate未入力＝未完了であること）
 async function checkOrderNoValid(orderNo) {
     if (!orderNo || orderNo.length < 4) {
         return { valid: false, message: '工事番号が短すぎます' };
     }
-    
     const first4Digits = orderNo.substring(0, 4);
-    
     try {
-        const tableNames = ['T_AcceptOrder', 't_acceptorder', 't_accept_order', 'AcceptOrder', 'orders'];
+        const tableNames = ['t_acceptorder', 'T_AcceptOrder', 't_accept_order', 'orders'];
         for (const tableName of tableNames) {
             try {
-                // VB.NET: WHERE ConstructNo='...' AND FinishedDate IS NULL
+                // 工事が存在し、完了(finisheddateが入力済み)でないこと
                 const { data, error } = await getSupabaseClient()
                     .from(tableName)
                     .select('*')
-                    .or(`ConstructNo.like.${first4Digits}%,constructNo.like.${first4Digits}%,OrderNo.like.${first4Digits}%,orderNo.like.${first4Digits}%`)
-                    .is('FinishedDate', null)
-                    .limit(1);
-                
-                if (!error && data && data.length > 0) {
-                    const order = data[0];
-                    const cancelFlg = order.CancelFlg || order.cancelFlg || order.cancel_flg;
-                    
+                    .ilike('constructno', first4Digits + '%')
+                    .is('finisheddate', null)
+                    .limit(5);
+                if (error) continue;
+                const exact = (data || []).find(o => {
+                    const cn = (o.constructno || o.ConstructNo || o.orderNo || '').toString();
+                    return cn.startsWith(first4Digits) || cn.indexOf(orderNo) === 0;
+                }) || (data && data[0]);
+                if (exact) {
+                    const cancelFlg = exact.cancelflg ?? exact.CancelFlg ?? exact.cancel_flg;
                     if (cancelFlg === true || cancelFlg === 1) {
                         return { valid: false, message: 'この工事はキャンセルされています' };
                     }
-                    return { valid: true, registerDate: order.RegisterDate || order.registerDate || order.register_date };
+                    const regDate = exact.registerdate || exact.RegisterDate || exact.register_date;
+                    return { valid: true, registerDate: regDate };
                 }
-            } catch (e) {
-                // 次のテーブルを試す
-            }
+            } catch (e) { /* 次のテーブルを試す */ }
         }
-        // テーブルが存在しない場合は警告のみ（開発中は許可）
-        console.warn('工事番号テーブルが見つかりません。検証をスキップします。');
-        return { valid: true };
+        return { valid: false, message: '工事番号が存在しないか、既に完了済みです' };
     } catch (error) {
         console.error('工事番号確認エラー:', error);
         return { valid: false, message: '工事番号の確認中にエラーが発生しました' };
@@ -631,54 +803,45 @@ async function processDrawingNumberRegistrationVB(orderNo, machineCode, designer
         try {
             const saibanDateISO = new Date(saibanDate).toISOString();
             
+            // 資料に基づく小文字カラムで登録
             const drawingData = {
-                DrawingNo: newDrawing,
-                Description: description || null,
-                OrderNo: orderNo,
-                Material: null,
-                MaterialWeight: null,
-                FinishedWeight: null,
-                Designer: designer,
-                SaibanDate: saibanDateISO,
-                KeyDate: keyDate,
-                History1: null,
-                History2: null,
-                History3: null,
-                History4: null,
-                History5: null,
-                History6: null,
-                History7: null,
-                History8: null,
-                History9: null,
-                History10: null
+                drawingno: newDrawing,
+                description: description || null,
+                orderno: orderNo,
+                material: null,
+                materialweight: null,
+                finishedweight: null,
+                designer: designer,
+                saibandate: saibanDateISO,
+                keydate: keyDate,
+                history1: null,
+                history2: null,
+                history3: null,
+                history4: null,
+                history5: null,
+                history6: null,
+                history7: null,
+                history8: null,
+                history9: null,
+                history10: null
             };
             
-            // t_saibanテーブルに登録
-            const tableNames = ['t_saiban', 'T_Saiban', 't_Saiban', 'saiban'];
-            let registered = false;
-            
-            for (const tableName of tableNames) {
-                try {
-                    const { error } = await getSupabaseClient()
-                        .from(tableName)
-                        .insert([drawingData]);
-                    
-                    if (!error) {
-                        registered = true;
-                        successCount++;
-                        drawingNumbers.push(newDrawing);
-                        prevDrawing = newDrawing; // 次のループ用に更新
-                        break;
-                    } else {
-                        console.error(`テーブル ${tableName} への登録エラー:`, error);
-                    }
-                } catch (e) {
-                    console.error(`テーブル ${tableName} への登録例外:`, e);
-                }
-            }
-            
-            if (!registered) {
+            const saibanTable = await getSaibanTableName();
+            if (!saibanTable) {
+                console.error('t_saiban テーブルが見つかりません');
                 skipped.push(newDrawing);
+            } else {
+                const { error } = await getSupabaseClient()
+                    .from(saibanTable)
+                    .insert([drawingData]);
+                if (!error) {
+                    successCount++;
+                    drawingNumbers.push(newDrawing);
+                    prevDrawing = newDrawing;
+                } else {
+                    console.error('t_saiban への登録エラー:', error);
+                    skipped.push(newDrawing);
+                }
             }
         } catch (error) {
             console.error(`図面番号 ${newDrawing} の登録エラー:`, error);
@@ -695,26 +858,17 @@ async function processDrawingNumberRegistrationVB(orderNo, machineCode, designer
     };
 }
 
-// 図面番号の重複チェック
+// 図面番号の重複チェック（t_saiban.drawingno で確認・小文字）
 async function checkDrawingNoDuplicate(drawingNo) {
     try {
-        const tableNames = ['t_saiban', 'T_Saiban', 't_Saiban', 'saiban'];
-        for (const tableName of tableNames) {
-            try {
-                const { data, error } = await getSupabaseClient()
-                    .from(tableName)
-                    .select('DrawingNo')
-                    .eq('DrawingNo', drawingNo)
-                    .limit(1);
-                
-                if (!error && data && data.length > 0) {
-                    return true; // 重複あり
-                }
-            } catch (e) {
-                // 次のテーブルを試す
-            }
-        }
-        return false; // 重複なし
+        const tableName = await getSaibanTableName();
+        if (!tableName) return false;
+        const { data, error } = await getSupabaseClient()
+            .from(tableName)
+            .select('drawingno')
+            .eq('drawingno', drawingNo)
+            .limit(1);
+        return !error && data && data.length > 0;
     } catch (error) {
         console.error('図面番号重複チェックエラー:', error);
         throw error;

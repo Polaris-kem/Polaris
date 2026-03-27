@@ -11,6 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- SheetJS for BOM import -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <!-- メインアプリケーション -->
@@ -19,6 +21,11 @@
     <header class="top-header">
         <div class="header-content">
             <div style="display: flex; align-items: center; gap: 12px;">
+                <!-- モバイル用ハンバーガーボタン -->
+                <button id="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="メニュー"
+                    style="display:none;background:rgba(255,255,255,0.12);border:none;color:white;width:38px;height:38px;border-radius:8px;font-size:18px;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <img src="assets/logo.png" alt="Polaris Logo" style="width: 40px; height: 40px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border: 2px solid rgba(255,255,255,0.1);">
                 <h1 style="font-family: 'Outfit', sans-serif; letter-spacing: -0.03em; font-weight: 900; font-size: 28px; background: linear-gradient(to right, #ffffff 0%, #a5b4fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">Polaris</h1>
             </div>
@@ -34,11 +41,14 @@
         </div>
     </header>
 
+    <!-- モバイル用サイドバーオーバーレイ（背景暗幕） -->
+    <div id="mobile-sidebar-overlay" onclick="closeMobileSidebar()" style="display:none;position:fixed;inset:0;top:56px;background:rgba(0,0,0,0.55);z-index:998;"></div>
+
     <!-- メインコンテナ -->
     <div class="main-container">
         <!-- 左サイドバー（メニュー） -->
         <aside class="left-sidebar">
-            <div class="sidebar-header" style="padding: 30px 24px; position: relative; z-index: 2;">
+            <div class="sidebar-header" style="padding: 24px 24px 8px 24px; position: relative; z-index: 2;">
                 <h2 style="color: white; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 13px; letter-spacing: 0.15em; display: flex; align-items: center; gap: 12px; opacity: 0.9;">
                     <div style="position: relative; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
                         <i class="fas fa-star" style="color: #FFD700; font-size: 16px; position: absolute; filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.9)); animation: starPulse 2s infinite alternate;"></i>
@@ -50,7 +60,7 @@
             <nav class="main-menu">
                 <button class="menu-item active" data-page="dashboard">
                     <i class="fas fa-home"></i>
-                    <span>ダッシュボード</span>
+                    <span>ホーム</span>
                 </button>
                 <button class="menu-item" data-page="list">
                     <i class="fas fa-list"></i>
@@ -68,6 +78,10 @@
                     <i class="fas fa-chart-bar"></i>
                     <span>集計</span>
                 </button>
+                <button class="menu-item" data-page="settings">
+                    <i class="fas fa-user-cog"></i>
+                    <span>個人設定</span>
+                </button>
             </nav>
             <div class="table-list-section">
                 <h3>テーブル一覧</h3>
@@ -77,16 +91,51 @@
                 </div>
             </div>
             <div class="sidebar-footer">
-                <p>ログインユーザー: システム管理者</p>
+                <p id="sidebar-login-user">ログインユーザー: システム管理者</p>
                 <p id="current-time"></p>
             </div>
         </aside>
 
         <!-- メインコンテンツエリア -->
         <main class="content-area">
-            <!-- ダッシュボードページ -->
+            <!-- ホームページ -->
             <div id="dashboard-page" class="page active">
-                <!-- 掲示板 -->
+                <!-- クイックアクション＋イラスト（1行で） -->
+                <div class="dashboard-quick-actions" id="dashboard-quick-actions">
+                    <div class="quick-actions-main">
+                        <h3 class="quick-actions-title"><i class="fas fa-bolt"></i> クイックアクション</h3>
+                        <div class="quick-actions-grid" id="quick-actions-grid">
+                            <!-- renderQuickActions() で描画 -->
+                        </div>
+                    </div>
+                    <div class="dashboard-visual-illus" aria-hidden="true">
+                        <svg viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg" class="dashboard-svg-illus">
+                            <defs>
+                                <linearGradient id="dashGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#3b82f6"/>
+                                    <stop offset="100%" style="stop-color:#6366f1"/>
+                                </linearGradient>
+                                <linearGradient id="dashGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#818cf8"/>
+                                    <stop offset="100%" style="stop-color:#a5b4fc"/>
+                                </linearGradient>
+                                <filter id="dashShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.12"/>
+                                </filter>
+                            </defs>
+                            <rect x="200" y="48" width="160" height="88" rx="12" fill="url(#dashGrad2)" opacity="0.5" filter="url(#dashShadow)"/>
+                            <rect x="40" y="72" width="140" height="64" rx="12" fill="white" opacity="0.9" filter="url(#dashShadow)" stroke="rgba(59,130,246,0.2)" stroke-width="1"/>
+                            <path d="M60 100 L100 80 L140 88 L180 60 L220 70" stroke="url(#dashGrad1)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9"/>
+                            <rect x="220" y="24" width="140" height="96" rx="14" fill="white" filter="url(#dashShadow)" stroke="rgba(59,130,246,0.15)" stroke-width="1"/>
+                            <rect x="236" y="44" width="48" height="8" rx="4" fill="#e0e7ff"/>
+                            <rect x="236" y="60" width="88" height="8" rx="4" fill="#e0e7ff"/>
+                            <rect x="236" y="76" width="64" height="8" rx="4" fill="#c7d2fe"/>
+                            <circle cx="320" cy="52" r="20" fill="url(#dashGrad1)" opacity="0.9"/>
+                            <path d="M312 52 L317 57 L328 46" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                    </div>
+                </div>
+                <!-- 掲示板（全員が同じ内容を閲覧） -->
                 <div class="dashboard-card bulletin-card" style="margin-bottom: 20px; cursor: pointer;" onclick="showPage('bulletin')" title="クリックして掲示板ページを開く">
                     <div class="section-header" onclick="event.stopPropagation();">
                         <h3>掲示板</h3>
@@ -124,7 +173,7 @@
                     <!-- タスクリスト -->
                     <div class="dashboard-card task-list-card">
                         <div class="section-header">
-                            <h3><i class="fas fa-tasks"></i> タスクリスト</h3>
+                            <h3><i class="fas fa-clipboard-list"></i> タスクリスト</h3>
                             <button class="btn-primary btn-small" id="add-task-btn" onclick="if(typeof window.openTaskModal === 'function') { window.openTaskModal(); } else { const m = document.getElementById('task-modal'); if(m) { m.style.display = 'flex'; m.style.zIndex = '10000'; } }">
                                 <i class="fas fa-plus"></i> 追加
                             </button>
@@ -168,7 +217,7 @@
                 <div class="page-title">
                     <h2>掲示板</h2>
                     <button class="btn-secondary" onclick="showPage('dashboard')">
-                        <i class="fas fa-arrow-left"></i> ダッシュボードに戻る
+                        <i class="fas fa-arrow-left"></i> ホームに戻る
                     </button>
                 </div>
                 <div class="dashboard-card bulletin-card-full" style="margin-bottom: 20px;">
@@ -181,6 +230,66 @@
                     <div class="bulletin-list-full" id="bulletin-list-full">
                         <!-- 動的に生成されます -->
                     </div>
+                </div>
+            </div>
+
+            <!-- 個人設定ページ（ログインごと） -->
+            <div id="settings-page" class="page">
+                <div class="page-title">
+                    <h2><i class="fas fa-user-cog"></i> 個人設定</h2>
+                    <button class="btn-secondary" onclick="showPage('dashboard')">
+                        <i class="fas fa-arrow-left"></i> ホームに戻る
+                    </button>
+                </div>
+                <div class="settings-card">
+                    <p class="settings-description">この設定はログイン中のアカウントにのみ保存され、他のユーザーには表示されません。</p>
+                    <form id="user-settings-form" class="settings-form">
+                        <div class="settings-section">
+                            <h4>表示</h4>
+                            <div class="form-field">
+                                <label for="settings-display-name">表示名</label>
+                                <input type="text" id="settings-display-name" class="form-input" placeholder="画面上で表示する名前（任意）">
+                            </div>
+                        </div>
+                        <div class="settings-section">
+                            <h4>クイックアクション</h4>
+                            <div class="form-field">
+                                <label class="settings-check-label">
+                                    <input type="checkbox" id="settings-show-quick-actions" checked>
+                                    <span>クイックアクションを表示する</span>
+                                </label>
+                                <p class="settings-field-note">オフにすると、ホームのクイックアクション欄全体が非表示になります。</p>
+                            </div>
+                            <p class="settings-sublabel">表示する項目を選んでください（チェックを外すと非表示）</p>
+                            <div class="settings-quick-action-checks" id="settings-quick-action-checks">
+                                <label class="settings-check-label"><input type="checkbox" name="quick-action" value="order-registration" checked> <span>受注登録</span></label>
+                                <label class="settings-check-label"><input type="checkbox" name="quick-action" value="drawing-number" checked> <span>図面番号採番</span></label>
+                                <label class="settings-check-label"><input type="checkbox" name="quick-action" value="construct-number" checked> <span>工事番号採番</span></label>
+                                <label class="settings-check-label"><input type="checkbox" name="quick-action" value="search" checked> <span>検索</span></label>
+                                <label class="settings-check-label"><input type="checkbox" name="quick-action" value="settings" checked> <span>個人設定</span></label>
+                            </div>
+                            <p class="settings-sublabel" style="margin-top: 14px;">自分で追加したいURL（別タブで開きます）</p>
+                            <div id="settings-custom-urls" class="settings-custom-urls">
+                                <!-- JSで行を追加 -->
+                            </div>
+                            <button type="button" class="btn-secondary btn-small" id="settings-add-custom-url" style="margin-top: 8px;">
+                                <i class="fas fa-plus"></i> URLを追加
+                            </button>
+                        </div>
+                        <div class="settings-section">
+                            <h4>通知</h4>
+                            <div class="form-field">
+                                <label class="settings-check-label">
+                                    <input type="checkbox" id="settings-notify-tasks">
+                                    <span>期限のタスクをブラウザで通知する</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-actions">
+                            <button type="submit" class="btn-primary"><i class="fas fa-save"></i> 保存</button>
+                            <button type="button" class="btn-secondary" onclick="showPage('dashboard')">キャンセル</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -197,15 +306,47 @@
 
                 <!-- テーブル選択セクション -->
                 <div id="table-selection-section" class="search-section" style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
-                    <div style="display: flex; gap: 12px; align-items: center; background: white; padding: 16px; border-radius: 12px; box-shadow: var(--shadow-sm);">
-                        <i class="fas fa-search" style="color: var(--primary); font-size: 18px;"></i>
-                        <input type="text" id="list-table-search" class="search-input" placeholder="テーブル名で検索..." style="flex: 1; border: none; font-size: 16px; outline: none;" oninput="filterListTableSelection()">
-                        <div class="record-badge">
-                            <span class="badge-label">全テーブル</span>
-                            <span id="list-table-count" class="badge-value">0</span>
+                    <div style="display: flex; flex-direction: column; gap: 12px; background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <i class="fas fa-search" style="color: var(--primary); font-size: 18px;"></i>
+                            <div style="flex: 1; position: relative; display: flex; align-items: center;">
+                                <input type="text" id="list-table-search" class="search-input" placeholder="テーブル名、またはデータの中身を全テーブルから検索..." style="flex: 1; border: none; font-size: 16px; outline: none; padding-right: 40px;">
+                                <button id="clear-global-search-btn" style="position: absolute; right: 10px; background: none; border: none; color: var(--text-tertiary); cursor: pointer; display: none;" onclick="clearGlobalSearch()">
+                                    <i class="fas fa-times-circle"></i>
+                                </button>
+                            </div>
+                            <button id="global-data-search-btn" class="btn-primary" style="padding: 0 20px; height: 38px; display: flex; align-items: center; gap: 8px;" onclick="searchAllTablesData()">
+                                <i class="fas fa-magic" style="font-size: 14px;"></i> 全検索
+                            </button>
+                            <div class="record-badge" style="height: 38px; display: flex; align-items: center;">
+                                <span class="badge-label">全テーブル</span>
+                                <span id="list-table-count" class="badge-value">0</span>
+                            </div>
+                            <button type="button" id="polaris-save-search-btn" class="btn-secondary" style="padding: 8px 14px; height: 38px; font-size: 13px;" title="現在のテーブルと検索条件を保存">
+                                <i class="fas fa-bookmark"></i> 条件を保存
+                            </button>
+                            <select id="polaris-saved-search-select" class="form-input" style="width: 180px; height: 38px; font-size: 13px; padding: 0 8px;" title="保存した検索条件で復元">
+                                <option value="">保存した条件で復元</option>
+                            </select>
+                        </div>
+                        <div id="global-search-status" style="font-size: 12px; color: var(--text-tertiary); display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> <span id="global-search-progress">検索中...</span>
                         </div>
                     </div>
                     
+                    <div id="global-search-results" style="display: none; flex-direction: column; gap: 16px; margin-bottom: 20px;">
+                        <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-poll-h" style="color: var(--primary);"></i> データ検索結果
+                            <span id="global-search-result-count" style="font-size: 12px; font-weight: 400; color: var(--text-tertiary); background: #f1f5f9; padding: 2px 8px; border-radius: 10px;">0件ヒット</span>
+                        </h3>
+                        <div id="global-search-results-list" style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- 検索結果がここに表示されます -->
+                        </div>
+                    </div>
+                    
+                    <div id="table-grid-title" style="font-size: 14px; font-weight: 700; color: var(--text-secondary); margin-top: 10px;">
+                        <i class="fas fa-th-large"></i> テーブルから選ぶ
+                    </div>
                     <div id="list-table-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; overflow-y: auto; padding: 4px;">
                         <!-- テーブルカードが動的に生成されます -->
                     </div>
@@ -248,6 +389,9 @@
                             <button id="refresh-table" class="btn-secondary" title="テーブルデータを更新" style="white-space: nowrap;">
                                 <i class="fas fa-sync-alt"></i> 更新
                             </button>
+                            <button id="polaris-surplus-check-btn" class="btn-secondary" title="表示中の一覧と余剰在庫を照合し、在庫ありの行を強調" style="white-space: nowrap;">
+                                <i class="fas fa-box-open"></i> 余剰在庫をチェック
+                            </button>
                             <button id="csv-export" class="btn-secondary" style="white-space: nowrap;">CSV出力</button>
                             <button id="csv-import" class="btn-secondary" style="white-space: nowrap;">CSVインポート</button>
                             <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
@@ -287,56 +431,57 @@
                 <div class="page-title" style="margin-bottom: 8px;">
                     <h2 style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 28px; font-weight: 700; letter-spacing: 0.5px;">登録・編集</h2>
                 </div>
+
                 <div class="register-buttons">
-                    <button class="register-btn" data-type="accept-order" onclick="openOrderRegistrationModal()" style="border-left: 4px solid #3b82f6; background: linear-gradient(to right, #eff6ff, #ffffff);">
+                    <button class="register-btn" data-type="estimate-request" onclick="showPage('estimate-request')" style="border-left: 4px solid #6366f1; background: linear-gradient(to right, #eff0ff, #ffffff);">
+                        <i class="fas fa-envelope-open-text" style="font-size: 24px; margin-right: 12px; color: #6366f1; flex-shrink: 0;"></i>
+                        <span style="font-weight: 700; color: #4338ca;">見積依頼<br><small style="font-weight:400;color:#64748b;">K番号採番・メール送信</small></span>
+                    </button>
+                    <button class="register-btn" data-type="quotation" onclick="showPage('quotation')" style="border-left: 4px solid #10b981; background: linear-gradient(to right, #ecfdf5, #ffffff);">
+                        <i class="fas fa-file-invoice" style="font-size: 24px; margin-right: 12px; color: #10b981; flex-shrink: 0;"></i>
+                        <span style="font-weight: 700; color: #065f46;">見積書作成<br><small style="font-weight:400;color:#64748b;">金額入力・PDF出力</small></span>
+                    </button>
+                    <button class="register-btn" data-type="accept-order" onclick="showPage('order-registration')" style="border-left: 4px solid #3b82f6; background: linear-gradient(to right, #eff6ff, #ffffff);">
                         <i class="fas fa-file-invoice-dollar" style="font-size: 24px; margin-right: 12px; color: #3b82f6; flex-shrink: 0;"></i>
                         <span style="font-weight: 700; color: #1e40af;">受注登録 (営業)</span>
-                    </button>
-                    <button class="register-btn" data-type="purchase-order" onclick="openPurchaseOrderModal()" style="border-left: 4px solid #10b981; background: linear-gradient(to right, #f0fdf4, #ffffff);">
-                        <i class="fas fa-shopping-cart" style="font-size: 24px; margin-right: 12px; color: #10b981; flex-shrink: 0;"></i>
-                        <span style="font-weight: 700; color: #166534;">購入部品発注 (資材)</span>
                     </button>
                     <button class="register-btn" data-type="work-ticket" onclick="showPage('work-ticket')">
                         <i class="fas fa-clipboard-list" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
                         <span>作業票の登録</span>
                     </button>
-                    <button class="register-btn" data-type="barcode">
+                    <button class="register-btn" data-type="barcode-work-ticket" onclick="showPage('barcode-work-ticket')">
                         <i class="fas fa-barcode" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
                         <span>バーコードリーダー版<br>作業票の登録</span>
                     </button>
-                    <button class="register-btn" data-type="misc-purchase">
+                    <button class="register-btn" data-type="misc-purchase" onclick="showPage('misc-purchase')">
                         <i class="fas fa-shopping-cart" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
                         <span>諸掛購入登録</span>
                     </button>
-                    <button class="register-btn" data-type="misc-delivery">
+                    <button class="register-btn" data-type="misc-delivery" onclick="showPage('misc-delivery')">
                         <i class="fas fa-truck" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
                         <span>諸掛納入処理</span>
                     </button>
-                    <button class="register-btn" data-type="delivery-approval">
-                        <i class="fas fa-check-circle" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
-                        <span>納期承認</span>
-                    </button>
-                    <button class="register-btn" data-type="shipping">
+                    <button class="register-btn" data-type="shipping" onclick="showPage('shipping')">
                         <i class="fas fa-shipping-fast" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
                         <span>出荷管理</span>
                     </button>
-                    <button class="register-btn" data-type="outsource-delivery">
+                    <button class="register-btn" data-type="outsource-delivery" onclick="showPage('outsource-delivery')">
                         <i class="fas fa-handshake" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
                         <span>外注・材料<br>納入処理</span>
                     </button>
-                    <button class="register-btn" data-type="parts-delivery">
+                    <button class="register-btn" data-type="parts-delivery" onclick="showPage('parts-delivery')">
                         <i class="fas fa-cogs" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
                         <span>購入部品<br>納入処理</span>
                     </button>
-                    <button class="register-btn" data-type="surplus-register">
+                    <button class="register-btn" data-type="surplus-register" onclick="showPage('surplus-register')">
                         <i class="fas fa-box" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
                         <span>余り品登録</span>
                     </button>
-                    <button class="register-btn" data-type="surplus-search">
+                    <button class="register-btn" data-type="surplus-search" onclick="showPage('surplus-search')">
                         <i class="fas fa-search" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
                         <span>余り品検索</span>
                     </button>
-                    <button class="register-btn" data-type="project-shipping">
+                    <button class="register-btn" data-type="project-shipping" onclick="showPage('project-shipping')">
                         <i class="fas fa-file-export" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
                         <span>工事番号出荷登録</span>
                     </button>
@@ -352,6 +497,887 @@
                         <i class="fas fa-drafting-compass" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
                         <span>図面番号採番</span>
                     </button>
+                </div>
+            </div>
+
+            <!-- 受注データ一覧・検索ページ（t_acceptorder） -->
+            <div id="accept-order-list-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div class="page-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 16px 24px; flex-shrink: 0;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #1e293b;"><i class="fas fa-file-invoice-dollar" style="color: #10b981; margin-right: 8px;"></i>受注データ</h2>
+                        <button type="button" class="btn-secondary" onclick="showPage('register')" style="padding: 8px 16px;"><i class="fas fa-arrow-left"></i> 戻る</button>
+                    </div>
+                    <button type="button" class="btn-primary" id="accept-order-new-btn" style="padding: 10px 20px;">
+                        <i class="fas fa-plus"></i> 新規登録
+                    </button>
+                </div>
+                <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 0 24px 24px; min-height: 0;">
+                    <!-- 検索エリア -->
+                    <div class="search-section" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 16px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <div class="form-field" style="margin: 0;">
+                            <label style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">工事番号</label>
+                            <input type="text" id="accept-order-search-constructno" class="form-input" placeholder="工事番号で検索" style="width: 180px; padding: 8px 12px;">
+                        </div>
+                        <div class="form-field" style="margin: 0;">
+                            <label style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">客先名・工事名</label>
+                            <input type="text" id="accept-order-search-customer" class="form-input" placeholder="客先名・工事名称で検索" style="width: 220px; padding: 8px 12px;">
+                        </div>
+                        <button type="button" class="btn-primary" id="accept-order-search-btn" style="padding: 8px 20px; height: 38px;"><i class="fas fa-search"></i> 検索</button>
+                        <button type="button" class="btn-secondary" id="accept-order-search-clear-btn" style="padding: 8px 16px; height: 38px;">クリア</button>
+                    </div>
+                    <!-- 一覧テーブル -->
+                    <div style="flex: 1; min-height: 0; overflow: auto; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                        <table class="data-table" id="accept-order-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="padding: 12px; text-align: left; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; white-space: nowrap;">工事番号</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0;">工事名称</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0;">受注元</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0;">納品先</th>
+                                    <th style="padding: 12px; text-align: right; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0;">受注金額</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0;">受注日</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0;">納期</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0;">登録日</th>
+                                    <th style="padding: 12px; text-align: center; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0;">次の請求</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accept-order-tbody">
+                                <!-- JSで描画 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="accept-order-list-status" style="font-size: 13px; color: #64748b; margin-top: 8px;"><span id="accept-order-list-count">0</span> 件</div>
+                </div>
+            </div>
+
+            <!-- 受注登録ページ（プレミアム風レイアウト） -->
+            <div id="order-registration-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div class="order-reg-page-body" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
+                    <!-- ヘッダー（ガラス風） -->
+                    <div class="order-reg-header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <h2 class="order-reg-page-title" style="margin: 0;">
+                                <i class="fas fa-file-invoice-dollar" style="margin-right: 8px;"></i>受注登録
+                            </h2>
+                            <button type="button" class="btn-secondary order-reg-btn-back" onclick="closeOrderRegistrationPage()" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-arrow-left"></i> 戻る
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn-secondary" onclick="window.print()" style="padding: 8px 16px; border-radius: 8px;"><i class="fas fa-print"></i> 画面印刷</button>
+                            <button type="submit" form="order-registration-form" class="btn-primary order-reg-btn-primary" style="padding: 10px 24px;">
+                                <i class="fas fa-save"></i> 受注データの登録 次へ
+                            </button>
+                        </div>
+                    </div>
+                    <!-- フォームエリア（2列＋フル幅） -->
+                    <div style="flex: 1; overflow-y: auto; min-height: 0;">
+                        <form id="order-registration-form" style="max-width: 100%; margin: 0 auto; padding: 2px 0 10px;">
+                            <!-- 1行目：工事 | 注文主 -->
+                            <div class="order-reg-cols">
+                                <div class="order-reg-card order-reg-card-1">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">1</span><i class="fas fa-hard-hat"></i> 工事情報</h3>
+                                    <div class="order-reg-grid order-reg-grid-4">
+                                        <div><label class="order-reg-label">工事番号</label><div style="display: flex; gap: 6px; align-items: center;"><input type="text" id="reg-ConstructNo" name="ConstructNo" class="order-reg-input" style="flex:1;"><span id="reg-sales-rep-display" style="font-size: 0.7rem; color: #64748b;">営業</span><input type="hidden" id="reg-StaffCode" name="StaffCode" value=""></div></div>
+                                        <div><label class="order-reg-label">親オーダー</label><div style="display: flex; gap: 6px;"><input type="text" name="ParentOrder" class="order-reg-input" style="flex:1;"><button type="button" class="btn-secondary">選択</button></div></div>
+                                        <div><label class="order-reg-label">ルート番号</label><div style="display: flex; gap: 6px;"><input type="text" name="RouteNo" class="order-reg-input" style="flex:1;"><button type="button" class="btn-secondary">選択</button></div></div>
+                                        <div><label class="order-reg-label">ライン名称</label><input type="text" name="LineName" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">S番</label><input type="text" name="SNo" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">作業内容</label><select name="WorkContent" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div><label class="order-reg-label">D番区分</label><div style="display: flex; gap: 8px; padding: 2px 0;"><label><input type="radio" name="DCategory" value="新作"> 新作</label><label><input type="radio" name="DCategory" value="点検・オーバーホール"> 点検・OH</label></div></div>
+                                        <div><label class="order-reg-label">受注説明会</label><div style="display: flex; gap: 8px; padding: 2px 0;"><label><input type="radio" name="OrderBriefing" value="はい"> はい</label><label><input type="radio" name="OrderBriefing" value="まだ"> まだ</label></div></div>
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">工事名</label><input type="text" id="reg-ConstructName" name="ConstructName" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">製作数</label><input type="number" name="Quantity" value="1" min="1" class="order-reg-input"> 式</div>
+                                        <div style="display: flex; align-items: center;"><label><input type="checkbox" name="RepeatNoDrawingChange"> リピート品</label></div>
+                                        <div><label class="order-reg-label">塗装</label><div style="display: flex; gap: 8px; padding: 2px 0;"><label><input type="radio" name="Painting" value="無し" checked> 無し</label><label><input type="radio" name="Painting" value="有り(機械)"> 有り</label></div></div>
+                                        <div><label class="order-reg-label">安全</label><input type="text" name="Safety" class="order-reg-input"></div>
+                                    </div>
+                                </div>
+                                <div class="order-reg-card order-reg-card-2">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">2</span><i class="fas fa-building"></i> 注文主情報</h3>
+                                    <div class="order-reg-grid order-reg-grid-3">
+                                        <div><label class="order-reg-label">注文主</label><div style="display: flex; gap: 6px;"><input type="text" id="reg-OwnerCode" name="OwnerCode" class="order-reg-input" style="flex:1;"><button type="button" class="btn-secondary">確認</button></div></div>
+                                        <div><label class="order-reg-label">納入先</label><div style="display: flex; gap: 6px;"><input type="text" name="DeliveryTo" class="order-reg-input" style="flex:1;"><button type="button" class="btn-secondary">確認</button></div></div>
+                                        <div><label class="order-reg-label">所属部署</label><input type="text" name="Department" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">客先注番</label><input type="text" name="CustomerOrderNo" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">見積番号</label><div style="display: flex; gap: 6px;"><input type="text" name="EstimateNo" class="order-reg-input" style="flex:1;"><button type="button" class="btn-secondary">取得</button></div></div>
+                                        <div><label class="order-reg-label">原価見積依頼番号</label><input type="text" name="CostEstimateRequestNo" class="order-reg-input"></div>
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">客先担当</label><input type="text" name="CustomerContact" placeholder="無い場合は「ー」" class="order-reg-input"><p class="order-reg-hint">↑無い場合は「ー」</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 2行目：受注・出荷 | 金額 -->
+                            <div class="order-reg-cols">
+                                <div class="order-reg-card order-reg-card-3">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">3</span><i class="fas fa-calendar-check"></i> 受注・出荷日 <span style="font-size: 0.65rem; color: #64748b;">(3P・4P・5・8000番必須)</span></h3>
+                                    <div class="order-reg-grid order-reg-grid-4">
+                                        <div><label class="order-reg-label">受注日</label><input type="text" id="reg-OrderDate" name="OrderDate" class="date-input order-reg-input" placeholder="YYYY/MM/DD"></div>
+                                        <div><label class="order-reg-label">受注/内示</label><div style="display: flex; gap: 6px; padding: 2px 0;"><label><input type="radio" name="OrderType" value="受注" checked> 受注</label><label><input type="radio" name="OrderType" value="内示"> 内示</label></div></div>
+                                        <div><label class="order-reg-label">出荷場所</label><input type="text" name="ShipPlace" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">客先納期</label><input type="text" id="reg-DeliveryDate" name="DeliveryDate" class="date-input order-reg-input" placeholder="YYYY/MM/DD"></div>
+                                        <div><label class="order-reg-label">工場出荷日</label><input type="text" name="FactoryShipDate" class="date-input order-reg-input" placeholder="YYYY/MM/DD"></div>
+                                        <div><label class="order-reg-label">更新出荷日</label><input type="text" name="UpdatedShipDate" class="order-reg-input"></div>
+                                        <div style="display: flex; align-items: center;"><label><input type="checkbox" name="ExportPacking"> 輸出梱包(4P-8000番)</label></div>
+                                        <div><label class="order-reg-label">輸送便</label><select name="Transport" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div><label class="order-reg-label">1000番手配</label><select name="Arrangement1000" class="order-reg-input"><option value="">選択</option></select></div>
+                                    </div>
+                                </div>
+                                <div class="order-reg-card order-reg-card-4">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">4</span><i class="fas fa-yen-sign"></i> 金額情報</h3>
+                                    <div class="order-reg-grid order-reg-grid-4">
+                                        <div><label class="order-reg-label">受注金額</label><input type="number" id="reg-OrderPrice" name="OrderPrice" placeholder="0" class="order-reg-input" style="text-align: right;"></div>
+                                        <div><label class="order-reg-label">円内訳</label><input type="text" name="PriceBreakdown" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">変更理由</label><select name="PriceChangeReason" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div><label class="order-reg-label">外貨金額</label><input type="text" name="ForeignAmount" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">通貨</label><select name="Currency" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div><label class="order-reg-label">レート</label><input type="text" name="Rate" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">消費税</label><div style="display: flex; gap: 6px; padding: 2px 0;"><label><input type="radio" name="TaxCalc" value="計算しない"> しない</label><label><input type="radio" name="TaxCalc" value="計算する" checked> する</label></div></div>
+                                        <div><label class="order-reg-label">合計</label><input type="text" id="reg-TotalAmount" value="0" readonly class="order-reg-input" style="background: #eef1f5; text-align: right;"></div>
+                                        <div><label class="order-reg-label">支払方法</label><div style="display: flex; gap: 6px; padding: 2px 0;"><label><input type="radio" name="PaymentMethod" value="手形"> 手形</label><label><input type="radio" name="PaymentMethod" value="振込" checked> 振込</label></div></div>
+                                        <div><label class="order-reg-label">粗利</label><div style="display: flex; gap: 6px; padding: 2px 0;"><label><input type="radio" name="GrossProfit" value="計算しない" checked> しない</label><label><input type="radio" name="GrossProfit" value="計算する"> する</label></div></div>
+                                    </div>
+                                    <p class="order-reg-hint" style="margin: 8px 0 0;">※ 2000番のみ自動計算可</p>
+                                </div>
+                            </div>
+                            <!-- 3行目：その他（フル幅） -->
+                            <div class="order-reg-row-full">
+                                <div class="order-reg-card order-reg-card-5">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">5</span><i class="fas fa-sticky-note"></i> その他</h3>
+                                    <div class="order-reg-grid order-reg-grid-2">
+                                        <div><label class="order-reg-label">仕様書番号</label><input type="text" name="SpecNo" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">受渡場所</label><input type="text" name="DeliveryPlace" class="order-reg-input"></div>
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">備考</label><textarea name="Memo" rows="2" class="order-reg-input" style="resize: vertical;"></textarea></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 諸掛購入登録ページ（諸経費入力/諸掛購入表印刷・受注登録と同じデザイン） -->
+            <div id="misc-purchase-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div class="order-reg-page-body" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
+                    <div class="order-reg-header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <h2 class="order-reg-page-title" style="margin: 0;">
+                                <i class="fas fa-file-invoice" style="margin-right: 8px;"></i>諸経費の入力 / 諸掛購入表印刷
+                            </h2>
+                            <button type="button" class="btn-secondary order-reg-btn-back" onclick="closeMiscPurchasePage()" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-arrow-left"></i> 戻る
+                            </button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <label class="order-reg-label" style="margin: 0;">文書ID</label>
+                            <select id="misc-purchase-doc-id" class="order-reg-input" style="width: 140px;">
+                                <option value="">選択</option>
+                            </select>
+                            <button type="button" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">読込</button>
+                            <button type="button" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">更新</button>
+                            <button type="button" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">削除</button>
+                            <button type="button" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">再印刷</button>
+                            <button type="submit" form="misc-purchase-form" class="btn-primary order-reg-btn-primary" style="padding: 10px 24px;">
+                                <i class="fas fa-save"></i> 登録
+                            </button>
+                        </div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; min-height: 0;">
+                        <form id="misc-purchase-form" style="max-width: 100%; margin: 0 auto; padding: 2px 0 10px;">
+                            <div class="order-reg-cols">
+                                <div class="order-reg-card order-reg-card-1">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">1</span><i class="fas fa-hard-hat"></i> 工事・通番・日付</h3>
+                                    <div class="order-reg-grid order-reg-grid-4">
+                                        <div><label class="order-reg-label">工事番号</label><input type="text" name="construct_no" class="order-reg-input" placeholder="工事番号"></div>
+                                        <div><label class="order-reg-label">機械</label><select name="machine" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div><label class="order-reg-label">ユニット</label><select name="unit" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div><label class="order-reg-label">通番</label><div style="display: flex; gap: 6px;"><input type="text" name="serial_no" class="order-reg-input" style="flex:1;"><button type="button" class="btn-secondary">表示消去</button></div></div>
+                                        <div><label class="order-reg-label">受注登録日</label><input type="text" name="order_date" class="order-reg-input date-input" placeholder="YYYY/MM/DD"></div>
+                                        <div><label class="order-reg-label">納期</label><input type="text" name="delivery_date" class="order-reg-input date-input" placeholder="YYYY/MM/DD"></div>
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">記事</label><input type="text" name="article" class="order-reg-input"></div>
+                                    </div>
+                                </div>
+                                <div class="order-reg-card order-reg-card-2">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">2</span><i class="fas fa-box"></i> 品目・分類</h3>
+                                    <div class="order-reg-grid order-reg-grid-4">
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">品名</label><input type="text" name="product_name" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">寸法型式</label><input type="text" name="size_type" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">メーカー</label><input type="text" name="manufacturer" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">部門コード</label><input type="text" name="dept_code" class="order-reg-input" placeholder="365"></div>
+                                        <div><label class="order-reg-label">勘定科目</label><input type="text" name="account" class="order-reg-input"></div>
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">コメント</label><input type="text" name="comment" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">購入依頼者</label><select name="requester" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div><label class="order-reg-label">カテゴリー</label><select name="category" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div><label class="order-reg-label">操業</label><select name="operation" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div><label class="order-reg-label">確認</label><select name="confirm" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div class="order-reg-grid-full" style="display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center;">
+                                            <label><input type="checkbox" name="repeat"> リピート品</label>
+                                            <label><input type="checkbox" name="inspection"> 検収管理品</label>
+                                            <label><input type="checkbox" name="tax_free"> 非課税</label>
+                                            <label><input type="checkbox" name="import_tax"> 輸入消費税</label>
+                                            <label><input type="checkbox" name="tax_included"> 消費税込み</label>
+                                            <label style="color: #dc2626;"><input type="checkbox" name="amount_undecided"> 金額未確定</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="order-reg-cols">
+                                <div class="order-reg-card order-reg-card-3">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">3</span><i class="fas fa-calculator"></i> 数量・単価・発注</h3>
+                                    <div class="order-reg-grid order-reg-grid-4">
+                                        <div><label class="order-reg-label">数量</label><input type="number" name="quantity" class="order-reg-input" placeholder="0"></div>
+                                        <div><label class="order-reg-label">単位</label><select name="unit_type" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div><label class="order-reg-label">単価</label><input type="number" name="unit_price" class="order-reg-input" placeholder="0" style="text-align: right;"></div>
+                                        <div><label class="order-reg-label">合計</label><input type="text" name="total" class="order-reg-input" readonly style="background: #eef1f5; text-align: right;"></div>
+                                        <div><label class="order-reg-label">発注先</label><input type="text" name="order_to" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">発注日</label><input type="text" name="order_date2" class="order-reg-input date-input" placeholder="YYYY/MM/DD"></div>
+                                        <div><label class="order-reg-label" style="color: #dc2626;">納入日</label><input type="text" name="delivery_date2" class="order-reg-input date-input" placeholder="YYYY/MM/DD"></div>
+                                    </div>
+                                </div>
+                                <div class="order-reg-card order-reg-card-4">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">4</span><i class="fas fa-print"></i> 新規登録/印刷</h3>
+                                    <div class="order-reg-grid order-reg-grid-2">
+                                        <div class="order-reg-grid-full">
+                                            <label class="order-reg-label">書類種別</label>
+                                            <div style="display: flex; gap: 16px; padding: 6px 0;">
+                                                <label><input type="radio" name="doc_type" value="misc" checked> 諸掛購入表</label>
+                                                <label><input type="radio" name="doc_type" value="asset"> 資産購入申請書</label>
+                                                <label><input type="radio" name="doc_type" value="parts"> 購入部品表</label>
+                                            </div>
+                                        </div>
+                                        <div><button type="button" class="btn-secondary" style="width: 100%;">添付ファイル選択</button></div>
+                                        <div><button type="button" class="btn-primary order-reg-btn-primary" style="width: 100%;">新規登録/印刷 (承認ルート)</button></div>
+                                        <div class="order-reg-grid-full">
+                                            <p class="order-reg-hint" style="margin: 8px 0 0;">※製造関係の勘定科目は82始まり</p>
+                                            <p class="order-reg-hint" style="margin: 4px 0 0;">※購入部品表の場合はカテゴリーと勘定科目不要</p>
+                                            <p class="order-reg-hint" style="margin: 4px 0 0; color: #dc2626;">※既に納入・完了されている場合</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
+                                <button type="button" class="btn-primary order-reg-btn-primary">検索</button>
+                                <button type="submit" class="btn-primary order-reg-btn-primary">登録</button>
+                                <button type="button" class="btn-secondary"><i class="fas fa-chevron-down"></i> 検索</button>
+                                <button type="button" class="btn-secondary"><i class="fas fa-chevron-up"></i> コピー</button>
+                                <button type="button" class="btn-secondary">最新のデータをコピー</button>
+                            </div>
+                            <div class="order-reg-row-full">
+                                <div class="order-reg-card order-reg-card-5">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">検索</span><i class="fas fa-list"></i> 検索結果</h3>
+                                    <div style="overflow-x: auto;">
+                                        <table class="data-table" style="width: 100%; font-size: 0.75rem;">
+                                            <thead>
+                                                <tr>
+                                                    <th>工事番号</th><th>機械</th><th>ユニット</th><th>通番</th><th>品名</th><th>型式</th><th>メーカー</th>
+                                                    <th>数量</th><th>単位</th><th>発注日</th><th>発注先名</th><th>単価</th><th>コメン</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="misc-purchase-result-body">
+                                                <tr><td colspan="13" style="text-align: center; padding: 24px; color: #64748b;">検索条件を入力して検索してください</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 諸掛納入処理ページ（検索結果が黄色エリアに表示） -->
+            <div id="misc-delivery-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div class="order-reg-page-body" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
+                    <div class="order-reg-header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <h2 class="order-reg-page-title" style="margin: 0;">
+                                <i class="fas fa-truck" style="margin-right: 8px;"></i>諸掛納入処理
+                            </h2>
+                            <button type="button" class="btn-secondary order-reg-btn-back" onclick="closeMiscDeliveryPage()" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-arrow-left"></i> 戻る
+                            </button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button type="button" class="btn-secondary" onclick="window.print()" style="padding: 8px 16px;"><i class="fas fa-print"></i> 画面印刷</button>
+                            <button type="button" class="btn-secondary" onclick="closeMiscDeliveryPage()" style="padding: 8px 20px;">閉</button>
+                        </div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; min-height: 0;">
+                        <form id="misc-delivery-form" style="max-width: 100%; margin: 0 auto; padding: 2px 0 10px;">
+                            <div class="order-reg-card order-reg-card-1" style="margin-bottom: 8px;">
+                                <h3 class="order-reg-card-title"><span class="order-reg-card-badge">検索</span><i class="fas fa-search"></i> 検索条件</h3>
+                                <div class="order-reg-grid order-reg-grid-4" style="margin-bottom: 8px;">
+                                    <div><label class="order-reg-label">工事番号</label><input type="text" id="delivery-construct-no" name="construct_no" class="order-reg-input" placeholder="工事番号"></div>
+                                    <div><label class="order-reg-label">機械</label><select id="delivery-machine" name="machine" class="order-reg-input"><option value="">機械</option></select></div>
+                                    <div><label class="order-reg-label">ユニット</label><select id="delivery-unit" name="unit" class="order-reg-input"><option value="">ユニット</option></select></div>
+                                    <div><label class="order-reg-label">通番</label><input type="text" id="delivery-serial" name="serial_no" class="order-reg-input" placeholder="通番"></div>
+                                    <div style="grid-column: span 2;"><label class="order-reg-label">発注先</label><div style="display: flex; gap: 8px;"><input type="text" id="delivery-order-to" name="order_to" class="order-reg-input" style="flex:1;" placeholder="発注先"><button type="button" class="btn-secondary">確認</button></div></div>
+                                    <div><label class="order-reg-label">注文番号</label><input type="text" id="delivery-order-no" name="order_no" class="order-reg-input" placeholder="注文番号"></div>
+                                    <div style="display: flex; gap: 6px; align-items: flex-end;"><label class="order-reg-label" style="white-space: nowrap;">部門コード</label><input type="text" id="delivery-dept-code" name="dept_code" class="order-reg-input" placeholder="部門コード" style="flex:1;"><select id="delivery-dept-select" class="order-reg-input" style="min-width: 80px;"><option value="">選択</option></select></div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px;">
+                                    <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" id="delivery-include-done" name="include_done"> 納入済みも表示する</label>
+                                    <button type="button" class="btn-primary" id="delivery-search-btn">データ検索</button>
+                                </div>
+                                <p class="order-reg-hint" style="margin: 0 0 4px;">検索は、AND検索で行ないます。発注先・注文番号は、途中までの入力でも検索できます。</p>
+                                <p class="order-reg-hint" style="margin: 0; color: #dc2626;">※ 検収済みデータは表示しません</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <label class="order-reg-label" style="margin: 0;">納入日</label>
+                                    <input type="text" id="delivery-date-input" name="delivery_date" class="order-reg-input date-input" placeholder="納入日" style="width: 140px;">
+                                    <span class="order-reg-hint" style="margin: 0;">入力例) 2013/4/12</span>
+                                </div>
+                                <button type="button" class="btn-secondary" id="delivery-copy-all-btn">納入日を全行にコピー</button>
+                                <button type="button" class="btn-primary" id="delivery-register-btn">納入日を登録</button>
+                            </div>
+                            <p class="order-reg-hint" style="margin: 0 0 8px;">※納入日を間違って登録した場合は、空白で登録すると、納入日は消去されます</p>
+                            <div class="delivery-result-area" class="delivery-result-area">
+                                <div style="overflow-x: auto;">
+                                    <table class="data-table delivery-result-table" style="width: 100%; font-size: 0.75rem; background: #fffbeb;">
+                                        <thead>
+                                            <tr>
+                                                <th>工事番</th><th>機械</th><th>ユニット</th><th>通番</th><th>再</th><th>注文番号</th><th>一括注文番号</th>
+                                                <th>品名</th><th>寸法・型式</th><th>コメント</th><th>メーカー</th><th>納入日</th><th>納期</th><th>単価</th><th>個数</th><th>単位</th><th>合計金額</th><th>発注先</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="misc-delivery-result-body">
+                                            <tr><td colspan="18" style="text-align: center; padding: 24px; color: #64748b;">検索条件を入力して「データ検索」を押してください</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 部品単位出荷管理ページ -->
+            <div id="shipping-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div class="order-reg-page-body" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
+                    <div class="order-reg-header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <h2 class="order-reg-page-title" style="margin: 0;">
+                                <i class="fas fa-shipping-fast" style="margin-right: 8px;"></i>部品単位出荷管理
+                            </h2>
+                            <button type="button" class="btn-secondary order-reg-btn-back" onclick="closeShippingPage()" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-arrow-left"></i> 戻る
+                            </button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="shipping-result-count" style="font-size: 13px; color: #64748b; font-weight: 600;">—</span>
+                            <button type="button" class="btn-secondary" onclick="window.print()" style="padding: 8px 16px;"><i class="fas fa-print"></i> 印刷</button>
+                        </div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; min-height: 0;">
+                        <form id="shipping-form" style="max-width: 100%; margin: 0 auto; padding: 2px 0 10px;">
+                            <div class="order-reg-card order-reg-card-1" style="margin-bottom: 12px;">
+                                <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #475569;">検索条件</h3>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 20px; margin-bottom: 12px;">
+                                    <div>
+                                        <span class="order-reg-label" style="display: block; margin-bottom: 4px;">番号</span>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                            <label style="cursor: pointer;"><input type="radio" name="shipping-number-type" value="all" checked> すべて</label>
+                                            <label style="cursor: pointer;"><input type="radio" name="shipping-number-type" value="5000"> 5000番</label>
+                                            <label style="cursor: pointer;"><input type="radio" name="shipping-number-type" value="8000"> 8000番</label>
+                                            <label style="cursor: pointer;"><input type="radio" name="shipping-number-type" value="7000"> 7000番</label>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="order-reg-label" for="shipping-construct-no">工事番号</label>
+                                        <input type="text" id="shipping-construct-no" class="order-reg-input" placeholder="例: 8000-001" style="width: 100%; max-width: 140px;">
+                                    </div>
+                                    <div>
+                                        <label class="order-reg-label" for="shipping-sales-rep">営業担当者</label>
+                                        <input type="text" id="shipping-sales-rep" class="order-reg-input" placeholder="担当者で絞る" style="width: 100%; max-width: 160px;">
+                                    </div>
+                                    <div>
+                                        <label class="order-reg-label" for="shipping-delivery-to">納入先</label>
+                                        <div style="display: flex; gap: 6px;">
+                                            <input type="text" id="shipping-delivery-to" class="order-reg-input" placeholder="納入先で絞る" style="flex: 1; max-width: 140px;">
+                                            <button type="button" class="btn-secondary" id="shipping-delivery-confirm-btn" title="納入先確認">確認</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h3 style="margin: 12px 0 8px 0; font-size: 14px; font-weight: 700; color: #475569;">表示フィルタ（状態）</h3>
+                                <div style="display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin-bottom: 12px;">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                        <label style="cursor: pointer;"><input type="radio" name="shipping-status1" value=""> 指定なし</label>
+                                        <label style="cursor: pointer;"><input type="radio" name="shipping-status1" value="undelivered"> 未納入</label>
+                                        <label style="cursor: pointer;"><input type="radio" name="shipping-status1" value="return"> 不具合返却</label>
+                                        <label style="cursor: pointer;"><input type="radio" name="shipping-status1" value="unredeliver"> 未再納入</label>
+                                        <label style="cursor: pointer;"><input type="radio" name="shipping-status1" value="incomplete"> 加工未完了</label>
+                                    </div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                        <label style="cursor: pointer;"><input type="radio" name="shipping-status2" value="prep-incomplete" checked> 出荷準備未完了</label>
+                                        <label style="cursor: pointer;"><input type="radio" name="shipping-status2" value="complete"> 加工完了</label>
+                                        <label style="cursor: pointer;"><input type="radio" name="shipping-status2" value="unsold"> 未売上(現行部品全部)</label>
+                                        <label style="cursor: pointer;"><input type="checkbox" id="shipping-unshipped"> 未出荷部品</label>
+                                        <label style="cursor: pointer;"><input type="checkbox" id="shipping-delayed"> 予定遅れ</label>
+                                    </div>
+                                </div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                                    <button type="button" class="btn-primary" id="shipping-search-btn" style="padding: 10px 20px;"><i class="fas fa-search"></i> 検索</button>
+                                    <button type="button" class="btn-secondary" id="shipping-clear-btn" style="padding: 10px 16px;"><i class="fas fa-eraser"></i> 条件をクリア</button>
+                                </div>
+                            </div>
+                            <p class="order-reg-hint" style="margin: 0 0 12px; font-size: 0.8rem; color: #64748b;">
+                                工事番号または番号範囲で絞り込み → 検索で一覧表示。部品出荷更新日は部品単位(青) or 受注データ出荷予定(黒)を参照。
+                            </p>
+                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 10px;">
+                                <span style="font-size: 12px; font-weight: 600; color: #64748b;">クイック:</span>
+                                <button type="button" class="btn-secondary shipping-quick-btn" data-filter="5000" style="padding: 6px 12px; font-size: 12px;">製造管理部</button>
+                                <button type="button" class="btn-secondary shipping-quick-btn" data-filter="8000" style="padding: 6px 12px; font-size: 12px;">営業部</button>
+                                <button type="button" class="btn-secondary shipping-quick-btn" data-filter="7000" style="padding: 6px 12px; font-size: 12px;">明石製造</button>
+                                <input type="text" id="shipping-batch-input" class="order-reg-input" placeholder="まとめて入力" style="width: 110px; padding: 6px 10px;">
+                                <button type="button" class="btn-secondary" id="shipping-paste-btn" style="padding: 6px 12px; font-size: 12px;">選択セルに貼り付け</button>
+                                <label style="cursor: pointer; font-size: 13px;"><input type="checkbox" id="shipping-english"> 英語</label>
+                                <label style="cursor: pointer; font-size: 13px;"><input type="checkbox" id="shipping-made-japan"> made in Japan</label>
+                                <button type="button" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;"><i class="fas fa-tag"></i> ラベル印刷</button>
+                            </div>
+                            <div style="display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap;" id="shipping-tabs-wrap" role="tablist">
+                                <button type="button" class="btn-secondary shipping-tab active" data-tab="unit" role="tab" aria-selected="true">部品単位</button>
+                                <button type="button" class="btn-secondary shipping-tab" data-tab="construct" role="tab" aria-selected="false">工事番号単位</button>
+                                <button type="button" class="btn-secondary shipping-tab" data-tab="unshipped" role="tab">未出荷リスト</button>
+                                <button type="button" class="btn-secondary shipping-tab" data-tab="pending" role="tab">ペンディング</button>
+                                <button type="button" class="btn-secondary shipping-tab" data-tab="cancel" role="tab">出荷キャンセル</button>
+                                <button type="button" class="btn-secondary shipping-tab" data-tab="unsold7000" role="tab">未売上7000番</button>
+                            </div>
+                            <p id="shipping-tab-desc" style="margin: 0 0 8px 0; font-size: 12px; color: #64748b;">部品単位タブ: 検索で工事・部品一覧を表示します。</p>
+                            <div class="delivery-result-area shipping-result-wrap" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+                                <div style="overflow-x: auto;">
+                                    <table class="data-table delivery-result-table shipping-result-table" style="width: 100%; font-size: 13px;">
+                                        <thead>
+                                            <tr>
+                                                <th>工事番号</th><th>機械</th><th>ユニット</th><th>通番</th><th>図面番号</th><th>品番</th><th>品名</th><th>数量</th><th>予備数</th><th>単位</th>
+                                                <th>営業担当</th><th>ステータス</th><th>出図日</th><th>発注日</th><th>業者名</th><th>熱処理/表面処理</th><th>社内加工開始日</th><th>外注/購入品納期</th><th>更新納期</th><th>納入日</th><th>不適合</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="shipping-result-body">
+                                            <tr><td colspan="21" style="text-align: center; padding: 32px; color: #64748b;">工事番号や番号範囲を選び、「検索」を押してください（Enterでも検索できます）</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 外注・材料 納入処理ページ -->
+            <div id="outsource-delivery-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div class="order-reg-page-body" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
+                    <div class="order-reg-header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <h2 class="order-reg-page-title" style="margin: 0;">
+                                <i class="fas fa-handshake" style="margin-right: 8px;"></i>外注・材料 納入処理
+                            </h2>
+                            <button type="button" class="btn-secondary order-reg-btn-back" onclick="closeOutsourceDeliveryPage()" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-arrow-left"></i> 戻る
+                            </button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button type="button" class="btn-secondary" id="outsource-detail-btn">詳細表示</button>
+                            <button type="button" class="btn-primary" id="outsource-register-date-btn">納入日を登録</button>
+                            <button type="button" class="btn-secondary" onclick="closeOutsourceDeliveryPage()" style="padding: 8px 20px;">閉</button>
+                        </div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; min-height: 0;">
+                        <form id="outsource-delivery-form" style="max-width: 100%; margin: 0 auto; padding: 2px 0 10px;">
+                            <div class="order-reg-card order-reg-card-1" style="margin-bottom: 8px;">
+                                <h3 class="order-reg-card-title"><span class="order-reg-card-badge">検索</span><i class="fas fa-search"></i> 検索条件</h3>
+                                <div class="order-reg-grid order-reg-grid-4" style="margin-bottom: 8px;">
+                                    <div><label class="order-reg-label">工事番号</label><input type="text" id="outsource-construct-no" name="construct_no" class="order-reg-input" placeholder="工事番号"></div>
+                                    <div><label class="order-reg-label">機械</label><select id="outsource-machine" name="machine" class="order-reg-input"><option value="">選択</option></select></div>
+                                    <div><label class="order-reg-label">ユニット</label><select id="outsource-unit" name="unit" class="order-reg-input"><option value="">選択</option></select></div>
+                                    <div><label class="order-reg-label">通番</label><input type="text" id="outsource-serial" name="serial_no" class="order-reg-input" placeholder="通番"></div>
+                                    <div><label class="order-reg-label">図面番号</label><input type="text" id="outsource-drawing" name="drawing_no" class="order-reg-input"></div>
+                                    <div><label class="order-reg-label">品番</label><input type="text" id="outsource-part-no" name="part_no" class="order-reg-input"></div>
+                                    <div style="grid-column: span 2;"><label class="order-reg-label">発注先</label><div style="display: flex; gap: 8px;"><input type="text" id="outsource-order-to" name="order_to" class="order-reg-input" style="flex:1;" placeholder="発注先"><button type="button" class="btn-secondary">確認</button></div></div>
+                                    <div><label class="order-reg-label">発注者</label><select id="outsource-orderer" name="orderer" class="order-reg-input"><option value="">選択</option></select></div>
+                                    <div><label class="order-reg-label">注文番号</label><input type="text" id="outsource-order-no" name="order_no" class="order-reg-input" placeholder="注文番号"></div>
+                                </div>
+                                <p class="order-reg-hint" style="margin: 0 0 4px;">注文番号は、途中までの入力でも検索できます。</p>
+                                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px;">
+                                    <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" id="outsource-include-done" name="include_done"> 納入済みも表示する</label>
+                                    <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" id="outsource-include-unordered" name="include_unordered"> 正式発注が未発注のデータも表示する</label>
+                                    <button type="button" class="btn-primary" id="outsource-search-btn">データ検索</button>
+                                </div>
+                                <p class="order-reg-hint" style="margin: 0; color: #dc2626;">※検収済みデータは表示しません</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <label class="order-reg-label" style="margin: 0;">納入日</label>
+                                    <input type="text" id="outsource-date-input" name="delivery_date" class="order-reg-input date-input" placeholder="納入日" style="width: 140px;">
+                                    <span class="order-reg-hint" style="margin: 0;">入力例) 2013/4/12</span>
+                                </div>
+                                <button type="button" class="btn-secondary" id="outsource-copy-all-btn">納入日を全行にコピー</button>
+                            </div>
+                            <p class="order-reg-hint" style="margin: 0 0 12px;">納入日列に直接納入日を入力してください。「納入日を登録」ボタンをクリックして、登録を完了してください。</p>
+                            <div style="display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
+                                <label><input type="radio" name="outsource-category" value="outsource" checked> 外注加工</label>
+                                <label><input type="radio" name="outsource-category" value="material"> 材料</label>
+                            </div>
+                            <div class="delivery-result-area" class="delivery-result-area">
+                                <div style="overflow-x: auto;">
+                                    <table class="data-table delivery-result-table" style="width: 100%; font-size: 0.75rem; background: #fffbeb;">
+                                        <thead>
+                                            <tr>
+                                                <th>工事番号</th><th>機械</th><th>ユニット</th><th>通番</th><th>連番</th><th>図面番号</th><th>品番</th><th>個数</th><th>納期</th><th>納入日</th><th>不具合返却日</th><th>再納入日</th>
+                                                <th>注文番号</th><th>一括注文番号</th><th>発注先名</th><th>発注者</th><th>加工コード</th><th>加工名称</th><th>材質</th><th>材料</th><th>合計金額</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="outsource-delivery-result-body">
+                                            <tr><td colspan="21" style="text-align: center; padding: 24px; color: #64748b;">検索条件を入力して「データ検索」を押してください</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 購入部品納入処理ページ（諸掛納入処理と同じレイアウト） -->
+            <div id="parts-delivery-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div class="order-reg-page-body" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
+                    <div class="order-reg-header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <h2 class="order-reg-page-title" style="margin: 0;">
+                                <i class="fas fa-cogs" style="margin-right: 8px;"></i>購入部品納入処理
+                            </h2>
+                            <button type="button" class="btn-secondary order-reg-btn-back" onclick="closePartsDeliveryPage()" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-arrow-left"></i> 戻る
+                            </button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button type="button" class="btn-secondary" onclick="window.print()" style="padding: 8px 16px;"><i class="fas fa-print"></i> 画面印刷</button>
+                            <button type="button" class="btn-secondary" onclick="closePartsDeliveryPage()" style="padding: 8px 20px;">閉</button>
+                        </div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; min-height: 0;">
+                        <form id="parts-delivery-form" style="max-width: 100%; margin: 0 auto; padding: 2px 0 10px;">
+                            <div class="order-reg-card order-reg-card-1" style="margin-bottom: 8px;">
+                                <h3 class="order-reg-card-title"><span class="order-reg-card-badge">検索</span><i class="fas fa-search"></i> 検索条件</h3>
+                                <div class="order-reg-grid order-reg-grid-4" style="margin-bottom: 8px;">
+                                    <div><label class="order-reg-label">工事番号</label><input type="text" id="parts-delivery-construct-no" name="construct_no" class="order-reg-input" placeholder="工事番号"></div>
+                                    <div><label class="order-reg-label">機械</label><select id="parts-delivery-machine" name="machine" class="order-reg-input"><option value="">機械</option></select></div>
+                                    <div><label class="order-reg-label">ユニット</label><select id="parts-delivery-unit" name="unit" class="order-reg-input"><option value="">ユニット</option></select></div>
+                                    <div><label class="order-reg-label">通番</label><input type="text" id="parts-delivery-serial" name="serial_no" class="order-reg-input" placeholder="通番"></div>
+                                    <div style="grid-column: span 2;"><label class="order-reg-label">発注先</label><div style="display: flex; gap: 8px;"><input type="text" id="parts-delivery-order-to" name="order_to" class="order-reg-input" style="flex:1;" placeholder="発注先"><button type="button" class="btn-secondary">確認</button></div></div>
+                                    <div><label class="order-reg-label">注文番号</label><input type="text" id="parts-delivery-order-no" name="order_no" class="order-reg-input" placeholder="注文番号"></div>
+                                    <div style="display: flex; gap: 6px; align-items: flex-end;"><label class="order-reg-label" style="white-space: nowrap;">部門コード</label><input type="text" id="parts-delivery-dept-code" name="dept_code" class="order-reg-input" placeholder="部門コード" style="flex:1;"><select id="parts-delivery-dept-select" class="order-reg-input" style="min-width: 80px;"><option value="">選択</option></select></div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px;">
+                                    <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" id="parts-delivery-include-done" name="include_done"> 納入済みも表示する</label>
+                                    <button type="button" class="btn-primary" id="parts-delivery-search-btn">データ検索</button>
+                                </div>
+                                <p class="order-reg-hint" style="margin: 0 0 4px;">検索は、AND検索で行ないます。発注先・注文番号は、途中までの入力でも検索できます。</p>
+                                <p class="order-reg-hint" style="margin: 0; color: #dc2626;">※ 検収済みデータは表示しません</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <label class="order-reg-label" style="margin: 0;">納入日</label>
+                                    <input type="text" id="parts-delivery-date-input" name="delivery_date" class="order-reg-input date-input" placeholder="納入日" style="width: 140px;">
+                                    <span class="order-reg-hint" style="margin: 0;">入力例) 2013/4/12</span>
+                                </div>
+                                <button type="button" class="btn-secondary" id="parts-delivery-copy-all-btn">納入日を全行にコピー</button>
+                                <button type="button" class="btn-primary" id="parts-delivery-register-btn">納入日を登録</button>
+                            </div>
+                            <p class="order-reg-hint" style="margin: 0 0 8px;">※納入日を間違って登録した場合は、空白で登録すると、納入日は消去されます</p>
+                            <div class="delivery-result-area" class="delivery-result-area">
+                                <div style="overflow-x: auto;">
+                                    <table class="data-table delivery-result-table" style="width: 100%; font-size: 0.75rem; background: #fffbeb;">
+                                        <thead>
+                                            <tr>
+                                                <th>工事番号</th><th>機械</th><th>ユニット</th><th>通番</th><th>再</th><th>注文番号</th><th>一括注文番号</th>
+                                                <th>品名</th><th>寸法・型式</th><th>コメント</th><th>メーカー</th><th>納入日</th><th>納期</th><th>単価</th><th>個数</th><th>単位</th><th>合計金額</th><th>発注先</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="parts-delivery-result-body">
+                                            <tr><td colspan="18" style="text-align: center; padding: 24px; color: #64748b;">検索条件を入力して「データ検索」を押してください</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 余り品登録ページ -->
+            <div id="surplus-register-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div class="order-reg-page-body" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
+                    <div class="order-reg-header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <h2 class="order-reg-page-title" style="margin: 0;">
+                                <i class="fas fa-box" style="margin-right: 8px;"></i>余り品登録
+                            </h2>
+                            <button type="button" class="btn-secondary order-reg-btn-back" onclick="closeSurplusRegisterPage()" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-arrow-left"></i> 戻る
+                            </button>
+                        </div>
+                        <button type="button" class="btn-secondary" onclick="closeSurplusRegisterPage()" style="padding: 8px 20px;">閉</button>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; min-height: 0;">
+                        <form id="surplus-register-form" style="max-width: 100%; margin: 0 auto; padding: 2px 0 10px;">
+                            <div style="display: grid; grid-template-columns: minmax(0, 420px) 1fr; gap: 10px; margin-bottom: 6px; align-items: start;">
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    <div class="order-reg-card order-reg-card-1 surplus-reg-compact surplus-reg-narrow">
+                                        <h3 class="order-reg-card-title"><span class="order-reg-card-badge">識別</span><i class="fas fa-hashtag"></i> 工事・種類</h3>
+                                        <div class="order-reg-grid surplus-reg-ident-grid" style="margin-bottom: 4px;">
+                                            <div><label class="order-reg-label">工事番号</label><input type="text" id="surplus-reg-construct-no" class="order-reg-input" placeholder="工事番号"></div>
+                                            <div><label class="order-reg-label">機械</label><input type="text" id="surplus-reg-machine" class="order-reg-input"></div>
+                                            <div><label class="order-reg-label">ユニット</label><input type="text" id="surplus-reg-unit" class="order-reg-input"></div>
+                                            <div><label class="order-reg-label">受注登録日</label><input type="text" id="surplus-reg-order-date" class="order-reg-input date-input surplus-reg-date-input" placeholder="YYYY/MM/DD"></div>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
+                                            <span class="order-reg-label" style="margin: 0;">種類</span>
+                                            <button type="button" class="btn-primary surplus-reg-type-btn active" data-type="purchased" style="padding: 4px 12px; font-size: 12px;">購入品</button>
+                                            <button type="button" class="btn-secondary surplus-reg-type-btn" data-type="manufactured" style="padding: 4px 12px; font-size: 12px;">製作品</button>
+                                            <span id="surplus-reg-serial-area" style="display: inline-flex; align-items: center; gap: 4px; margin-left: 8px;"><label class="order-reg-label" style="margin:0;">通番</label><input type="text" id="surplus-reg-serial" class="order-reg-input" style="width: 100px;"></span>
+                                        </div>
+                                        <div id="surplus-reg-drawing-area" class="surplus-reg-or-row" style="display: none; margin-top: 6px;">
+                                            <div class="surplus-reg-or-group">
+                                                <label class="order-reg-label">通番</label>
+                                                <input type="text" id="surplus-reg-serial-m" class="order-reg-input">
+                                            </div>
+                                            <span class="surplus-reg-or-badge">or</span>
+                                            <div class="surplus-reg-or-group">
+                                                <label class="order-reg-label">図面番号</label>
+                                                <input type="text" id="surplus-reg-drawing" class="order-reg-input">
+                                            </div>
+                                            <div class="surplus-reg-or-group">
+                                                <label class="order-reg-label">品番</label>
+                                                <input type="text" id="surplus-reg-part-no" class="order-reg-input">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="order-reg-card order-reg-card-3 surplus-reg-compact surplus-reg-narrow">
+                                        <h3 class="order-reg-card-title"><span class="order-reg-card-badge">登録区分</span></h3>
+                                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                                            <label><input type="radio" name="surplus-reg-mode" value="known" checked> 工事番号が判明している</label>
+                                            <label><input type="radio" name="surplus-reg-mode" value="unknown"> 工事番号が不明</label>
+                                            <label><input type="radio" name="surplus-reg-mode" value="no-drawing-manage"> 出図無しで購入し、余り品として管理する</label>
+                                            <label><input type="radio" name="surplus-reg-mode" value="no-drawing-no-manage"> 出図無しで購入し、余り品として管理しない</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    <div class="order-reg-card order-reg-card-2 surplus-reg-compact">
+                                        <h3 class="order-reg-card-title"><span class="order-reg-card-badge">受注</span><i class="fas fa-info-circle"></i> 受注情報</h3>
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <div><label class="order-reg-label">工事名称</label><input type="text" id="surplus-reg-construct-name" class="order-reg-input" readonly style="background: #f1f5f9;"></div>
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                                <div><label class="order-reg-label">注文元</label><input type="text" id="surplus-reg-client" class="order-reg-input" readonly style="background: #f1f5f9;"></div>
+                                                <div><label class="order-reg-label">納品先</label><input type="text" id="surplus-reg-delivery" class="order-reg-input" readonly style="background: #f1f5f9;"></div>
+                                            </div>
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                                <div><label class="order-reg-label">営業担当</label><input type="text" id="surplus-reg-sales" class="order-reg-input" readonly style="background: #f1f5f9;"></div>
+                                                <div><label class="order-reg-label">工場出荷予定日</label><input type="text" id="surplus-reg-ship-date" class="order-reg-input" readonly style="background: #f1f5f9;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="order-reg-card order-reg-card-4 surplus-reg-compact" style="font-size: 0.75rem;">
+                                        <p class="order-reg-hint" style="margin: 0 0 2px; color: #dc2626;">※ 原価の振替をするので、必ず <strong>工事番号・機械・ユニット・通番</strong>を特定して登録してください。</p>
+                                        <p class="order-reg-hint" style="margin: 0 0 2px;">※ ZKの工事番号で登録します。原価の振替はしません。</p>
+                                        <p class="order-reg-hint" style="margin: 0 0 2px;">※ ZKの工事番号で登録します。「新規登録」ボタンを押すと、発注データにも自動登録されます。</p>
+                                        <p class="order-reg-hint" style="margin: 0; color: #dc2626;">※ 余り品データには登録されないXC部品です。</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="order-reg-card order-reg-card-5 surplus-reg-compact" style="margin-bottom: 6px;">
+                                <h3 class="order-reg-card-title"><span class="order-reg-card-badge">明細</span><i class="fas fa-list"></i> 品目・数量</h3>
+                                <div style="display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; align-items: center;">
+                                    <button type="button" class="btn-primary" id="surplus-reg-search-btn" style="padding: 4px 10px; font-size: 12px;"><i class="fas fa-chevron-down"></i> 検索</button>
+                                    <label style="margin: 0;"><input type="checkbox" id="surplus-reg-no-label"> ラベル印刷しない (XC部品は印刷しません)</label>
+                                    <span style="display: inline-flex; gap: 6px; align-items: center;"><span class="order-reg-label" style="margin:0;">品目</span><label style="margin:0;"><input type="radio" name="surplus-reg-item-type" value="purchased"> 購入品</label><label style="margin:0;"><input type="radio" name="surplus-reg-item-type" value="fastener"> 締結品</label></span>
+                                    <span style="display: inline-flex; gap: 6px; align-items: center;"><span class="order-reg-label" style="margin:0;">状態</span><label style="margin:0;"><input type="radio" name="surplus-reg-status" value="complete" checked> 製作完成品</label><label style="margin:0;"><input type="radio" name="surplus-reg-status" value="incomplete"> 製作未完成品</label></span>
+                                </div>
+                                <div class="order-reg-grid order-reg-grid-4" style="margin-bottom: 4px; gap: 6px;">
+                                    <div class="order-reg-grid-full"><label class="order-reg-label">品名</label><input type="text" id="surplus-reg-name" class="order-reg-input"></div>
+                                    <div><label class="order-reg-label">型式</label><input type="text" id="surplus-reg-model" class="order-reg-input"></div>
+                                    <div><label class="order-reg-label">市販品の型式</label><input type="text" id="surplus-reg-commercial" class="order-reg-input"></div>
+                                    <div><label class="order-reg-label">材質/メーカー</label><input type="text" id="surplus-reg-material" class="order-reg-input"></div>
+                                    <div><label class="order-reg-label">品番</label><input type="text" id="surplus-reg-part-no2" class="order-reg-input" value="1" style="width: 60px;"></div>
+                                    <div><label class="order-reg-label">部品単価</label><input type="text" id="surplus-reg-unit-price" class="order-reg-input" style="width: 90px;"></div>
+                                    <div><label class="order-reg-label">数量</label><input type="text" id="surplus-reg-qty" class="order-reg-input" value="1" style="width: 60px;"></div>
+                                    <div style="display: flex; gap: 4px; align-items: flex-end; flex-wrap: nowrap;"><label class="order-reg-label" style="white-space:nowrap; margin:0;">のうち、余り品数</label><input type="text" id="surplus-reg-surplus-qty" class="order-reg-input" style="width: 56px;"><select id="surplus-reg-newused" class="order-reg-input" style="width: 72px;"><option value="new">新品</option><option value="used">中古品</option></select></div>
+                                    <div class="order-reg-grid-full"><label class="order-reg-label">備考</label><input type="text" id="surplus-reg-remarks" class="order-reg-input"></div>
+                                    <div><label class="order-reg-label">保管場所</label><input type="text" id="surplus-reg-storage" class="order-reg-input"></div>
+                                    <div><label class="order-reg-label">購入依頼部署</label><select id="surplus-reg-dept" class="order-reg-input"><option value="">選択</option></select></div>
+                                    <div class="order-reg-grid-full"><label class="order-reg-label">ラベル印刷方法</label><input type="text" id="surplus-reg-label-method" class="order-reg-input" placeholder="例) 3:3" style="max-width: 140px;"></div>
+                                </div>
+                                <p class="order-reg-hint" style="margin: 0; font-size: 0.65rem;">※ 余り品数を1枚のラベルに出す場合は空白でよい。例) 6個→3個×2枚の場合は「3:3」</p>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;">
+                                <button type="button" class="btn-primary" style="background: #10b981; border-color: #059669;">在庫払出画面へ</button>
+                                <button type="button" class="btn-secondary" style="background: #7dd3fc; color: #0c4a6e;">編集画面へ</button>
+                                <button type="button" class="btn-primary" id="surplus-reg-submit-btn" style="background: #dc2626; border-color: #b91c1c;">新規登録</button>
+                                <button type="button" class="btn-secondary" onclick="closeSurplusRegisterPage()">閉</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 余り品検索ページ（余り品データ検索・編集） -->
+            <div id="surplus-search-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div class="order-reg-page-body" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
+                    <div class="order-reg-header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <h2 class="order-reg-page-title" style="margin: 0;">
+                                <i class="fas fa-box-open" style="margin-right: 8px;"></i>余り品データ検索・編集
+                            </h2>
+                            <button type="button" class="btn-secondary order-reg-btn-back" onclick="closeSurplusSearchPage()" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-arrow-left"></i> 戻る
+                            </button>
+                            <button type="button" class="btn-secondary" id="surplus-clear-display-btn" style="padding: 8px 16px;">表示クリア</button>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <button type="button" class="btn-secondary" id="surplus-update-btn">更新</button>
+                            <button type="button" class="btn-secondary" id="surplus-delete-btn">削除</button>
+                            <button type="button" class="btn-secondary" id="surplus-dispose-btn">廃棄</button>
+                            <button type="button" class="btn-secondary" onclick="closeSurplusSearchPage()" style="padding: 8px 20px;">閉</button>
+                        </div>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; min-height: 0;">
+                        <form id="surplus-search-form" style="max-width: 100%; margin: 0 auto; padding: 2px 0 10px;">
+                            <div style="display: grid; grid-template-columns: 1fr 320px; gap: 10px; margin-bottom: 8px;">
+                                <div class="order-reg-card order-reg-card-1" style="margin-bottom: 0;">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">検索</span><i class="fas fa-search"></i> 検索条件</h3>
+                                    <div class="order-reg-grid order-reg-grid-4" style="margin-bottom: 6px;">
+                                        <div><label class="order-reg-label">余り品番号</label><input type="text" id="surplus-no" name="surplus_no" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">余り品サブ番号</label><input type="text" id="surplus-sub-no" name="surplus_sub_no" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">在庫番号</label><input type="text" id="surplus-inventory-no" name="inventory_no" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">Rev.</label><input type="text" id="surplus-rev" name="rev" class="order-reg-input"></div>
+                                    </div>
+                                    <div style="display: flex; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 6px;">
+                                        <label><input type="checkbox" id="surplus-purchased" name="purchased" checked> 購入品</label>
+                                        <label><input type="checkbox" id="surplus-manufactured" name="manufactured" checked> 製作品</label>
+                                        <label><input type="checkbox" id="surplus-unfinished" name="unfinished"> 未完成品</label>
+                                        <label><input type="checkbox" id="surplus-spare" name="spare"> 電気技術部予備品</label>
+                                    </div>
+                                    <div class="order-reg-grid order-reg-grid-4" style="margin-bottom: 6px;">
+                                        <div><label class="order-reg-label">工事番号</label><input type="text" id="surplus-construct-no" name="construct_no" class="order-reg-input" placeholder="工事番号"></div>
+                                        <div><label class="order-reg-label">機械</label><select id="surplus-machine" name="machine" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div><label class="order-reg-label">ユニット</label><select id="surplus-unit" name="unit" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div><label class="order-reg-label">通番</label><input type="text" id="surplus-serial" name="serial_no" class="order-reg-input"></div>
+                                    </div>
+                                    <p class="order-reg-hint" style="margin: 0 0 8px;">※ZKの工事番号は「ZK」だけでも、4桁入力しても検索可能です</p>
+                                    <div class="order-reg-grid order-reg-grid-4" style="margin-bottom: 6px;">
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">品名 <span class="order-reg-hint">※あいまい検索</span></label><input type="text" id="surplus-name" name="part_name" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">図面番号/型式</label><input type="text" id="surplus-drawing" name="drawing" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">品番 <span class="order-reg-hint">※あいまい検索</span></label><input type="text" id="surplus-part-no" name="part_no" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">製作品の市販品型式</label><input type="text" id="surplus-commercial" name="commercial" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">材質/メーカー</label><input type="text" id="surplus-material" name="material" class="order-reg-input"></div>
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">備考 <span class="order-reg-hint">※あいまい検索</span></label><input type="text" id="surplus-remarks" name="remarks" class="order-reg-input"></div>
+                                    </div>
+                                    <div class="order-reg-grid order-reg-grid-4" style="margin-bottom: 6px;">
+                                        <div style="display: flex; gap: 6px; align-items: flex-end;"><label class="order-reg-label" style="white-space:nowrap;">部品単価</label><input type="text" id="surplus-unit-price" name="unit_price" class="order-reg-input" style="width:100px;">円<button type="button" class="btn-secondary" style="padding:6px 10px;">金額取得</button></div>
+                                        <div><label class="order-reg-label">数量</label><input type="text" id="surplus-qty" name="qty" class="order-reg-input" value="1" style="width:80px;"></div>
+                                        <div><label class="order-reg-label">単位</label><input type="text" id="surplus-qty-unit" name="unit" class="order-reg-input" value="個" style="width:80px;"></div>
+                                        <div><label class="order-reg-label">保管場所</label><input type="text" id="surplus-storage" name="storage" class="order-reg-input"></div>
+                                        <div><label class="order-reg-label">購入依頼部署</label><select id="surplus-dept" name="dept" class="order-reg-input"><option value="">選択</option></select></div>
+                                        <div style="display: flex; gap: 12px; align-items: center;"><label class="order-reg-label" style="margin:0;">新/古</label><label><input type="radio" name="surplus-newused" value="new" checked> 新品</label><label><input type="radio" name="surplus-newused" value="used"> 中古品</label></div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap; margin-bottom: 8px;">
+                                        <button type="button" class="btn-primary" id="surplus-search-btn"><i class="fas fa-chevron-down"></i> 検索</button>
+                                        <button type="button" class="btn-secondary" id="surplus-edit-btn"><i class="fas fa-chevron-up"></i> 編集</button>
+                                        <label><input type="checkbox" id="surplus-show-zero" name="show_zero"> 在庫数0のものも表示する</label>
+                                        <label><input type="checkbox" id="surplus-show-disposed" name="show_disposed"> 廃棄のものも表示する</label>
+                                    </div>
+                                    <p class="order-reg-hint" style="margin: 0; color: #dc2626;">※更新は、在庫番号に対して、水色のテキストボックスの項目を変更します</p>
+                                    <p class="order-reg-hint" style="margin: 4px 0 0; color: #dc2626;">※余り品データごと廃棄扱いになります 数量のうち、一部だけ廃棄のケースはお知らせください</p>
+                                </div>
+                                <div class="order-reg-card order-reg-card-2" style="margin-bottom: 0;">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">印刷</span><i class="fas fa-print"></i></h3>
+                                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                                        <button type="button" class="btn-secondary" id="surplus-print-order-btn">手配依頼書印刷</button>
+                                        <button type="button" class="btn-secondary" id="surplus-print-label-btn">ラベル印刷</button>
+                                        <div><label class="order-reg-label">ラベル印刷方法</label><input type="text" id="surplus-label-method" class="order-reg-input"></div>
+                                        <button type="button" class="btn-secondary" id="surplus-print-list-btn">一覧表印刷</button>
+                                        <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" id="surplus-print-from-no"> 在庫番号 <input type="text" id="surplus-print-from-value" class="order-reg-input" value="1" style="width:60px;"> から印刷</label>
+                                        <label><input type="checkbox" id="surplus-print-all"> 下記表データすべて</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="delivery-result-area" class="delivery-result-area" style="background: #f8fafc; border-color: #e2e8f0;">
+                                <div style="overflow-x: auto;">
+                                    <table class="data-table delivery-result-table" style="width: 100%; font-size: 0.75rem;">
+                                        <thead>
+                                            <tr>
+                                                <th>在庫番号</th><th>余り品番号</th><th>サブ番号</th><th>Rev.</th><th>工事番号</th><th>機械</th><th>ユニット</th><th>通番</th>
+                                                <th>品名</th><th>図面番号/型式</th><th>品番</th><th>材質/メーカー</th><th>市販品型式</th><th>数量</th><th>単位</th><th>新/古</th><th>保管場所</th><th>製作品</th><th>購入品</th><th>締結</th><th>登録状況</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="surplus-search-result-body">
+                                            <tr><td colspan="21" style="text-align: center; padding: 24px; color: #64748b;">検索条件を入力して「検索」を押してください</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 工事番号出荷登録ページ -->
+            <div id="project-shipping-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div class="order-reg-page-body" style="height: 100%; overflow: hidden; display: flex; flex-direction: column;">
+                    <div class="order-reg-header-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <h2 class="order-reg-page-title" style="margin: 0;">
+                                <i class="fas fa-file-export" style="margin-right: 8px;"></i>工事番号出荷登録
+                            </h2>
+                            <button type="button" class="btn-secondary order-reg-btn-back" onclick="closeProjectShippingPage()" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fas fa-arrow-left"></i> 戻る
+                            </button>
+                        </div>
+                        <button type="button" class="btn-secondary" onclick="closeProjectShippingPage()" style="padding: 8px 20px;">閉</button>
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; min-height: 0;">
+                        <form id="project-shipping-form" style="max-width: 100%; margin: 0 auto; padding: 2px 0 10px;">
+                            <div class="order-reg-cols">
+                                <div class="order-reg-card order-reg-card-1">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">1</span><i class="fas fa-truck-loading"></i> 出荷登録</h3>
+                                    <div class="order-reg-grid order-reg-grid-2">
+                                        <div class="order-reg-grid-full">
+                                            <label class="order-reg-label">工事番号</label>
+                                            <div style="display: flex; gap: 8px;">
+                                                <input type="text" id="project-ship-construct-no" name="construct_no" class="order-reg-input" placeholder="工事番号" style="flex: 1;">
+                                                <button type="button" class="btn-primary order-reg-btn-primary" id="project-ship-search-btn">検索</button>
+                                            </div>
+                                        </div>
+                                        <div class="order-reg-grid-full">
+                                            <label class="order-reg-label">出荷日</label>
+                                            <input type="text" id="project-ship-date" name="ship_date" class="order-reg-input date-input" placeholder="例) 2019/5/9">
+                                            <p class="order-reg-hint" style="margin: 4px 0 0;">例) 2019/5/9</p>
+                                            <p class="order-reg-hint" style="margin: 2px 0 0;">※消去したい場合は空で登録してください</p>
+                                        </div>
+                                        <div class="order-reg-grid-full" style="margin-top: 12px;">
+                                            <button type="submit" class="btn-primary" style="width: 100%; color: #fff; background: #dc2626; border-color: #b91c1c;">登録</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="order-reg-card order-reg-card-2">
+                                    <h3 class="order-reg-card-title"><span class="order-reg-card-badge">2</span><i class="fas fa-info-circle"></i> 受注情報</h3>
+                                    <div class="order-reg-grid order-reg-grid-2">
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">工事名</label><input type="text" id="project-ship-construct-name" name="construct_name" class="order-reg-input" readonly></div>
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">発注元</label><input type="text" id="project-ship-client" name="client" class="order-reg-input" readonly></div>
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">納品先</label><input type="text" id="project-ship-delivery" name="delivery" class="order-reg-input" readonly></div>
+                                        <div><label class="order-reg-label">受注日</label><input type="text" id="project-ship-order-date" name="order_date" class="order-reg-input" readonly></div>
+                                        <div><label class="order-reg-label">出荷予定</label><input type="text" id="project-ship-schedule" name="ship_schedule" class="order-reg-input" readonly></div>
+                                        <div><label class="order-reg-label">納期</label><input type="text" id="project-ship-delivery-date" name="delivery_date" class="order-reg-input" readonly></div>
+                                        <div><label class="order-reg-label">工事完了日</label><input type="text" id="project-ship-complete-date" name="complete_date" class="order-reg-input" readonly></div>
+                                        <div><label class="order-reg-label">売上日</label><input type="text" id="project-ship-sales-date" name="sales_date" class="order-reg-input" readonly></div>
+                                        <div><label class="order-reg-label">出荷予定変更</label><input type="text" id="project-ship-schedule-change" name="schedule_change" class="order-reg-input" readonly></div>
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">営業担当</label><input type="text" id="project-ship-sales-rep" name="sales_rep" class="order-reg-input" readonly></div>
+                                        <div class="order-reg-grid-full"><label class="order-reg-label">出荷日</label><input type="text" id="project-ship-ship-date" name="ship_date_display" class="order-reg-input" readonly></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
 
@@ -458,7 +1484,7 @@
                             </div>
                         </div>
                         
-                        <!-- カラフルダッシュボード -->
+                        <!-- カラフルホーム -->
                         <div style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
                             <!-- ヘッダー -->
                             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px 12px 0 0; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
@@ -480,197 +1506,137 @@
                             
                             <!-- カードコンテナ -->
                             <div id="cn-status-cards-container" style="flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-content: start; overflow-y: auto; padding: 16px; background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%); border-radius: 0 0 12px 12px;">
-                                <!-- カラフルなダッシュボードがここに動的に生成されます -->
+                                <!-- カラフルなホームがここに動的に生成されます -->
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 図面番号採番ページ -->
-            <div id="drawing-number-page" class="page">
-                <div class="page-title" style="flex-shrink: 0;">
-                    <h2>図面番号採番システム</h2>
-                </div>
-                <div style="padding: 24px; flex: 1; overflow: hidden; min-height: 0; display: flex; flex-direction: column; justify-content: flex-start; align-items: center;">
-                    <div style="display: flex; gap: 24px; align-items: flex-start; flex: 1; min-height: 0; max-width: calc(100vw - 600px); width: calc(100vw - 600px); justify-content: center; margin-left: 2cm;">
+            <!-- 図面番号採番ページ（作業票風デザイン） -->
+            <div id="drawing-number-page" class="page" style="flex-direction: column; overflow: hidden;">
+                <header class="drawing-number-page-title" aria-label="ページタイトル">
+                    <h2><i class="fas fa-drafting-compass" aria-hidden="true"></i> 図面番号採番システム</h2>
+                </header>
+                <div class="drawing-number-page-body">
+                    <div class="drawing-number-page-inner">
                         <!-- 左側：入力フォーム -->
-                        <div style="flex: 0 0 500px; max-width: 500px; min-width: 450px; display: flex; flex-direction: column;">
-                            <div style="background: linear-gradient(135deg, rgba(74, 144, 226, 0.05) 0%, rgba(74, 144, 226, 0.02) 100%); border-radius: 16px; padding: 20px; border: 2px solid rgba(74, 144, 226, 0.1); display: flex; flex-direction: column;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-shrink: 0; justify-content: center;">
-                                    <h4 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-primary);">図面番号採番</h4>
-                                </div>
-                                <form id="drawing-number-form-page" class="register-form" onsubmit="event.preventDefault(); if(typeof getDrawingNumberPage === 'function') { getDrawingNumberPage(); } return false;" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto;">
-                                    <div style="flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 16px;">
-                                        <!-- 1行目：図面種類と機種記号 -->
-                                        <div style="display: flex; gap: 12px; flex-shrink: 0;">
-                                            <!-- 図面種類選択 -->
-                                            <div class="form-field" style="flex: 1; flex-shrink: 0;">
-                                                <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; margin-bottom: 8px; font-size: 14px;">
-                                                    図面種類 <span class="required">*</span>
-                                                </label>
-                                                <select id="drawing-type-select" class="form-input" required style="font-size: 14px; padding: 12px;">
-                                                    <option value="">選択してください</option>
-                                                    <option value="parts">部品図</option>
-                                                    <option value="unit">組図/ユニット図</option>
-                                                </select>
+                        <div class="drawing-number-form-wrap">
+                            <div class="drawing-number-form-card">
+                                <h4 class="drawing-number-form-card-title">図面番号採番</h4>
+                                <form id="drawing-number-form-page" class="register-form drawing-number-form" onsubmit="event.preventDefault(); if(typeof getDrawingNumberPage === 'function') { getDrawingNumberPage(); } return false;">
+                                    <div class="drawing-number-form-fields">
+                                        <!-- ブロック1：図面種類・機種記号・工事番号・採番者 -->
+                                        <div class="drawing-number-section">
+                                            <div class="drawing-number-form-row drawing-number-form-row-equal">
+                                                <div class="form-field drawing-number-field drawing-number-field-with-spacer">
+                                                    <label>図面種類 <span class="required">*</span></label>
+                                                    <input type="hidden" id="drawing-type-select" name="drawing-type" value="">
+                                                    <div class="drawing-number-type-buttons" role="group" aria-label="図面種類">
+                                                        <button type="button" class="drawing-number-type-btn" data-type="parts" aria-pressed="false">部品図</button>
+                                                        <button type="button" class="drawing-number-type-btn" data-type="unit" aria-pressed="false">組立図</button>
+                                                    </div>
+                                                    <span class="drawing-number-field-spacer" aria-hidden="true"></span>
+                                                </div>
+                                                <div class="form-field drawing-number-field drawing-number-field-same-height">
+                                                    <label>機種記号 <span class="required">*</span> <button type="button" class="drawing-number-refresh-list" onclick="loadMachineMarksFromSaiban()" title="一覧を再読み込み">🔄</button></label>
+                                                    <div class="drawing-number-machine-row">
+                                                        <input type="text" id="machine-code-input" class="form-input drawing-number-input-fixed-height drawing-number-machine-code-input" required
+                                                            list="machine-mark-datalist" placeholder="例: CF" maxlength="2"
+                                                            style="text-transform: uppercase;" autocomplete="off">
+                                                        <datalist id="machine-mark-datalist"></datalist>
+                                                        <span id="machine-name-display" class="drawing-number-machine-name-inline"></span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            
-                                            <!-- 機種記号 -->
-                                            <div class="form-field" style="flex: 1; flex-shrink: 0;">
-                                                <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; margin-bottom: 8px; font-size: 14px;">
-                                                    機種記号 <span class="required">*</span>
-                                                </label>
-                                                <input type="text" id="machine-code-input" class="form-input" required 
-                                                       placeholder="機種記号を入力" 
-                                                       style="text-transform: uppercase; font-size: 14px; padding: 12px;"
-                                                       oninput="this.value = this.value.toUpperCase();">
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- 2行目：工事番号と採番者 -->
-                                        <div style="display: flex; gap: 12px; flex-shrink: 0;">
-                                            <!-- 工事番号 -->
-                                            <div class="form-field" style="flex: 1; flex-shrink: 0;">
-                                                <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; margin-bottom: 8px; font-size: 14px;">
-                                                    工事番号 <span class="required">*</span>
-                                                </label>
-                                                <input type="text" id="order-no-input" class="form-input" required 
-                                                       placeholder="工事番号を入力" 
-                                                       style="text-transform: uppercase; font-size: 14px; padding: 12px;"
-                                                       oninput="this.value = this.value.toUpperCase();">
-                                            </div>
-                                            
-                                            <!-- 採番者 -->
-                                            <div class="form-field" style="flex: 1; flex-shrink: 0;">
-                                                <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; margin-bottom: 8px; font-size: 14px;">
-                                                    採番者 <span class="required">*</span>
-                                                </label>
-                                                <select id="designer-select" class="form-input" required style="font-size: 14px; padding: 12px;">
-                                                    <option value="">読み込み中...</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- 3行目：採番日と採番枚数 -->
-                                        <div style="display: flex; gap: 12px; flex-shrink: 0;">
-                                            <!-- 採番日 -->
-                                            <div class="form-field" style="flex: 1; flex-shrink: 0;">
-                                                <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; margin-bottom: 8px; font-size: 14px;">
-                                                    採番日 <span class="required">*</span>
-                                                </label>
-                                                <input type="datetime-local" id="saiban-date-input" class="form-input" required style="font-size: 14px; padding: 12px;">
-                                            </div>
-                                            
-                                            <!-- 採番枚数 -->
-                                            <div class="form-field" style="flex: 1; flex-shrink: 0;">
-                                                <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; margin-bottom: 8px; font-size: 14px;">
-                                                    採番枚数
-                                                </label>
-                                                <input type="number" id="drawing-count-input" class="form-input" 
-                                                       min="1" max="100" value="1" 
-                                                       style="font-size: 14px; padding: 12px;">
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- 基準図面番号 -->
-                                        <div class="form-field form-field-full" style="flex-shrink: 0;">
-                                            <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; margin-bottom: 8px; font-size: 14px;">
-                                                基準図面番号 <span style="color: var(--text-secondary); font-weight: normal;">（未入力時は自動生成）</span>
-                                            </label>
-                                            <div style="display: flex; gap: 8px;">
-                                                <input type="text" id="base-drawing-no-input" class="form-input" 
-                                                       placeholder="10桁以上の図面番号を入力（未入力時は自動生成）" 
-                                                       minlength="10"
-                                                       style="font-family: monospace; font-size: 16px; letter-spacing: 2px; padding: 12px; flex: 1;">
-                                                <button type="button" class="btn-secondary" onclick="generateFirstDrawingNumber()" style="white-space: nowrap; padding: 12px 16px; font-size: 13px;">
-                                                    <i class="fas fa-magic"></i> 自動生成
-                                                </button>
-                                            </div>
-                                            <small style="display: block; margin-top: 4px; font-size: 12px; color: var(--text-secondary);">10桁以上、6桁目に「I」「O」は使用不可。未入力時は機種記号と図面種類から自動生成されます。</small>
-                                        </div>
-                                        
-                                        <!-- 品名 -->
-                                        <div class="form-field form-field-full" style="flex-shrink: 0;">
-                                            <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; margin-bottom: 8px; font-size: 14px;">
-                                                品名
-                                            </label>
-                                            <input type="text" id="description-input" class="form-input" 
-                                                   placeholder="品名を入力"
-                                                   style="font-size: 14px; padding: 12px;">
-                                        </div>
-                                        
-                                        <!-- 取得された図面番号 -->
-                                        <div class="form-field form-field-full" style="margin-top: 20px; flex-shrink: 0;">
-                                            <label style="display: flex; align-items: center; gap: 6px; font-weight: 600; margin-bottom: 8px; font-size: 14px; justify-content: center;">
-                                                取得された図面番号
-                                            </label>
-                                            <div style="position: relative;">
-                                                <input type="text" id="drawing-number-result-page" class="form-input" readonly style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); font-weight: 700; font-size: 20px; text-align: center; padding: 16px; border: 3px solid var(--success); border-radius: 12px; letter-spacing: 2px; color: #2e7d32; word-break: break-all;">
-                                                <div style="position: absolute; top: 8px; right: 12px; color: var(--success); font-size: 18px; opacity: 0.6;">
-                                                    <i class="fas fa-copy" id="copy-drawing-number-page" style="cursor: pointer;" onclick="copyDrawingNumberPage()" title="コピー"></i>
+                                            <div class="drawing-number-form-row drawing-number-form-row-align-top">
+                                                <div class="form-field drawing-number-field drawing-number-field-same-height">
+                                                    <label>工事番号 <span class="required">*</span></label>
+                                                    <input type="text" id="order-no-input" class="form-input drawing-number-input-fixed-height" required placeholder="工事番号"
+                                                        style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();">
+                                                </div>
+                                                <div class="form-field drawing-number-field drawing-number-field-same-height">
+                                                    <label>採番者 <span class="required">*</span></label>
+                                                    <select id="designer-select" class="form-input drawing-number-input-fixed-height" required><option value="">読み込み中...</option></select>
                                                 </div>
                                             </div>
                                         </div>
-                                        
-                                        <!-- エラーメッセージ -->
-                                        <div id="drawing-number-errors-page" style="display: none; background: rgba(255, 107, 107, 0.1); border: 2px solid var(--error); border-radius: 8px; padding: 12px; color: var(--error); font-size: 13px;">
-                                            <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
-                                            <span id="drawing-number-error-message-page"></span>
-                                        </div>
-                                        
-                                        <!-- 成功メッセージ -->
-                                        <div id="drawing-number-success-page" style="display: none; background: rgba(78, 205, 196, 0.1); border: 2px solid var(--success); border-radius: 8px; padding: 12px; color: var(--success); font-size: 13px;">
-                                            <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
-                                            <span id="drawing-number-success-message-page"></span>
-                                        </div>
-                                        
-                                        <div class="form-actions" style="margin-top: 20px; gap: 10px; display: flex; flex-direction: column; flex-shrink: 0;">
-                                            <div style="display: flex; gap: 10px; justify-content: center;">
-                                                <button type="submit" class="btn-primary" style="flex: 1; min-width: 140px; max-width: 300px; font-size: 13px; padding: 10px; white-space: nowrap;">
-                                                    <i class="fas fa-magic"></i> 図面番号取得
-                                                </button>
+                                        <!-- ブロック2：採番日・採番枚数・品名 -->
+                                        <div class="drawing-number-section">
+                                            <div class="drawing-number-form-row">
+                                                <div class="form-field drawing-number-field drawing-number-field-same-height">
+                                                    <label>採番日 <span class="required">*</span></label>
+                                                    <input type="datetime-local" id="saiban-date-input" class="form-input drawing-number-input-fixed-height" required>
+                                                </div>
+                                                <div class="form-field drawing-number-field drawing-number-field-narrow drawing-number-field-same-height">
+                                                    <label>採番枚数</label>
+                                                    <input type="number" id="drawing-count-input" class="form-input drawing-number-input-fixed-height" min="1" max="100" value="1">
+                                                </div>
+                                                <div class="form-field drawing-number-field drawing-number-field-same-height">
+                                                    <label>品名</label>
+                                                    <input type="text" id="description-input" class="form-input drawing-number-input-fixed-height" placeholder="品名">
+                                                </div>
                                             </div>
                                         </div>
+                                        <!-- ブロック3：基準図面番号 -->
+                                        <div class="drawing-number-section">
+                                            <div class="form-field drawing-number-field drawing-number-field-full">
+                                                <label>基準図面番号</label>
+                                                <p class="drawing-number-base-desc">空欄で自動。続きは入力または右一覧で行クリック。</p>
+                                                <div class="drawing-number-base-row">
+                                                    <input type="text" id="base-drawing-no-input" class="form-input drawing-number-input-fixed-height" placeholder="空欄で自動／10桁以上"
+                                                        minlength="10" style="font-family: monospace; letter-spacing: 1px;">
+                                                    <button type="button" class="btn-secondary drawing-number-btn-auto" onclick="generateFirstDrawingNumber()"><i class="fas fa-magic"></i> 自動生成</button>
+                                                </div>
+                                                <small class="drawing-number-hint">10桁以上・6桁目にI/O不可</small>
+                                            </div>
+                                        </div>
+                                        <!-- ブロック4：採番・登録結果 -->
+                                        <div class="drawing-number-section drawing-number-section-result">
+                                            <div class="form-field drawing-number-field drawing-number-field-full">
+                                                <label>登録された図面番号</label>
+                                                <small class="drawing-number-block-hint">↓ 採番して登録でDBに登録。登録番号はここに表示。</small>
+                                                <div class="drawing-number-result-wrap">
+                                                    <input type="text" id="drawing-number-result-page" class="form-input drawing-number-result-input" readonly placeholder="採番・登録後に表示">
+                                                    <i class="fas fa-copy" id="copy-drawing-number-page" style="cursor: pointer;" onclick="copyDrawingNumberPage()" title="コピー"></i>
+                                                </div>
+                                            </div>
+                                            <div class="drawing-number-msg-label">処理結果</div>
+                                            <div id="drawing-number-errors-page" class="drawing-number-msg drawing-number-msg-error" style="display: none;">
+                                                <i class="fas fa-exclamation-triangle"></i><span id="drawing-number-error-message-page"></span>
+                                            </div>
+                                            <div id="drawing-number-success-page" class="drawing-number-msg drawing-number-msg-success" style="display: none;">
+                                                <i class="fas fa-check-circle"></i><span id="drawing-number-success-message-page"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="drawing-number-form-actions">
+                                        <button type="submit" class="btn-primary drawing-number-btn-register" title="採番してデータベースに登録"><i class="fas fa-save"></i> 図面番号を採番して登録</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
-                        
                         <!-- 右側：図面一覧 -->
-                        <div style="flex: 0 0 400px; max-width: 400px; min-width: 350px; display: flex; flex-direction: column; max-height: 100%;">
-                            <div style="background: white; border-radius: 16px; padding: 20px; border: 2px solid var(--border-light); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; max-height: 100%; overflow: hidden;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; flex-shrink: 0;">
-                                    <div style="display: flex; align-items: center; gap: 6px; margin: 0 auto;">
-                                        <h4 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-primary);">図面一覧</h4>
-                                    </div>
-                                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                                        <button type="button" class="btn-secondary btn-small" id="refresh-drawing-list-btn" onclick="loadDrawingList()" style="padding: 6px 10px; font-size: 11px; white-space: nowrap;">
-                                            <i class="fas fa-sync-alt"></i> 更新
-                                        </button>
+                        <div class="drawing-number-list-wrap">
+                            <div class="drawing-number-list-card">
+                                <div class="drawing-number-list-header">
+                                    <div class="drawing-number-list-header-title">
+                                        <h4>図面一覧</h4>
+                                        <span id="drawing-list-filter-badge" class="drawing-number-filter-badge" aria-hidden="true"></span>
                                     </div>
                                 </div>
-                                <div style="flex: 1; overflow-y: auto; overflow-x: auto; background: #fafafa; border-radius: 12px; border: 1px solid var(--border-light); min-height: 0; max-height: calc(100vh - 300px);">
-                                    <table style="width: 100%; border-collapse: collapse; min-width: 300px; margin: 0 auto;">
-                                        <thead style="background: linear-gradient(135deg, #1E40AF 0%, #1E3A8A 50%, #1E2A5E 100%); position: sticky; top: 0; z-index: 10; box-shadow: 0 4px 16px rgba(30, 58, 138, 0.3);">
+                                <div class="drawing-number-list-table-wrap">
+                                    <table class="drawing-number-list-table">
+                                        <thead>
                                             <tr>
-                                                <th style="padding: 14px 12px; text-align: center; color: #FFFFFF; font-size: 12px; font-weight: 700; border-bottom: 3px solid rgba(255, 255, 255, 0.15); white-space: nowrap; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);">
-                                                    図面番号
-                                                </th>
-                                                <th style="padding: 14px 12px; text-align: center; color: #FFFFFF; font-size: 12px; font-weight: 700; border-bottom: 3px solid rgba(255, 255, 255, 0.15); white-space: nowrap; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);">
-                                                    品名
-                                                </th>
-                                                <th style="padding: 14px 12px; text-align: center; color: #FFFFFF; font-size: 12px; font-weight: 700; border-bottom: 3px solid rgba(255, 255, 255, 0.15); white-space: nowrap; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);">
-                                                    採番日
-                                                </th>
+                                                <th>図面番号</th>
+                                                <th>品名</th>
+                                                <th>採番日</th>
                                             </tr>
                                         </thead>
                                         <tbody id="drawing-list-page">
                                             <tr>
-                                                <td colspan="3" style="text-align: center; padding: 40px; color: var(--text-tertiary);">
-                                                    <i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 12px; opacity: 0.3; display: block;"></i>
-                                                    <span style="font-size: 13px;">図面データはありません</span>
-                                                </td>
+                                                <td colspan="3" class="drawing-number-list-empty">図面データはありません</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -681,22 +1647,219 @@
                 </div>
             </div>
 
-            <!-- 検索ページ -->
+            <!-- 検索ページ（納入予定カレンダー・加工進捗管理） -->
             <div id="search-page" class="page">
                 <div class="page-title">
                     <h2>検索</h2>
+                    <p class="search-page-desc">名称・原価での検索は「一覧表示」でテーブルを選ぶか、「集計」の原価集計をご利用ください。</p>
                 </div>
                 <div class="search-buttons">
-                    <button class="search-btn">購入部品・材料・諸経費検索</button>
-                    <button class="search-btn">外注加工検索</button>
-                    <button class="search-btn">業者別発注済み外注加工</button>
-                    <button class="search-btn">納入予定カレンダー</button>
-                    <button class="search-btn" onclick="showPage('processing-progress')">加工進捗管理</button>
-                    <button class="search-btn">名称による原価検索</button>
-                    <button class="search-btn">出図・手配状況</button>
-                    <button class="search-btn">加工振り分け状況</button>
-                    <button class="search-btn">売上年月で検索 工事一覧</button>
+                    <button class="search-btn" onclick="showPage('delivery-calendar')"><i class="fas fa-calendar-alt"></i> 納入予定カレンダー</button>
+                    <button class="search-btn" onclick="showPage('processing-progress')"><i class="fas fa-tasks"></i> 加工進捗管理</button>
+                    <button class="search-btn" onclick="showPage('machine-progress')"><i class="fas fa-cogs"></i> 機械の加工進捗状況</button>
+                    <button class="search-btn" onclick="showPage('cost-summary')"><i class="fas fa-chart-pie"></i> 原価集計</button>
+                    <button class="search-btn" onclick="showPage('bom-import')"><i class="fas fa-file-import"></i> BOMインポート</button>
+                    <button class="search-btn" onclick="showPage('acceptance')"><i class="fas fa-check-circle"></i> 検収処理</button>
                 </div>
+            </div>
+
+            <!-- 納入予定カレンダーページ -->
+            <div id="delivery-calendar-page" class="page delivery-calendar-page">
+                <header class="delivery-cal-header">
+                    <div class="delivery-cal-header-left">
+                        <button type="button" class="delivery-cal-back" onclick="showPage('search')"><i class="fas fa-arrow-left"></i></button>
+                        <h1 class="delivery-cal-title">納入予定カレンダー</h1>
+                    </div>
+                    <div class="delivery-cal-nav">
+                        <button type="button" class="delivery-cal-arrow" id="delivery-cal-prev" title="前月"><i class="fas fa-chevron-left"></i></button>
+                        <span id="delivery-cal-year-month" class="delivery-cal-month">2026年4月</span>
+                        <button type="button" class="delivery-cal-arrow" id="delivery-cal-next" title="次月"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div class="delivery-cal-tabs">
+                        <button type="button" class="delivery-cal-tab active" data-category="purchased">購入品</button>
+                        <button type="button" class="delivery-cal-tab" data-category="outsource">外注</button>
+                        <button type="button" class="delivery-cal-tab" data-category="material">材料</button>
+                        <button type="button" class="delivery-cal-tab" data-category="misc">諸経費</button>
+                    </div>
+                    <div class="delivery-cal-options">
+                        <label class="delivery-cal-check">
+                            <input type="checkbox" id="delivery-cal-undelivered-only" checked> 未納入のみ
+                        </label>
+                        <span class="delivery-cal-unit">単位:件数</span>
+                    </div>
+                </header>
+                <p class="delivery-cal-note">※諸経費は一般消耗品・工場内消耗品のみ</p>
+                <div class="delivery-cal-grid-wrap">
+                    <table class="delivery-cal-grid" id="delivery-cal-grid">
+                        <thead>
+                            <tr>
+                                <th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th>
+                            </tr>
+                        </thead>
+                        <tbody id="delivery-cal-body">
+                            <!-- JSで6週分のセルを生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 納入予定詳細モーダル（日付クリックで表示） -->
+            <div id="delivery-detail-modal" class="modal-overlay delivery-detail-modal" style="display: none;" onclick="if(event.target===this) closeDeliveryDetailModal()">
+                <div class="modal-container delivery-detail-modal-container" onclick="event.stopPropagation()">
+                    <div class="delivery-detail-header">
+                        <h2 class="delivery-detail-title">納入予定詳細</h2>
+                        <button type="button" class="modal-close delivery-detail-close" onclick="closeDeliveryDetailModal()" aria-label="閉じる">&times;</button>
+                    </div>
+                    <div class="delivery-detail-date" id="delivery-detail-date">—</div>
+                    <div class="delivery-detail-toolbar">
+                        <div class="delivery-detail-tabs" id="delivery-detail-tabs">
+                            <button type="button" class="delivery-detail-tab" data-category="outsource">外注</button>
+                            <button type="button" class="delivery-detail-tab" data-category="material">材料</button>
+                            <button type="button" class="delivery-detail-tab" data-category="purchased">購入品</button>
+                            <button type="button" class="delivery-detail-tab" data-category="misc">諸経費</button>
+                        </div>
+                        <p class="delivery-detail-note">※注文番号・発注者が空のデータは、正式発注されていませんが、発注登録されているものです。</p>
+                        <div class="delivery-detail-actions">
+                            <button type="button" class="btn-secondary btn-small" onclick="window.printDeliveryDetailPreview && window.printDeliveryDetailPreview()"><i class="fas fa-search"></i> 印刷プレビュー</button>
+                            <button type="button" class="btn-primary btn-small" onclick="window.printDeliveryDetail && window.printDeliveryDetail()"><i class="fas fa-print"></i> 印刷</button>
+                        </div>
+                    </div>
+                    <div class="delivery-detail-table-wrap">
+                        <table class="delivery-detail-table" id="delivery-detail-table">
+                            <thead>
+                                <tr>
+                                    <th>注文番号</th><th>一括注文番号</th><th>工事番号</th><th>機械</th><th>ユニット</th><th>通番</th>
+                                    <th>品名</th><th>寸法・型式・加工名</th><th>個数</th><th>単位</th><th>納期</th><th>発注者</th><th>発注先</th><th>コメント</th>
+                                </tr>
+                            </thead>
+                            <tbody id="delivery-detail-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 機械の加工進捗状況ページ -->
+            <div id="machine-progress-page" class="page machine-progress-page">
+                <header class="mp-header">
+                    <button type="button" class="mp-back" onclick="showPage('search')"><i class="fas fa-arrow-left"></i> 検索に戻る</button>
+                    <h1 class="mp-title"><i class="fas fa-cogs"></i> 機械の加工進捗状況</h1>
+                </header>
+                <section class="mp-form-card">
+                    <div class="mp-form-row mp-form-row-main">
+                        <div class="mp-field">
+                            <label class="mp-label">工事番号</label>
+                            <input type="text" id="mp-construct-no" class="mp-input" maxlength="8">
+                        </div>
+                        <div class="mp-field">
+                            <label class="mp-label">受注登録日</label>
+                            <input type="date" id="mp-order-date" class="mp-input mp-input-date">
+                        </div>
+                        <div class="mp-field mp-field-calc">
+                            <label class="mp-label mp-label-invisible">計算</label>
+                            <button type="button" class="mp-calc-btn" id="mp-calc-btn"><i class="fas fa-calculator"></i><span>計算</span></button>
+                        </div>
+                        <div class="mp-field">
+                            <label class="mp-label">機械</label>
+                            <select id="mp-machine" class="mp-input mp-select">
+                                <option value="">—</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mp-form-row">
+                        <div class="mp-field mp-field-flex">
+                            <label class="mp-label">注文元</label>
+                            <input type="text" id="mp-client" class="mp-input" readonly>
+                        </div>
+                        <div class="mp-field mp-field-flex">
+                            <label class="mp-label">納品先</label>
+                            <input type="text" id="mp-delivery-to" class="mp-input" readonly>
+                        </div>
+                        <div class="mp-field">
+                            <label class="mp-label">営業担当</label>
+                            <input type="text" id="mp-sales" class="mp-input mp-input-narrow" readonly>
+                        </div>
+                    </div>
+                    <div class="mp-form-row">
+                        <div class="mp-field mp-field-flex">
+                            <label class="mp-label">工事名</label>
+                            <input type="text" id="mp-project-name" class="mp-input" readonly>
+                        </div>
+                        <div class="mp-field">
+                            <label class="mp-label">出荷予定</label>
+                            <input type="date" id="mp-ship-date" class="mp-input mp-input-date" readonly>
+                        </div>
+                        <div class="mp-field">
+                            <label class="mp-label">出荷予定変更</label>
+                            <input type="date" id="mp-ship-change" class="mp-input mp-input-date">
+                        </div>
+                        <div class="mp-field">
+                            <label class="mp-label">工事完了日</label>
+                            <input type="date" id="mp-complete-date" class="mp-input mp-input-date">
+                        </div>
+                    </div>
+                </section>
+                <section class="mp-table-card">
+                    <div class="mp-filters">
+                        <button type="button" class="mp-filter-btn" data-filter="abcdf">↓A・B・C・D・F(01除く)</button>
+                        <button type="button" class="mp-filter-btn" data-filter="f01">↓F01</button>
+                    </div>
+                    <table class="mp-table" id="machine-progress-table">
+                        <thead>
+                            <tr>
+                                <th>ユニット</th><th>出図枚数</th><th>未加工</th><th>加工中</th><th>加工完了</th><th>外注/一部</th><th>外注/全部</th><th>完了%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="machine-progress-tbody">
+                            <tr><td colspan="8" class="mp-empty">工事番号を入力し「計算」を押してください</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+
+            <!-- 原価集計ページ -->
+            <div id="cost-summary-page" class="page cost-summary-page">
+                <header class="cs-header">
+                    <button type="button" class="cs-back" onclick="showPage('search')"><i class="fas fa-arrow-left"></i> 検索に戻る</button>
+                    <h1 class="cs-title"><i class="fas fa-chart-pie"></i> 原価集計</h1>
+                </header>
+                <section class="cs-toolbar">
+                    <div class="cs-search">
+                        <label class="cs-label" for="cs-query">検索</label>
+                        <div class="cs-search-row">
+                            <input type="text" id="cs-query" class="cs-input" placeholder="工事番号 / 機械 / ユニット / 図面番号 / 名称 など、どれでも検索できます">
+                            <button type="button" id="cs-search-btn" class="cs-btn cs-btn-primary"><i class="fas fa-search"></i> 検索</button>
+                            <button type="button" id="cs-clear-btn" class="cs-btn cs-btn-ghost">クリア</button>
+                        </div>
+                        <div class="cs-hint" id="cs-hint">工事番号 → 機械 → ユニット → 図面（名称）まで、階層をまたいで検索できます。行をクリックすると下位へドリルダウンします。</div>
+                    </div>
+                    <div class="cs-tabs" id="cs-tabs" role="tablist" aria-label="原価集計タブ">
+                        <button type="button" class="cs-tab active" data-level="construct" role="tab" aria-selected="true">工事番号別 <span class="cs-count" id="cs-count-construct">0</span></button>
+                        <button type="button" class="cs-tab" data-level="machine" role="tab" aria-selected="false">機械別 <span class="cs-count" id="cs-count-machine">0</span></button>
+                        <button type="button" class="cs-tab" data-level="unit" role="tab" aria-selected="false">ユニット別 <span class="cs-count" id="cs-count-unit">0</span></button>
+                        <button type="button" class="cs-tab" data-level="drawing" role="tab" aria-selected="false">名称・図面別 <span class="cs-count" id="cs-count-drawing">0</span></button>
+                    </div>
+                </section>
+                <section class="cs-content">
+                    <div class="cs-breadcrumb" id="cs-breadcrumb"></div>
+                    <div class="cs-card">
+                        <div class="cs-card-header">
+                            <div class="cs-card-title" id="cs-table-title">工事番号別</div>
+                            <div class="cs-card-sub" id="cs-status"></div>
+                        </div>
+                        <div class="cs-table-wrap">
+                            <table class="cs-table" id="cs-table">
+                                <thead id="cs-thead">
+                                    <tr>
+                                        <th>キー</th><th>売上</th><th>原価合計</th><th>利益</th><th>利益率</th><th>購入</th><th>外注</th><th>材料</th><th>諸経費</th><th>社内</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cs-tbody">
+                                    <tr><td colspan="10" class="cs-empty">検索条件を入力して「検索」を押してください</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <!-- 集計ページ -->
@@ -714,178 +1877,153 @@
             </div>
 
             <!-- 加工進捗ページ -->
-            <div id="processing-progress-page" class="page" style="padding: 12px; gap: 12px; background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);">
-                <div class="page-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; flex-shrink: 0; background: white; padding: 12px 16px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);">
-                    <h2 style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 24px; margin: 0;"><i class="fas fa-chart-line" style="color: var(--primary);"></i> 加工進捗管理</h2>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="printProcessingProgress()"><i class="fas fa-print"></i> 印刷</button>
-                        <button class="btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="printSelectedParts()"><i class="fas fa-file-pdf"></i> 準備印刷</button>
+            <div id="processing-progress-page" class="page pp-page">
+                <div class="pp-header">
+                    <div>
+                        <h2 class="pp-title"><i class="fas fa-tasks"></i> 加工進捗管理</h2>
+                        <p class="pp-desc">工事番号・機械・ユニットで絞り込み、検索で一覧を表示します。</p>
+                    </div>
+                    <div class="pp-header-actions">
+                        <button type="button" class="btn-secondary" onclick="showPage('search')" style="margin-right: 8px;"><i class="fas fa-arrow-left"></i> 検索に戻る</button>
+                        <span id="pp-result-count" class="pp-result-count">—</span>
+                        <button type="button" class="btn-secondary btn-pp" onclick="printProcessingProgress()"><i class="fas fa-print"></i> 印刷</button>
+                        <button type="button" class="btn-secondary btn-pp" onclick="printSelectedParts()" title="チェックした行だけ印刷"><i class="fas fa-check-square"></i> 選択印刷</button>
                     </div>
                 </div>
 
-                <!-- 検索・フィルターセクション -->
-                <div class="dashboard-card" style="padding: 14px; flex-shrink: 0; background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%); border-radius: 12px; box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3); position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-                    <div style="position: relative; z-index: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; align-items: flex-end;">
-                        <div class="form-field" style="margin: 0;">
-                            <label style="font-size: 11px; font-weight: 700; color: white; margin-bottom: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">工事番号</label>
-                            <input type="text" id="pp-filter-construct-no" class="form-input" placeholder="工事番号" style="padding: 6px 8px; font-size: 12px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                <!-- 検索条件（横1行・高さ統一） -->
+                <div class="pp-filter-card">
+                    <h3 class="pp-filter-title">検索条件</h3>
+                    <div class="pp-filter-row">
+                        <div class="pp-cell">
+                            <label class="pp-label" for="pp-filter-construct-no">工事番号</label>
+                            <input type="text" id="pp-filter-construct-no" class="pp-input-eq" placeholder="4桁" maxlength="8" inputmode="numeric">
                         </div>
-                        <div class="form-field" style="margin: 0;">
-                            <label style="font-size: 11px; font-weight: 700; color: white; margin-bottom: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">機械</label>
-                            <select id="pp-filter-machine" class="form-input" style="padding: 6px 8px; font-size: 12px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                        <div class="pp-cell">
+                            <label class="pp-label" for="pp-filter-machine">機械</label>
+                            <select id="pp-filter-machine" class="pp-input-eq">
                                 <option value="">すべて</option>
                             </select>
                         </div>
-                        <div class="form-field" style="margin: 0;">
-                            <label style="font-size: 11px; font-weight: 700; color: white; margin-bottom: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">ユニット</label>
-                            <select id="pp-filter-unit" class="form-input" style="padding: 6px 8px; font-size: 12px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                        <div class="pp-cell">
+                            <label class="pp-label" for="pp-filter-unit">ユニット</label>
+                            <select id="pp-filter-unit" class="pp-input-eq">
                                 <option value="">すべて</option>
                             </select>
                         </div>
-                        <div class="form-field" style="margin: 0;">
-                            <label style="font-size: 11px; font-weight: 700; color: white; margin-bottom: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">図面番号</label>
-                            <input type="text" id="pp-filter-drawing-no" class="form-input" placeholder="図面番号" style="padding: 6px 8px; font-size: 12px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
-                        </div>
-                        <div class="form-field" style="margin: 0;">
-                            <label style="font-size: 11px; font-weight: 700; color: white; margin-bottom: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">加工状況</label>
-                            <div style="display: flex; gap: 8px; padding: 4px 8px; background: rgba(255,255,255,0.9); border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                <label style="font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 2px; color: #333;"><input type="radio" name="pp-status" value="all" checked> 両方</label>
-                                <label style="font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 2px; color: #333;"><input type="radio" name="pp-status" value="completed"> 完了</label>
-                                <label style="font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 2px; color: #333;"><input type="radio" name="pp-status" value="pending"> 未完</label>
+                        <div class="pp-cell pp-cell-drawing">
+                            <label class="pp-label" for="pp-filter-drawing-no">図面番号</label>
+                            <div class="pp-drawing-inline">
+                                <input type="text" id="pp-filter-drawing-no" class="pp-input-eq" placeholder="">
+                                <span class="pp-drawing-note">※途中まででも検索可</span>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 6px;">
-                            <button class="btn-primary" style="flex: 1; height: 32px; font-size: 12px; background: linear-gradient(135deg, #FF8C42 0%, #FF6B35 100%); border: none; box-shadow: 0 3px 8px rgba(0,0,0,0.2);" onclick="searchProcessingProgress()"><i class="fas fa-search"></i> 検索</button>
-                            <button class="btn-secondary" style="width: 32px; height: 32px; padding: 0; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);" onclick="clearPPSearch()"><i class="fas fa-eraser"></i></button>
+                        <div class="pp-cell">
+                            <label class="pp-label" for="pp-filter-part-no">品番</label>
+                            <input type="text" id="pp-filter-part-no" class="pp-input-eq" placeholder="">
+                        </div>
+                        <div class="pp-cell pp-cell-status">
+                            <span class="pp-label">加工状況</span>
+                            <div class="pp-status-inline">
+                                <label><input type="radio" name="pp-status" value="all" checked> 両方</label>
+                                <label><input type="radio" name="pp-status" value="completed"> 完了</label>
+                                <label><input type="radio" name="pp-status" value="pending"> 未完</label>
+                            </div>
+                        </div>
+                        <div class="pp-cell pp-cell-dates">
+                            <span class="pp-label">keydate</span>
+                            <div class="pp-dates-inline">
+                                <input type="date" id="pp-filter-order-start" class="pp-input-eq pp-date">
+                                <span>～</span>
+                                <input type="date" id="pp-filter-order-end" class="pp-input-eq pp-date">
+                            </div>
+                        </div>
+                        <div class="pp-cell pp-cell-btns">
+                            <button type="button" class="btn-primary pp-btn-eq" id="pp-search-btn" onclick="searchProcessingProgress()"><i class="fas fa-search"></i> 検索</button>
+                            <button type="button" class="btn-secondary pp-btn-eq" onclick="clearPPSearch()" title="クリア"><i class="fas fa-eraser"></i></button>
                         </div>
                     </div>
-                    
-                    <!-- 凡例 -->
-                    <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2);">
-                        <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #fee2e2; border-radius: 2px; border: 1px solid rgba(0,0,0,0.1);"></span><span style="font-size: 10px; color: white;">材料未納</span></div>
-                        <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #ffedd5; border-radius: 2px; border: 1px solid rgba(0,0,0,0.1);"></span><span style="font-size: 10px; color: white;">材料済未工</span></div>
-                        <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #fef9c3; border-radius: 2px; border: 1px solid rgba(0,0,0,0.1);"></span><span style="font-size: 10px; color: white;">外注未納</span></div>
-                        <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #ecfeff; border-radius: 2px; border: 1px solid rgba(0,0,0,0.1);"></span><span style="font-size: 10px; color: white;">加工中</span></div>
-                        <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #f0f9ff; border-radius: 2px; border: 1px solid rgba(0,0,0,0.1);"></span><span style="font-size: 10px; color: white;">加工完</span></div>
-                        <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #e0e7ff; border-radius: 2px; border: 1px solid rgba(0,0,0,0.1);"></span><span style="font-size: 10px; color: white;">再完</span></div>
+                    <div class="pp-legend">
+                        <span class="pp-legend-title">進捗の色</span>
+                        <span class="pp-legend-item"><span class="pp-legend-swatch" style="background:#fee2e2;"></span>材料未納</span>
+                        <span class="pp-legend-item"><span class="pp-legend-swatch" style="background:#ffedd5;"></span>材料済未工</span>
+                        <span class="pp-legend-item"><span class="pp-legend-swatch" style="background:#fef9c3;"></span>外注未納</span>
+                        <span class="pp-legend-item"><span class="pp-legend-swatch" style="background:#cffafe;"></span>加工中</span>
+                        <span class="pp-legend-item"><span class="pp-legend-swatch" style="background:#e0f2fe;"></span>加工完</span>
+                        <span class="pp-legend-item"><span class="pp-legend-swatch" style="background:#e0e7ff;"></span>再納入完</span>
                     </div>
                 </div>
 
                 <!-- メインテーブル -->
-                <div class="dashboard-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; background: white; border-radius: 12px; margin-bottom: 12px;">
-                    <div style="overflow: auto; max-height: 400px;">
-                        <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed;">
-                            <thead style="position: sticky; top: 0; z-index: 10;">
+                <div class="pp-table-card">
+                    <div class="pp-table-scroll">
+                        <table class="data-table pp-main-table">
+                            <thead>
                                 <tr>
-                                    <th style="width: 30px;">選</th>
-                                    <th style="width: 60px;">工事番号</th>
-                                    <th style="width: 50px;">機械</th>
-                                    <th style="width: 50px;">ユニット</th>
-                                    <th style="width: 40px;">計画</th>
-                                    <th style="width: 30px;">支</th>
-                                    <th style="width: 80px;">図面番号</th>
-                                    <th style="width: 40px;">品番</th>
-                                    <th style="width: 100px;">名称</th>
-                                    <th style="width: 60px;">材質</th>
-                                    <th style="width: 30px;">数</th>
-                                    <th style="width: 30px;">単</th>
-                                    <th style="width: 50px;">素材重</th>
-                                    <th style="width: 50px;">仕上重</th>
-                                    <th style="width: 60px;">出図日</th>
-                                    <th style="width: 50px;">材料</th>
-                                    <th style="width: 50px;">社内</th>
-                                    <th style="width: 50px;">外注</th>
-                                    <th style="width: 40px;">時間</th>
-                                    <th style="width: 60px;">完了日</th>
-                                    <th style="width: 50px;">状況</th>
+                                    <th style="width: 32px;">選</th>
+                                    <th style="min-width: 72px;">工事番号</th>
+                                    <th style="min-width: 48px;">機械</th>
+                                    <th style="min-width: 48px;">ユニット</th>
+                                    <th style="min-width: 40px;">計画</th>
+                                    <th style="min-width: 28px;">支</th>
+                                    <th style="min-width: 90px;">図面番号</th>
+                                    <th style="width: 32px; max-width: 40px; text-align: center;">品番</th>
+                                    <th style="min-width: 110px;">名称</th>
+                                    <th style="min-width: 56px;">材質</th>
+                                    <th style="min-width: 48px;">数</th>
+                                    <th style="min-width: 42px;">単</th>
+                                    <th style="min-width: 64px;">素材重</th>
+                                    <th style="min-width: 64px;">仕上重</th>
+                                    <th style="min-width: 72px;">出図日</th>
+                                    <th style="min-width: 52px;">材料</th>
+                                    <th style="min-width: 52px;">社内</th>
+                                    <th style="min-width: 52px;">外注</th>
+                                    <th style="min-width: 44px;">時間</th>
+                                    <th style="min-width: 72px;">完了日</th>
+                                    <th style="min-width: 56px;">状況</th>
                                 </tr>
                             </thead>
                             <tbody id="pp-main-table-body">
                                 <tr>
-                                    <td colspan="21" style="text-align: center; padding: 20px; color: #94a3b8;">
-                                        検索条件を入力して検索してください
-                                    </td>
+                                    <td colspan="21" class="pp-empty-msg">条件を入力して「検索」を押すか、そのまま検索で一覧を表示します（Enterでも検索）</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- 下段詳細セクション -->
-                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-bottom: 20px;">
-                    <!-- 加工作業 -->
-                    <div class="dashboard-card" style="padding: 12px; display: flex; flex-direction: column; background: white; border-radius: 12px; min-height: 300px;">
-                        <div style="font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                            <i class="fas fa-tools" style="color: var(--primary);"></i> 加工作業
-                        </div>
-                        <div style="overflow: auto; flex: 1; border: 1px solid #f1f5f9; border-radius: 8px; max-height: 250px;">
-                            <table class="data-table" style="width: 100%; font-size: 10px;">
-                                <thead style="position: sticky; top: 0;">
-                                    <tr>
-                                        <th>作業日</th>
-                                        <th>コード</th>
-                                        <th>作業名</th>
-                                        <th>加工数</th>
-                                        <th>時間</th>
-                                        <th>社員名</th>
-                                    </tr>
-                                </thead>
+                <!-- 下段：行選択で表示 -->
+                <div class="pp-detail-section">
+                    <div class="pp-sub-card">
+                        <h4 class="pp-sub-title"><i class="fas fa-tools"></i> 加工作業</h4>
+                        <div class="pp-sub-scroll">
+                            <table class="data-table pp-sub-table">
+                                <thead><tr><th>作業日</th><th>コード</th><th>作業名</th><th>加工数</th><th>時間</th><th>社員名</th></tr></thead>
                                 <tbody id="pp-work-table-body">
-                                    <tr><td colspan="6" style="text-align: center; padding: 10px; color: #cbd5e1;">選択してください</td></tr>
+                                    <tr><td colspan="6" class="pp-sub-empty">行を選択してください</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-
-                    <!-- 材料手配 & 外注加工 -->
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <!-- 材料手配 -->
-                        <div class="dashboard-card" style="padding: 12px; display: flex; flex-direction: column; background: white; border-radius: 12px; min-height: 150px;">
-                            <div style="font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-truck-loading" style="color: var(--primary);"></i> 材料手配
-                            </div>
-                            <div style="overflow: auto; flex: 1; border: 1px solid #f1f5f9; border-radius: 8px; max-height: 120px;">
-                                <table class="data-table" style="width: 100%; font-size: 10px;">
-                                    <thead style="position: sticky; top: 0;">
-                                        <tr>
-                                            <th>注文番号</th>
-                                            <th>規格</th>
-                                            <th>寸法</th>
-                                            <th>数量</th>
-                                            <th>発注先</th>
-                                            <th>発注日</th>
-                                            <th>納期</th>
-                                            <th>納入日</th>
-                                        </tr>
-                                    </thead>
+                    <div class="pp-sub-right">
+                        <div class="pp-sub-card">
+                            <h4 class="pp-sub-title"><i class="fas fa-truck-loading"></i> 材料手配</h4>
+                            <div class="pp-sub-scroll">
+                                <table class="data-table pp-sub-table">
+                                    <thead><tr><th>注文番号</th><th>規格</th><th>寸法</th><th>数量</th><th>発注先</th><th>発注日</th><th>納期</th><th>納入日</th></tr></thead>
                                     <tbody id="pp-material-table-body">
-                                        <tr><td colspan="8" style="text-align: center; padding: 10px; color: #cbd5e1;">選択してください</td></tr>
+                                        <tr><td colspan="8" class="pp-sub-empty">行を選択してください</td></tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                        <!-- 外注加工 -->
-                        <div class="dashboard-card" style="padding: 12px; display: flex; flex-direction: column; background: white; border-radius: 12px; min-height: 150px;">
-                            <div style="font-size: 13px; font-weight: 800; color: #1e293b; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-external-link-alt" style="color: var(--primary);"></i> 外注加工
-                            </div>
-                            <div style="overflow: auto; flex: 1; border: 1px solid #f1f5f9; border-radius: 8px; max-height: 120px;">
-                                <table class="data-table" style="width: 100%; font-size: 10px;">
-                                    <thead style="position: sticky; top: 0;">
-                                        <tr>
-                                            <th>注文番号</th>
-                                            <th>加工名称</th>
-                                            <th>数量</th>
-                                            <th>発注先</th>
-                                            <th>発注日</th>
-                                            <th>納期</th>
-                                            <th>納入日</th>
-                                            <th>返却日</th>
-                                        </tr>
-                                    </thead>
+                        <div class="pp-sub-card">
+                            <h4 class="pp-sub-title"><i class="fas fa-external-link-alt"></i> 外注加工</h4>
+                            <div class="pp-sub-scroll">
+                                <table class="data-table pp-sub-table">
+                                    <thead><tr><th>注文番号</th><th>加工名称</th><th>数量</th><th>発注先</th><th>発注日</th><th>納期</th><th>納入日</th><th>返却日</th></tr></thead>
                                     <tbody id="pp-outsource-table-body">
-                                        <tr><td colspan="8" style="text-align: center; padding: 10px; color: #cbd5e1;">選択してください</td></tr>
+                                        <tr><td colspan="8" class="pp-sub-empty">行を選択してください</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -893,6 +2031,36 @@
                     </div>
                 </div>
             </div>
+            <!-- 工数入力ページ -->
+            <div id="worktime-entry-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div id="worktime-entry-content" style="padding: 24px; height: 100%; overflow-y: auto;"></div>
+            </div>
+
+            <!-- BOMインポートページ -->
+            <div id="bom-import-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div id="bom-import-content" style="padding: 24px; height: 100%; overflow-y: auto;"></div>
+            </div>
+
+            <!-- 検収処理ページ -->
+            <div id="acceptance-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div id="acceptance-content" style="padding: 24px; height: 100%; overflow-y: auto;"></div>
+            </div>
+
+            <!-- 見積依頼ページ -->
+            <div id="estimate-request-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div id="estimate-request-content" style="padding: 24px; height: 100%; overflow-y: auto;"></div>
+            </div>
+
+            <!-- 見積書作成ページ -->
+            <div id="quotation-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div id="quotation-content" style="padding: 24px; height: 100%; overflow-y: auto;"></div>
+            </div>
+
+            <!-- バーコードリーダー版 作業票登録ページ -->
+            <div id="barcode-work-ticket-page" class="page" style="flex-direction: column; padding: 0; overflow: hidden;">
+                <div id="barcode-work-ticket-content" style="height: 100%; overflow-y: auto;"></div>
+            </div>
+
         </main>
 
         <!-- 右サイドバー -->
@@ -1694,6 +2862,9 @@
         </div>
     </div>
 
+    <!-- バーコードスキャンライブラリ (ZXing: QR/Code128/EAN等 対応) -->
+    <script src="https://unpkg.com/@zxing/browser@0.1.4/dist/zxing-browser.min.umd.js"></script>
+
     <!-- スクリプト -->
     <script src="config.js"></script>
     
@@ -1777,11 +2948,8 @@
     <!-- カスタムテーブルモーダル（汎用） -->
     <div id="custom-table-modal" class="modal" style="display: none;">
         <div class="modal-backdrop"></div>
-        <div class="modal-content" style="max-width: 1200px; width: 90%; max-height: 90vh; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; transform: scale(0.9); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
-            <!-- ヘッダー部分（動的生成） -->
+        <div class="modal-content custom-table-modal-content" style="max-width: 1100px; width: 92%; max-height: 88vh; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 48px rgba(0,0,0,0.12); display: flex; flex-direction: column; transform: scale(0.9); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
             <div class="custom-modal-header"></div>
-            
-            <!-- コンテンツ部分（動的生成） -->
             <div class="custom-modal-content"></div>
         </div>
     </div>
@@ -1976,10 +3144,18 @@
     </style>
     
     <script src="todo.js"></script>
+    <script src="task.js"></script>
     <script src="table-modal-config.js"></script>
+    <script src="js/polaris-production.js"></script>
+    <script src="js/erp-constants.js"></script>
     <script src="app.js"></script>
     <script src="custom-calendar.js"></script>
     <script src="drawing-number.js"></script>
     <script src="calendar-notification.js"></script>
+    <script src="js/worktime-entry.js"></script>
+    <script src="js/bom-import.js"></script>
+    <script src="js/acceptance.js"></script>
+    <script src="js/sales-module.js"></script>
+    <script src="js/barcode-module.js"></script>
 </body>
 </html>

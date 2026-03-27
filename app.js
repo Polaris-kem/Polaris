@@ -1,3 +1,4 @@
+// Polaris: 業務・用語・画面対応は docs/ を参照（業務コンテキスト.md, 用語・番号体系.md, 画面と業務の対応.md）
 // Supabaseクライアントの初期化
 // グローバル変数としてsupabaseを定義（重複宣言を防ぐ）
 if (typeof window.supabaseClient === 'undefined') {
@@ -545,16 +546,7 @@ function getColumnDisplayName(columnName) {
 
 // テーブル名を日本語に変換する関数
 function getTableDisplayName(tableName) {
-    if (TABLE_NAME_MAP[tableName]) {
-        return TABLE_NAME_MAP[tableName];
-    }
-    // カメルケースやスネークケースを日本語っぽく変換
-    const camelToJapanese = tableName
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/_/g, ' ')
-        .replace(/-/g, ' ')
-        .trim();
-    return camelToJapanese || tableName;
+    return tableName;
 }
 
 // ログイン状態の確認（常にログイン済みとして扱う）
@@ -563,6 +555,7 @@ function checkLoginStatus() {
     if (mainApp) {
         mainApp.style.display = 'block';
     }
+    if (typeof updateSidebarUserDisplay === 'function') updateSidebarUserDisplay();
     return true; // 常にログイン済みとして扱う
 }
 
@@ -670,6 +663,158 @@ function handleLogin(username, password, remember) {
         }
         checkLoginStatus();
         return true;
+    }
+}
+
+// 個人設定（ログインごと。localStorage に userSettings_{loginId} で保存）
+function getCurrentLoginId() {
+    return localStorage.getItem('loginId') || localStorage.getItem('username') || 'default';
+}
+function getUserSettings() {
+    const loginId = getCurrentLoginId();
+    const key = 'userSettings_' + loginId;
+    const raw = localStorage.getItem(key);
+    if (!raw) return {};
+    try {
+        return JSON.parse(raw);
+    } catch (e) {
+        return {};
+    }
+}
+function saveUserSettings(settings) {
+    const loginId = getCurrentLoginId();
+    const key = 'userSettings_' + loginId;
+    localStorage.setItem(key, JSON.stringify(settings));
+    updateSidebarUserDisplay();
+}
+
+// クイックアクションの定義（id, ラベル, アイコン, ページ）
+var QUICK_ACTIONS_DEF = [
+    { id: 'order-registration', label: '受注登録', icon: 'fa-file-invoice-dollar', page: 'order-registration' },
+    { id: 'drawing-number', label: '図面番号採番', icon: 'fa-drafting-compass', page: 'drawing-number' },
+    { id: 'construct-number', label: '工事番号採番', icon: 'fa-hashtag', page: 'construct-number' },
+    { id: 'search', label: '検索', icon: 'fa-search', page: 'search' },
+    { id: 'settings', label: '個人設定', icon: 'fa-user-cog', page: 'settings' }
+];
+function renderQuickActions() {
+    const grid = document.getElementById('quick-actions-grid');
+    const container = document.getElementById('dashboard-quick-actions');
+    if (!grid || !container) return;
+    const s = getUserSettings();
+    const show = s.showQuickActions !== false;
+    container.style.display = show ? '' : 'none';
+    var ids = s.quickActionIds;
+    if (!Array.isArray(ids) || ids.length === 0) {
+        ids = QUICK_ACTIONS_DEF.map(function(d) { return d.id; });
+    }
+    grid.innerHTML = '';
+    ids.forEach(function(id) {
+        var def = QUICK_ACTIONS_DEF.find(function(d) { return d.id === id; });
+        if (!def) return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quick-action-btn';
+        btn.innerHTML = '<i class="fas ' + def.icon + '"></i><span>' + def.label + '</span>';
+        btn.onclick = (function(p) { return function() { showPage(p); }; })(def.page);
+        grid.appendChild(btn);
+    });
+    var custom = s.customQuickActions;
+    if (Array.isArray(custom) && custom.length > 0) {
+        custom.forEach(function(item) {
+            if (!item || !item.url || !item.label) return;
+            var a = document.createElement('a');
+            a.href = item.url;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.className = 'quick-action-btn';
+            a.innerHTML = '<i class="fas fa-external-link-alt"></i><span>' + escapeHtml(item.label) + '</span>';
+            grid.appendChild(a);
+        });
+    }
+}
+function loadUserSettingsIntoForm() {
+    const s = getUserSettings();
+    const displayNameEl = document.getElementById('settings-display-name');
+    const quickActionsEl = document.getElementById('settings-show-quick-actions');
+    const notifyTasksEl = document.getElementById('settings-notify-tasks');
+    if (displayNameEl) displayNameEl.value = s.displayName || '';
+    if (quickActionsEl) quickActionsEl.checked = s.showQuickActions !== false;
+    if (notifyTasksEl) notifyTasksEl.checked = !!s.notifyTasks;
+    var ids = s.quickActionIds;
+    if (!Array.isArray(ids) || ids.length === 0) ids = QUICK_ACTIONS_DEF.map(function(d) { return d.id; });
+    var checks = document.querySelectorAll('#settings-quick-action-checks input[name="quick-action"]');
+    checks.forEach(function(cb) {
+        cb.checked = ids.indexOf(cb.value) !== -1;
+    });
+    var container = document.getElementById('settings-custom-urls');
+    if (container) {
+        container.innerHTML = '';
+        var list = s.customQuickActions;
+        if (!Array.isArray(list) || list.length === 0) {
+            addCustomUrlRow('', '');
+        } else {
+            list.forEach(function(item) {
+                addCustomUrlRow(item.label || '', item.url || '');
+            });
+        }
+    }
+}
+function addCustomUrlRow(label, url) {
+    var container = document.getElementById('settings-custom-urls');
+    if (!container) return;
+    var row = document.createElement('div');
+    row.className = 'settings-custom-url-row';
+    row.innerHTML = '<input type="text" class="form-input settings-custom-url-label" placeholder="表示名" value="' + (label ? escapeHtml(label) : '') + '">' +
+        '<input type="text" class="form-input settings-custom-url-url" placeholder="https://..." value="' + (url ? escapeHtml(url) : '') + '">' +
+        '<button type="button" class="btn-secondary btn-small settings-custom-url-remove" title="削除"><i class="fas fa-times"></i></button>';
+    var removeBtn = row.querySelector('.settings-custom-url-remove');
+    removeBtn.addEventListener('click', function() {
+        row.remove();
+    });
+    container.appendChild(row);
+}
+function initCustomUrlAddButton() {
+    var btn = document.getElementById('settings-add-custom-url');
+    if (btn) btn.addEventListener('click', function() { addCustomUrlRow('', ''); });
+}
+function saveUserSettingsFromForm() {
+    const displayNameEl = document.getElementById('settings-display-name');
+    const quickActionsEl = document.getElementById('settings-show-quick-actions');
+    const notifyTasksEl = document.getElementById('settings-notify-tasks');
+    var ids = [];
+    document.querySelectorAll('#settings-quick-action-checks input[name="quick-action"]:checked').forEach(function(cb) {
+        ids.push(cb.value);
+    });
+    if (ids.length === 0) ids = QUICK_ACTIONS_DEF.map(function(d) { return d.id; });
+    var customList = [];
+    document.querySelectorAll('.settings-custom-url-row').forEach(function(row) {
+        var labelEl = row.querySelector('.settings-custom-url-label');
+        var urlEl = row.querySelector('.settings-custom-url-url');
+        var label = labelEl ? labelEl.value.trim() : '';
+        var url = urlEl ? urlEl.value.trim() : '';
+        if (url) customList.push({ label: label || url, url: url });
+    });
+    const settings = {
+        displayName: displayNameEl ? displayNameEl.value.trim() : '',
+        showQuickActions: quickActionsEl ? quickActionsEl.checked : true,
+        quickActionIds: ids,
+        customQuickActions: customList,
+        notifyTasks: notifyTasksEl ? notifyTasksEl.checked : false
+    };
+    saveUserSettings(settings);
+}
+function updateSidebarUserDisplay() {
+    const s = getUserSettings();
+    var name = s.displayName || localStorage.getItem('username') || 'ログインユーザー';
+    const footerP = document.getElementById('sidebar-login-user');
+    if (footerP) footerP.textContent = 'ログインユーザー: ' + name;
+}
+function applyUserSettingsToDashboard() {
+    const s = getUserSettings();
+    const qa = document.getElementById('dashboard-quick-actions');
+    if (qa) {
+        qa.style.display = s.showQuickActions !== false ? '' : 'none';
+        if (typeof renderQuickActions === 'function') renderQuickActions();
     }
 }
 
@@ -1104,11 +1249,14 @@ async function initializeApp() {
         }, 100);
         
         setupEventListeners();
+        if (typeof refreshPolarisSavedSearchSelect === 'function') refreshPolarisSavedSearchSelect();
         updateCurrentTime();
         setInterval(updateCurrentTime, 1000);
         
         // 初期表示はダッシュボードページ（先に表示）
         showPage('dashboard');
+        if (typeof updateSidebarUserDisplay === 'function') updateSidebarUserDisplay();
+        if (typeof applyUserSettingsToDashboard === 'function') applyUserSettingsToDashboard();
         
         // タスクの読み込み
         setTimeout(() => {
@@ -1150,10 +1298,22 @@ function updateCurrentTime() {
 
 // イベントリスナーの設定
 function setupEventListeners() {
+    // 個人設定フォーム
+    const userSettingsForm = document.getElementById('user-settings-form');
+    if (userSettingsForm) {
+        userSettingsForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (typeof saveUserSettingsFromForm === 'function') saveUserSettingsFromForm();
+            showMessage('個人設定を保存しました', 'success');
+            showPage('dashboard');
+        });
+    }
+    if (typeof initCustomUrlAddButton === 'function') initCustomUrlAddButton();
     // メニューアイテム
     document.querySelectorAll('.menu-item').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const page = e.target.dataset.page;
+            const menuBtn = e.currentTarget;
+            const page = menuBtn.dataset.page;
             showPage(page);
         });
     });
@@ -1192,6 +1352,60 @@ function setupEventListeners() {
             if (e.key === 'Enter') {
                 applyFilters();
             }
+        });
+    }
+
+    // テーブル一覧画面の検索入力Enterキー対応
+    const listTableSearchInput = document.getElementById('list-table-search');
+    if (listTableSearchInput) {
+        listTableSearchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchAllTablesData();
+            }
+        });
+        
+        listTableSearchInput.addEventListener('input', () => {
+            filterListTableSelection();
+            const clearBtn = document.getElementById('clear-global-search-btn');
+            if (clearBtn) {
+                clearBtn.style.display = listTableSearchInput.value ? 'block' : 'none';
+            }
+        });
+    }
+
+    // 検索条件の保存・復元（生産管理設計指針 UI/UX）
+    const polarisSaveSearchBtn = document.getElementById('polaris-save-search-btn');
+    const polarisSavedSearchSelect = document.getElementById('polaris-saved-search-select');
+    if (polarisSaveSearchBtn && typeof window.PolarisProduction !== 'undefined') {
+        polarisSaveSearchBtn.addEventListener('click', function () {
+            const name = prompt('この検索条件の名前を入力してください');
+            if (name == null || !name.trim()) return;
+            const searchInput = document.getElementById('list-table-search');
+            const condition = {
+                tableName: currentTable || '',
+                searchText: searchInput ? searchInput.value : ''
+            };
+            window.PolarisProduction.saveSearchCondition(name.trim(), condition);
+            if (typeof refreshPolarisSavedSearchSelect === 'function') refreshPolarisSavedSearchSelect();
+            if (typeof showMessage === 'function') showMessage('検索条件を保存しました', 'success');
+        });
+    }
+    if (polarisSavedSearchSelect && typeof window.PolarisProduction !== 'undefined') {
+        polarisSavedSearchSelect.addEventListener('change', function () {
+            const id = this.value;
+            if (!id) return;
+            const item = window.PolarisProduction.loadSearchCondition(id);
+            if (!item || !item.condition) return;
+            const c = item.condition;
+            const searchInput = document.getElementById('list-table-search');
+            if (searchInput && c.searchText != null) searchInput.value = c.searchText;
+            if (c.tableName && typeof selectListTable === 'function') {
+                selectListTable(c.tableName);
+            } else {
+                filterListTableSelection();
+            }
+            this.value = '';
         });
     }
 
@@ -1257,6 +1471,14 @@ function setupEventListeners() {
                     showMessage('テーブルデータを更新しました', 'success');
                 }
             }
+        });
+    }
+
+    // 余剰在庫と照合（生産管理設計指針 在庫・余剰品活用）
+    const polarisSurplusCheckBtn = document.getElementById('polaris-surplus-check-btn');
+    if (polarisSurplusCheckBtn && typeof window.PolarisProduction !== 'undefined') {
+        polarisSurplusCheckBtn.addEventListener('click', function () {
+            if (typeof runPolarisSurplusCheck === 'function') runPolarisSurplusCheck();
         });
     }
 
@@ -1334,9 +1556,8 @@ function setupEventListeners() {
     document.querySelectorAll('.register-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const type = btn.dataset.type || e.target.closest('.register-btn')?.dataset.type;
-            // work-ticket、construct-number、drawing-numberはonclickで処理されるため、ここでは何もしない
-            if (type === 'construct-number' || type === 'work-ticket' || type === 'drawing-number') {
-                // onclickで処理されるため、イベントリスナーでは何もしない
+            // 以下は onclick でページ表示するためモーダルを開かない
+            if (type === 'construct-number' || type === 'work-ticket' || type === 'drawing-number' || type === 'accept-order' || type === 'misc-purchase' || type === 'misc-delivery' || type === 'shipping' || type === 'outsource-delivery' || type === 'parts-delivery' || type === 'surplus-register' || type === 'surplus-search' || type === 'project-shipping' || type === 'estimate-request' || type === 'quotation' || type === 'barcode-work-ticket') {
                 return;
             } else {
                 e.preventDefault();
@@ -1537,12 +1758,42 @@ function setupEventListeners() {
 
 }
 
+// ── モバイルサイドバー開閉 ──────────────────────────────────
+function toggleMobileSidebar() {
+    var sidebar = document.querySelector('.left-sidebar');
+    var overlay = document.getElementById('mobile-sidebar-overlay');
+    var btn     = document.getElementById('mobile-menu-btn');
+    if (!sidebar) return;
+    var isOpen = sidebar.classList.contains('mobile-open');
+    if (isOpen) {
+        sidebar.classList.remove('mobile-open');
+        if (overlay) overlay.style.display = 'none';
+        if (btn) btn.innerHTML = '<i class="fas fa-bars"></i>';
+    } else {
+        sidebar.classList.add('mobile-open');
+        if (overlay) overlay.style.display = 'block';
+        if (btn) btn.innerHTML = '<i class="fas fa-times"></i>';
+    }
+}
+function closeMobileSidebar() {
+    var sidebar = document.querySelector('.left-sidebar');
+    var overlay = document.getElementById('mobile-sidebar-overlay');
+    var btn     = document.getElementById('mobile-menu-btn');
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (overlay) overlay.style.display = 'none';
+    if (btn) btn.innerHTML = '<i class="fas fa-bars"></i>';
+}
+window.toggleMobileSidebar = toggleMobileSidebar;
+window.closeMobileSidebar  = closeMobileSidebar;
+
 // ページ表示切り替え
 function showPage(pageName) {
     console.log('showPage関数が呼ばれました:', pageName);
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-    
+    // モバイルではページ遷移時にサイドバーを閉じる
+    closeMobileSidebar();
+
     const pageEl = document.getElementById(`${pageName}-page`);
     const menuEl = document.querySelector(`[data-page="${pageName}"]`);
     
@@ -1555,16 +1806,553 @@ function showPage(pageName) {
     if (menuEl) {
         menuEl.classList.add('active');
     } else {
-        console.warn(`[data-page="${pageName}"]要素が見つかりません`);
+        // 納入予定カレンダー・加工進捗・機械の加工進捗は検索から開くため、検索をアクティブに
+        if (pageName === 'delivery-calendar' || pageName === 'processing-progress' || pageName === 'machine-progress' || pageName === 'cost-summary' || pageName === 'worktime-entry' || pageName === 'bom-import' || pageName === 'acceptance') {
+            const searchMenu = document.querySelector('[data-page="search"]');
+            if (searchMenu) searchMenu.classList.add('active');
+        } else if (pageName === 'estimate-request' || pageName === 'quotation' || pageName === 'barcode-work-ticket') {
+            const regMenu = document.querySelector('[data-page="register"]');
+            if (regMenu) regMenu.classList.add('active');
+        } else {
+            console.warn(`[data-page="${pageName}"]要素が見つかりません`);
+        }
     }
 
     if (pageName === 'work-ticket') {
-        // ... (省略)
-    } else if (pageName === 'list') {
-        showTableSelection();
+        // 作業票登録ページを開いた時の初期化
+        console.log('作業票登録ページを表示します');
+        setTimeout(() => {
+            console.log('generateWorkTicketFormPageを呼び出します');
+            const container = document.getElementById('work-ticket-page-content');
+            if (container) {
+                generateWorkTicketFormPage(container);
+            } else {
+                console.error('work-ticket-page-content要素が見つかりません');
+            }
+        }, 100);
+    } else if (pageName === 'construct-number') {
+        // 工事番号採番ページを開いた時の初期化
+        console.log('工事番号採番ページを表示します');
+        setTimeout(() => {
+            console.log('initializeConstructNumberPageを呼び出します');
+            initializeConstructNumberPage();
+        }, 100);
+    } else if (pageName === 'drawing-number') {
+        // 図面番号採番ページを開いた時の初期化
+        console.log('図面番号採番ページを表示します');
+        setTimeout(() => {
+            initializeDrawingNumberPage();
+        }, 100);
+    } else if (pageName === 'order-registration') {
+        setTimeout(() => { initOrderRegistrationPage(); }, 100);
+    } else if (pageName === 'accept-order-list') {
+        if (typeof window.closeCustomTableModal === 'function') window.closeCustomTableModal();
+        const customModal = document.getElementById('custom-table-modal');
+        if (customModal) customModal.style.display = 'none';
+        setTimeout(() => { initAcceptOrderListPage(); }, 100);
+    } else if (pageName === 'misc-purchase') {
+        setTimeout(() => { initMiscPurchasePage(); }, 100);
+    } else if (pageName === 'misc-delivery') {
+        setTimeout(() => { initMiscDeliveryPage(); }, 100);
+    } else if (pageName === 'shipping') {
+        setTimeout(() => { initShippingPage(); }, 100);
+    } else if (pageName === 'outsource-delivery') {
+        setTimeout(() => { initOutsourceDeliveryPage(); }, 100);
+    } else if (pageName === 'parts-delivery') {
+        setTimeout(() => { initPartsDeliveryPage(); }, 100);
+    } else if (pageName === 'surplus-register') {
+        setTimeout(() => { initSurplusRegisterPage(); }, 100);
+    } else if (pageName === 'surplus-search') {
+        setTimeout(() => { initSurplusSearchPage(); }, 100);
+    } else if (pageName === 'project-shipping') {
+        setTimeout(() => { initProjectShippingPage(); }, 100);
+    } else if (pageName === 'processing-progress') {
+        console.log('加工進捗ページを表示します');
+        setTimeout(() => { initializeProcessingProgressPage(); }, 100);
+    } else if (pageName === 'delivery-calendar') {
+        setTimeout(() => { initDeliveryCalendarPage(); }, 100);
+    } else if (pageName === 'machine-progress') {
+        setTimeout(() => { if (typeof initMachineProgressPage === 'function') initMachineProgressPage(); }, 100);
+    } else if (pageName === 'cost-summary') {
+        setTimeout(() => { if (typeof initCostSummaryPage === 'function') initCostSummaryPage(); }, 100);
     } else if (pageName === 'dashboard') {
-        // ... (省略)
+        applyUserSettingsToDashboard();
+        // 少し遅延してからupdateDashboardを呼ぶ（DOMが確実に更新されるまで待つ）
+        setTimeout(() => {
+            updateDashboard();
+            setTimeout(() => {
+                if (typeof goToToday === 'function') goToToday();
+            }, 200);
+        }, 100);
+    } else if (pageName === 'worktime-entry') {
+        setTimeout(() => { if (typeof initWorktimeEntryPage === 'function') initWorktimeEntryPage(); }, 100);
+    } else if (pageName === 'bom-import') {
+        setTimeout(() => { if (typeof initBomImportPage === 'function') initBomImportPage(); }, 100);
+    } else if (pageName === 'acceptance') {
+        setTimeout(() => { if (typeof initAcceptancePage === 'function') initAcceptancePage(); }, 100);
+    } else if (pageName === 'estimate-request') {
+        setTimeout(() => { if (typeof initEstimateRequestPage === 'function') initEstimateRequestPage(); }, 100);
+    } else if (pageName === 'quotation') {
+        setTimeout(() => { if (typeof initQuotationPage === 'function') initQuotationPage(); }, 100);
+    } else if (pageName === 'barcode-work-ticket') {
+        setTimeout(() => { if (typeof initBarcodeWorkTicketPage === 'function') initBarcodeWorkTicketPage(); }, 100);
+    } else if (pageName === 'bulletin') {
+        // 掲示板ページを開いた時の初期化
+        setTimeout(() => {
+            renderBulletinsFull();
+        }, 100);
+    } else if (pageName === 'settings') {
+        if (typeof loadUserSettingsIntoForm === 'function') loadUserSettingsIntoForm();
+    } else if (pageName === 'todo') {
+        if (typeof renderTodos === 'function') {
+            renderTodos();
+        }
+    } else if (pageName === 'list') {
+        // サイドバーの「一覧表示」をクリックした時は、常にテーブル選択画面を表示する
+        showTableSelection();
+        if (typeof refreshPolarisSavedSearchSelect === 'function') refreshPolarisSavedSearchSelect();
     }
+}
+
+// =========================
+// 原価集計（夜間バッチ集計テーブル参照）
+// =========================
+const COST_SUMMARY_LEVELS = {
+    construct: {
+        label: '工事番号別',
+        drillTo: 'machine',
+        tableCandidates: [
+            't_工事番号別原価集計', 'T_工事番号別原価集計', 'T_工事番号別原価集計 ',
+            't_koujibangou_genka', 't_construct_cost_summary', 't_cost_by_construct',
+            't_costsummary_construct', 't_cost_summary_construct'
+        ],
+        searchCols: ['constructno', 'construct_no', 'koujibangou', '工事番号', 'projectname', 'project_name', '工事名', 'name', 'drawingname', 'drawing_name']
+    },
+    machine: {
+        label: '機械別',
+        drillTo: 'unit',
+        tableCandidates: [
+            't_機械別原価集計', 'T_機械別原価集計',
+            't_machine_cost_summary', 't_cost_by_machine',
+            't_costsummary_machine', 't_cost_summary_machine'
+        ],
+        searchCols: ['constructno', 'construct_no', 'koujibangou', '工事番号', 'machine', 'machinecode', 'machine_code', '機械', 'machinename', 'machine_name']
+    },
+    unit: {
+        label: 'ユニット別',
+        drillTo: 'drawing',
+        tableCandidates: [
+            't_ユニット別原価集計', 'T_ユニット別原価集計',
+            't_unit_cost_summary', 't_cost_by_unit',
+            't_costsummary_unit', 't_cost_summary_unit'
+        ],
+        searchCols: ['constructno', 'construct_no', 'koujibangou', '工事番号', 'machine', 'machinecode', 'machine_code', '機械', 'unit', 'unitcode', 'unit_code', 'ユニット', 'unitname', 'unit_name']
+    },
+    drawing: {
+        label: '名称・図面別',
+        drillTo: null,
+        tableCandidates: [
+            't_図面番号別原価集計', 'T_図面番号別原価集計',
+            't_drawing_cost_summary', 't_cost_by_drawing',
+            't_costsummary_drawing', 't_cost_summary_drawing',
+            't_cost_by_part', 't_part_cost_summary'
+        ],
+        searchCols: [
+            'constructno', 'construct_no', 'koujibangou', '工事番号',
+            'machine', 'machinecode', 'machine_code', '機械',
+            'unit', 'unitcode', 'unit_code', 'ユニット',
+            'drawingno', 'drawing_no', 'drawing', '図面番号', 'zumennumber', 'zumennno',
+            'name', 'itemname', 'partname', 'part_name', '品名', '名称'
+        ]
+    }
+};
+
+function initCostSummaryPage() {
+    window._cs = window._cs || {
+        inited: false,
+        level: 'construct',
+        query: '',
+        filters: { constructno: '', machine: '', unit: '' },
+        results: { construct: [], machine: [], unit: [], drawing: [] },
+        tables: { construct: null, machine: null, unit: null, drawing: null },
+        colsByTable: {}
+    };
+
+    const st = window._cs;
+    if (!st.inited) {
+        const queryEl = document.getElementById('cs-query');
+        const searchBtn = document.getElementById('cs-search-btn');
+        const clearBtn = document.getElementById('cs-clear-btn');
+        const tabs = document.getElementById('cs-tabs');
+
+        if (searchBtn) searchBtn.onclick = () => runCostSummarySearch();
+        if (clearBtn) clearBtn.onclick = () => clearCostSummary();
+        if (queryEl) {
+            queryEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    runCostSummarySearch();
+                }
+            });
+        }
+        if (tabs) {
+            tabs.querySelectorAll('.cs-tab').forEach(btn => {
+                btn.onclick = () => setCostSummaryLevel(btn.getAttribute('data-level') || 'construct');
+            });
+        }
+
+        st.inited = true;
+    }
+
+    // 初回表示は何もしない（検索待ち）
+    setCostSummaryLevel(st.level || 'construct');
+    renderCostSummaryBreadcrumb();
+}
+
+function clearCostSummary() {
+    const st = window._cs;
+    if (!st) return;
+    st.query = '';
+    st.filters = { constructno: '', machine: '', unit: '' };
+    st.results = { construct: [], machine: [], unit: [], drawing: [] };
+    const q = document.getElementById('cs-query');
+    if (q) q.value = '';
+    updateCostSummaryCounts();
+    renderCostSummaryBreadcrumb();
+    renderCostSummaryTable(st.level || 'construct');
+    const tbody = document.getElementById('cs-tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="10" class="cs-empty">検索条件を入力して「検索」を押してください</td></tr>';
+    const status = document.getElementById('cs-status');
+    if (status) status.textContent = '';
+}
+
+function setCostSummaryLevel(level) {
+    const st = window._cs;
+    if (!st) return;
+    if (!COST_SUMMARY_LEVELS[level]) level = 'construct';
+    st.level = level;
+
+    const tabs = document.getElementById('cs-tabs');
+    if (tabs) {
+        tabs.querySelectorAll('.cs-tab').forEach(btn => {
+            const lv = btn.getAttribute('data-level');
+            const active = (lv === level);
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+    }
+
+    const title = document.getElementById('cs-table-title');
+    if (title) title.textContent = COST_SUMMARY_LEVELS[level].label;
+
+    renderCostSummaryTable(level);
+}
+
+async function runCostSummarySearch() {
+    const st = window._cs;
+    if (!st) return;
+    const qEl = document.getElementById('cs-query');
+    st.query = (qEl && qEl.value != null) ? qEl.value.trim() : (st.query || '');
+
+    const status = document.getElementById('cs-status');
+    if (status) status.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 検索中...';
+
+    const levels = Object.keys(COST_SUMMARY_LEVELS);
+    const results = await Promise.all(levels.map(lv => queryCostSummaryLevel(lv, st.query, st.filters)));
+    levels.forEach((lv, idx) => { st.results[lv] = results[idx] || []; });
+
+    updateCostSummaryCounts();
+    renderCostSummaryBreadcrumb();
+    renderCostSummaryTable(st.level || 'construct');
+
+    if (status) status.textContent = `${st.query ? `「${st.query}」` : '条件'}：${(st.results[st.level] || []).length} 件`;
+}
+
+function updateCostSummaryCounts() {
+    const st = window._cs;
+    if (!st) return;
+    const set = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = String(n || 0); };
+    set('cs-count-construct', (st.results.construct || []).length);
+    set('cs-count-machine', (st.results.machine || []).length);
+    set('cs-count-unit', (st.results.unit || []).length);
+    set('cs-count-drawing', (st.results.drawing || []).length);
+}
+
+function renderCostSummaryBreadcrumb() {
+    const st = window._cs;
+    const el = document.getElementById('cs-breadcrumb');
+    if (!st || !el) return;
+
+    const chips = [];
+    if (st.filters.constructno) chips.push({ key: 'constructno', label: `工事番号: ${escapeHtml(st.filters.constructno)}` });
+    if (st.filters.machine) chips.push({ key: 'machine', label: `機械: ${escapeHtml(st.filters.machine)}` });
+    if (st.filters.unit) chips.push({ key: 'unit', label: `ユニット: ${escapeHtml(st.filters.unit)}` });
+
+    if (chips.length === 0) {
+        el.innerHTML = '';
+        return;
+    }
+
+    el.innerHTML = chips.map(c => `
+        <span class="cs-chip" data-key="${c.key}">
+            ${c.label}
+            <button type="button" class="cs-chip-x" title="解除" aria-label="解除">×</button>
+        </span>
+    `).join('');
+
+    el.querySelectorAll('.cs-chip').forEach(chip => {
+        const key = chip.getAttribute('data-key');
+        const x = chip.querySelector('.cs-chip-x');
+        if (!x) return;
+        x.onclick = () => {
+            if (key === 'constructno') st.filters.constructno = '';
+            if (key === 'machine') st.filters.machine = '';
+            if (key === 'unit') st.filters.unit = '';
+            runCostSummarySearch();
+        };
+    });
+}
+
+async function queryCostSummaryLevel(level, q, filters) {
+    try {
+        const supabase = getSupabaseClient();
+        if (!supabase) return [];
+        const cfg = COST_SUMMARY_LEVELS[level];
+        if (!cfg) return [];
+
+        const st = window._cs;
+        if (!st.tables[level]) {
+            st.tables[level] = await findTableName(cfg.tableCandidates);
+        }
+        const table = st.tables[level];
+        if (!table) return [];
+
+        const cols = await ensureCostSummaryColumns(table);
+        const colSet = cols ? new Set(cols) : null;
+
+        let query = supabase.from(table).select('*');
+
+        // ドリルダウン用フィルタ（存在する列だけ適用）
+        if (filters && colSet) {
+            if (filters.constructno && hasAnyCol(colSet, ['constructno', 'construct_no', 'koujibangou', '工事番号'])) {
+                query = query.eq(pickExistingCol(colSet, ['constructno', 'construct_no', 'koujibangou', '工事番号']), filters.constructno);
+            }
+            if (filters.machine && hasAnyCol(colSet, ['machine', 'machinecode', 'machine_code', '機械'])) {
+                query = query.eq(pickExistingCol(colSet, ['machine', 'machinecode', 'machine_code', '機械']), filters.machine);
+            }
+            if (filters.unit && hasAnyCol(colSet, ['unit', 'unitcode', 'unit_code', 'ユニット'])) {
+                query = query.eq(pickExistingCol(colSet, ['unit', 'unitcode', 'unit_code', 'ユニット']), filters.unit);
+            }
+        }
+
+        const qq = (q || '').trim();
+        if (qq) {
+            const candidates = cfg.searchCols || [];
+            const existing = (colSet ? candidates.filter(c => colSet.has(c)) : candidates);
+            const ors = existing
+                .filter(Boolean)
+                .map(c => `${c}.ilike.%${escapeForIlike(qq)}%`)
+                .join(',');
+            if (ors) query = query.or(ors);
+        }
+
+        const { data, error } = await query.limit(200);
+        if (error) {
+            // 列名不一致などでor/eqが失敗した場合のフォールバック：クライアント側で絞り込み
+            const { data: all } = await supabase.from(table).select('*').limit(200);
+            return filterCostSummaryClient(all || [], qq);
+        }
+        return filterCostSummaryClient(data || [], qq);
+    } catch (e) {
+        return [];
+    }
+}
+
+function filterCostSummaryClient(rows, q) {
+    const qq = (q || '').trim();
+    if (!qq) return rows || [];
+    const needle = qq.toLowerCase();
+    return (rows || []).filter(r => {
+        try {
+            const blob = Object.values(r || {}).join(' ').toLowerCase();
+            return blob.includes(needle);
+        } catch (_) {
+            return false;
+        }
+    });
+}
+
+async function ensureCostSummaryColumns(table) {
+    const st = window._cs;
+    if (!st) return null;
+    if (st.colsByTable[table]) return st.colsByTable[table];
+    try {
+        const supabase = getSupabaseClient();
+        if (!supabase) return null;
+        const { data } = await supabase.from(table).select('*').limit(1);
+        const cols = (data && data[0]) ? Object.keys(data[0]) : null;
+        st.colsByTable[table] = cols;
+        return cols;
+    } catch (e) {
+        st.colsByTable[table] = null;
+        return null;
+    }
+}
+
+function hasAnyCol(colSet, cols) {
+    return cols.some(c => colSet.has(c));
+}
+
+function pickExistingCol(colSet, cols) {
+    for (const c of cols) if (colSet.has(c)) return c;
+    return cols[0];
+}
+
+function escapeForIlike(s) {
+    // PostgRESTのor()で使うので、最低限 % を逃がす（' は使わない）
+    return String(s).replace(/%/g, '\\%');
+}
+
+function csGet(row, ...keys) {
+    for (const k of keys) {
+        if (!k) continue;
+        if (row && Object.prototype.hasOwnProperty.call(row, k) && row[k] != null && row[k] !== '') return row[k];
+    }
+    return '';
+}
+
+function csNum(row, ...keys) {
+    const v = csGet(row, ...keys);
+    if (v == null || v === '') return 0;
+    const n = Number(String(v).replace(/,/g, ''));
+    return Number.isFinite(n) ? n : 0;
+}
+
+function csMoney(n) {
+    if (n == null) return '';
+    const nn = Number(n);
+    if (!Number.isFinite(nn)) return '';
+    return nn.toLocaleString('ja-JP');
+}
+
+function csPct(n) {
+    const nn = Number(n);
+    if (!Number.isFinite(nn)) return '';
+    return nn.toFixed(1) + '%';
+}
+
+function buildCostCells(row) {
+    const sales = csNum(row, 'sales', 'uriage', '売上', 'amount', 'orderamount', '受注金額', 'receivable', '売掛金');
+    const purchased = csNum(row, 'purchased', 'purchase', 'purchasedparts', 'purchased_parts', '購入', '購入部品費', 'purchaseparts', '購買費');
+    const outsource = csNum(row, 'outsource', 'outsourcing', '外注', '外注加工費', 'subcontract', 'subcontract_cost');
+    const material = csNum(row, 'material', '材料', '材料費', 'rawmaterial', 'raw_material');
+    const misc = csNum(row, 'misc', '諸経費', 'overhead', 'expenses', 'expense');
+    const internal = csNum(row, 'internal', '社内', '社内加工費', 'labor', '工数費', 'inhouse');
+
+    const costTotal = csNum(row, 'costtotal', 'cost_total', '原価合計', 'totalcost', 'total_cost') || (purchased + outsource + material + misc + internal);
+    const profit = csNum(row, 'profit', '利益', 'grossprofit', 'gross_profit') || (sales ? (sales - costTotal) : 0);
+    const profitRate = csNum(row, 'profitrate', 'profit_rate', '利益率', 'margin', 'margin_rate') || (sales ? (profit / sales) * 100 : 0);
+
+    return { sales, costTotal, profit, profitRate, purchased, outsource, material, misc, internal };
+}
+
+function buildCostKey(level, row) {
+    const c = csGet(row, 'constructno', 'construct_no', 'koujibangou', '工事番号');
+    const m = csGet(row, 'machine', 'machinecode', 'machine_code', '機械');
+    const u = csGet(row, 'unit', 'unitcode', 'unit_code', 'ユニット');
+    const d = csGet(row, 'drawingno', 'drawing_no', 'drawing', '図面番号');
+    const name = csGet(row, 'name', 'itemname', 'partname', 'part_name', '品名', '名称');
+
+    if (level === 'construct') return c || '(工事番号不明)';
+    if (level === 'machine') return [c, m].filter(Boolean).join(' / ') || '(キー不明)';
+    if (level === 'unit') return [c, m, u].filter(Boolean).join(' / ') || '(キー不明)';
+    return [c, m, u, d || name].filter(Boolean).join(' / ') || '(キー不明)';
+}
+
+function renderCostSummaryTable(level) {
+    const st = window._cs;
+    if (!st) return;
+    const rows = st.results[level] || [];
+    const tbody = document.getElementById('cs-tbody');
+    const thead = document.getElementById('cs-thead');
+    if (!tbody || !thead) return;
+
+    thead.innerHTML = `
+        <tr>
+            <th>${escapeHtml(COST_SUMMARY_LEVELS[level].label)}キー</th>
+            <th style="text-align:right;">売上</th>
+            <th style="text-align:right;">原価合計</th>
+            <th style="text-align:right;">利益</th>
+            <th style="text-align:right;">利益率</th>
+            <th style="text-align:right;">購入</th>
+            <th style="text-align:right;">外注</th>
+            <th style="text-align:right;">材料</th>
+            <th style="text-align:right;">諸経費</th>
+            <th style="text-align:right;">社内</th>
+        </tr>
+    `;
+
+    if (!rows || rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="cs-empty">該当データはありません</td></tr>';
+        return;
+    }
+
+    const drillTo = COST_SUMMARY_LEVELS[level].drillTo;
+    tbody.innerHTML = rows.slice(0, 200).map((r, idx) => {
+        const key = buildCostKey(level, r);
+        const costs = buildCostCells(r);
+        const clickable = !!drillTo;
+        const cls = clickable ? 'cs-row cs-row-clickable' : 'cs-row';
+        return `
+            <tr class="${cls}" data-level="${level}" data-index="${idx}" ${clickable ? 'title="クリックで下位へ"' : ''}>
+                <td class="cs-key">${escapeHtml(String(key))}</td>
+                <td class="cs-num">${csMoney(costs.sales)}</td>
+                <td class="cs-num">${csMoney(costs.costTotal)}</td>
+                <td class="cs-num ${costs.profit < 0 ? 'cs-neg' : ''}">${csMoney(costs.profit)}</td>
+                <td class="cs-num">${csPct(costs.profitRate)}</td>
+                <td class="cs-num">${csMoney(costs.purchased)}</td>
+                <td class="cs-num">${csMoney(costs.outsource)}</td>
+                <td class="cs-num">${csMoney(costs.material)}</td>
+                <td class="cs-num">${csMoney(costs.misc)}</td>
+                <td class="cs-num">${csMoney(costs.internal)}</td>
+            </tr>
+        `;
+    }).join('');
+
+    // 行クリック（ドリルダウン）
+    tbody.querySelectorAll('.cs-row-clickable').forEach(tr => {
+        tr.onclick = () => {
+            const lv = tr.getAttribute('data-level');
+            const i = Number(tr.getAttribute('data-index'));
+            const row = (st.results[lv] || [])[i];
+            if (!row) return;
+            drillDownCostSummary(lv, row);
+        };
+    });
+}
+
+function drillDownCostSummary(level, row) {
+    const st = window._cs;
+    if (!st) return;
+    const next = COST_SUMMARY_LEVELS[level] ? COST_SUMMARY_LEVELS[level].drillTo : null;
+    if (!next) return;
+
+    if (level === 'construct') {
+        st.filters.constructno = String(csGet(row, 'constructno', 'construct_no', 'koujibangou', '工事番号') || '').trim();
+        st.filters.machine = '';
+        st.filters.unit = '';
+    } else if (level === 'machine') {
+        st.filters.constructno = String(csGet(row, 'constructno', 'construct_no', 'koujibangou', '工事番号') || st.filters.constructno || '').trim();
+        st.filters.machine = String(csGet(row, 'machine', 'machinecode', 'machine_code', '機械') || '').trim();
+        st.filters.unit = '';
+    } else if (level === 'unit') {
+        st.filters.constructno = String(csGet(row, 'constructno', 'construct_no', 'koujibangou', '工事番号') || st.filters.constructno || '').trim();
+        st.filters.machine = String(csGet(row, 'machine', 'machinecode', 'machine_code', '機械') || st.filters.machine || '').trim();
+        st.filters.unit = String(csGet(row, 'unit', 'unitcode', 'unit_code', 'ユニット') || '').trim();
+    }
+
+    setCostSummaryLevel(next);
+    runCostSummarySearch();
 }
 
 // テーブル選択画面を表示
@@ -1644,7 +2432,16 @@ function selectListTable(tableName) {
 function filterListTableSelection() {
     const searchTerm = document.getElementById('list-table-search').value.toLowerCase();
     const grid = document.getElementById('list-table-grid');
+    const resultsArea = document.getElementById('global-search-results');
+    const gridTitle = document.getElementById('table-grid-title');
+    
     if (!grid) return;
+    
+    // 検索語が空の場合は結果エリアを隠す
+    if (!searchTerm) {
+        if (resultsArea) resultsArea.style.display = 'none';
+        if (gridTitle) gridTitle.style.display = 'block';
+    }
     
     const cards = grid.children;
     for (let card of cards) {
@@ -1657,10 +2454,267 @@ function filterListTableSelection() {
     }
 }
 
+function refreshPolarisSavedSearchSelect() {
+    const sel = document.getElementById('polaris-saved-search-select');
+    if (!sel || typeof window.PolarisProduction === 'undefined') return;
+    const list = window.PolarisProduction.getSavedSearches();
+    sel.innerHTML = '<option value="">保存した条件で復元</option>';
+    list.forEach(function (item) {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = item.name + (item.condition && item.condition.tableName ? ' (' + item.condition.tableName + ')' : '');
+        sel.appendChild(opt);
+    });
+}
+
+function updatePolarisSurplusCheckButtonVisibility() {
+    const btn = document.getElementById('polaris-surplus-check-btn');
+    if (!btn) return;
+    if (!tableData || tableData.length === 0) {
+        btn.style.display = 'none';
+        return;
+    }
+    var columns = Object.keys(tableData[0]);
+    var surplusKeys = ['inventoryno', 'surplusno', 'constructno', 'drawingno', 'drawing', 'partno', 'partname', '図面番号', '品番', '工事番号'];
+    var hasRelevant = columns.some(function (col) {
+        var lower = col.toLowerCase();
+        return surplusKeys.some(function (k) { return lower === k.toLowerCase() || lower.indexOf(k) !== -1; });
+    });
+    if (!hasRelevant) {
+        hasRelevant = columns.some(function (col) {
+            return col === 'InventoryNo' || col === 'SurplusNo' || col === 'ConstructNo' || col === 'DrawingNo' || col === 'PartNo';
+        });
+    }
+    btn.style.display = hasRelevant ? '' : 'none';
+}
+
+async function runPolarisSurplusCheck() {
+    if (typeof window.PolarisProduction === 'undefined') return;
+    if (!currentTable || !filteredData || filteredData.length === 0) {
+        if (typeof showMessage === 'function') showMessage('テーブルを選択し、データを表示してから実行してください', 'warning');
+        return;
+    }
+    const tbody = document.getElementById('table-body');
+    if (!tbody) return;
+    const sb = getSupabaseClient();
+    if (!sb) return;
+    if (typeof showMessage === 'function') showMessage('余剰在庫を照合しています...', 'info');
+    try {
+        const { data: surplusRows, error } = await sb.from('t_surplus').select('inventoryno,surplusno,constructno').limit(2000);
+        if (error) throw error;
+        const keySet = new Set();
+        (surplusRows || []).forEach(function (r) {
+            if (r.inventoryno) keySet.add(String(r.inventoryno).trim());
+            if (r.surplusno) keySet.add(String(r.surplusno).trim());
+            if (r.constructno) keySet.add(String(r.constructno).trim());
+        });
+        const start = (currentPage - 1) * itemsPerPage;
+        const pageData = filteredData.slice(start, start + itemsPerPage);
+        const rows = tbody.querySelectorAll('tr');
+        let matchCount = 0;
+        pageData.forEach(function (row, i) {
+            const keys = window.PolarisProduction.getSurplusMatchKeys(row);
+            const has = keys.some(function (k) { return keySet.has(k); });
+            const tr = rows[i];
+            if (tr) {
+                if (has) {
+                    tr.classList.add('polaris-surplus-match');
+                    tr.title = '余剰在庫に一致する可能性あり: ' + keys.filter(function (k) { return keySet.has(k); }).join(', ');
+                    matchCount++;
+                } else {
+                    tr.classList.remove('polaris-surplus-match');
+                    tr.removeAttribute('title');
+                }
+            }
+        });
+        if (typeof showMessage === 'function') showMessage('照合完了。このページで' + matchCount + '件が在庫ありの可能性があります。', matchCount > 0 ? 'success' : 'info');
+    } catch (e) {
+        console.warn('余剰在庫チェック:', e);
+        if (typeof showMessage === 'function') showMessage('余剰在庫の照合に失敗しました: ' + (e.message || e), 'error');
+    }
+}
+
+// 全テーブルのデータを横断検索
+async function searchAllTablesData() {
+    const searchTerm = document.getElementById('list-table-search').value.trim();
+    if (!searchTerm) {
+        showMessage('検索キーワードを入力してください', 'warning');
+        return;
+    }
+
+    // 検索開始時に流れ星を降らせる
+    createShootingStars(false);
+
+    const statusEl = document.getElementById('global-search-status');
+    const progressEl = document.getElementById('global-search-progress');
+    const resultsArea = document.getElementById('global-search-results');
+    const resultsList = document.getElementById('global-search-results-list');
+    const resultCountEl = document.getElementById('global-search-result-count');
+    const gridTitle = document.getElementById('table-grid-title');
+
+    if (statusEl) statusEl.style.display = 'block';
+    if (resultsArea) resultsArea.style.display = 'flex';
+    if (resultsList) resultsList.innerHTML = '';
+    if (gridTitle) gridTitle.style.display = 'none';
+
+    let totalHits = 0;
+    const supabase = getSupabaseClient();
+    const searchWords = searchTerm.split(/\s+/).filter(w => w.length > 0);
+
+    console.log('検索開始:', searchTerm, '対象テーブル数:', availableTables.length);
+
+            // 各単語について、いずれかのカラムに含まれているか（OR）を、単語ごとにANDで繋ぐ
+            const searchPromises = availableTables.map(async (table) => {
+                try {
+                    // カラム一覧を取得するために最初の1件を取得
+                    const { data: sampleData, error: sampleError } = await supabase.from(table).select('*').limit(1);
+                    if (sampleError) {
+                        console.warn(`テーブル ${table} のカラム取得に失敗:`, sampleError);
+                        return null;
+                    }
+                    if (!sampleData || sampleData.length === 0) return null;
+
+                    const columns = Object.keys(sampleData[0]);
+                    let query = supabase.from(table).select('*');
+                    
+                    // 各単語について、いずれかのカラムに含まれているか（OR）を、単語ごとにANDで繋ぐ
+                    for (const word of searchWords) {
+                        const wordOrConditions = [];
+                        const wordNum = parseFloat(word);
+                        const isNumeric = !isNaN(wordNum) && /^\d+$/.test(word);
+                        
+                        columns.forEach(col => {
+                            // 全てのカラムに対して、まずは文字列としての ilike 検索を試みる
+                            wordOrConditions.push(`"${col}".ilike.%${word}%`);
+                            
+                            // キーワードが数字の場合は、数値としての完全一致も OR に含める
+                            if (isNumeric) {
+                                wordOrConditions.push(`"${col}".eq.${wordNum}`);
+                            }
+                        });
+                        
+                        if (wordOrConditions.length > 0) {
+                            query = query.or(wordOrConditions.join(','));
+                        }
+                    }
+                    
+                    const { data: hits, error: searchError } = await query.limit(10);
+                    if (searchError) {
+                        console.warn(`テーブル ${table} の検索中にエラー:`, searchError);
+                        return null;
+                    }
+
+                    if (hits && hits.length > 0) {
+                        return {
+                            table: table,
+                            displayName: getTableDisplayName(table),
+                            hits: hits
+                        };
+                    }
+                } catch (e) {
+                    console.error(`テーブル ${table} の処理中に例外発生:`, e);
+                }
+                return null;
+            });
+
+            // バッチ処理で実行（一度に大量のリクエストを送らないようにする）
+            const batchSize = 5;
+            const results = [];
+            for (let i = 0; i < searchPromises.length; i += batchSize) {
+                const batch = searchPromises.slice(i, i + batchSize);
+                const batchResults = await Promise.all(batch);
+                results.push(...batchResults);
+                
+                // 進行状況を更新
+                const progress = Math.round(((i + batch.length) / availableTables.length) * 100);
+                if (progressEl) progressEl.style.width = `${progress}%`;
+            }
+    
+    // 結果を表示
+    results.filter(r => r !== null).forEach(result => {
+        const { table, displayName, hits } = result;
+        totalHits += hits.length;
+        if (resultCountEl) resultCountEl.textContent = `${totalHits}件ヒット`;
+
+        // 結果カードを作成
+        const tableResult = document.createElement('div');
+        tableResult.className = 'dashboard-card';
+        tableResult.style.cssText = 'padding: 12px 16px; border-left: 4px solid var(--primary); background: #f8fafc; margin-bottom: 8px;';
+        
+        let hitsHtml = hits.map(hit => {
+            // ヒットした行の内容を表示（検索語が含まれる項目を強調）
+            const matchedEntries = Object.entries(hit)
+                .filter(([k, v]) => {
+                    if (!v) return false;
+                    const valStr = String(v).toLowerCase();
+                    return searchWords.some(word => valStr.includes(word.toLowerCase()));
+                });
+
+            const summary = matchedEntries
+                .map(([k, v]) => {
+                    let valDisplay = String(v);
+                    searchWords.forEach(word => {
+                        const reg = new RegExp(`(${word})`, 'gi');
+                        valDisplay = valDisplay.replace(reg, '<mark style="background: #fef08a; padding: 0 2px; border-radius: 2px;">$1</mark>');
+                    });
+                    return `<span style="color: var(--text-tertiary); font-size: 10px;">${k}:</span> <span style="font-size: 12px;">${valDisplay}</span>`;
+                })
+                .join(' | ');
+            
+            return `<div style="padding: 6px 0; border-bottom: 1px solid #edf2f7; line-height: 1.4;">${summary}</div>`;
+        }).join('');
+
+        tableResult.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; height: 38px;">
+                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                    <i class="fas fa-table" style="color: var(--primary); font-size: 12px;"></i>
+                    <div style="font-weight: 800; color: var(--text-primary); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        ${displayName} 
+                        <span style="font-size: 10px; font-weight: 400; color: var(--text-tertiary); margin-left: 4px; font-family: monospace;">${table}</span>
+                    </div>
+                    <span style="font-size: 10px; background: var(--primary); color: white; padding: 1px 6px; border-radius: 8px;">${hits.length}</span>
+                </div>
+                <button class="btn-primary" onclick="selectListTable('${table}')" style="padding: 0 12px; height: 28px; font-size: 11px; white-space: nowrap; display: flex; align-items: center; gap: 4px;">
+                    <i class="fas fa-external-link-alt" style="font-size: 10px;"></i> 開く
+                </button>
+            </div>
+            <div style="max-height: 150px; overflow-y: auto; padding-right: 4px;">${hitsHtml}</div>
+        `;
+        resultsList.appendChild(tableResult);
+    });
+
+    if (statusEl) statusEl.style.display = 'none';
+    if (totalHits === 0) {
+        resultsList.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-tertiary); font-size: 13px;">データの中身に一致するものは見つかりませんでした。</div>';
+    }
+    
+    // テーブル一覧もフィルタリング（テーブル名でのヒットも残す）
+    filterListTableSelection();
+}
+
+// 検索内容をクリア
+function clearGlobalSearch() {
+    const searchInput = document.getElementById('list-table-search');
+    const resultsArea = document.getElementById('global-search-results');
+    const gridTitle = document.getElementById('table-grid-title');
+    const clearBtn = document.getElementById('clear-global-search-btn');
+    
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+        filterListTableSelection();
+    }
+    if (resultsArea) resultsArea.style.display = 'none';
+    if (gridTitle) gridTitle.style.display = 'block';
+    if (clearBtn) clearBtn.style.display = 'none';
+}
+
 // グローバルに公開
 window.showTableSelection = showTableSelection;
 window.selectListTable = selectListTable;
 window.filterListTableSelection = filterListTableSelection;
+window.searchAllTablesData = searchAllTablesData;
+window.clearGlobalSearch = clearGlobalSearch;
 
 
 // ダッシュボードの更新
@@ -4558,7 +5612,8 @@ async function loadTables() {
             console.log('テーブルが見つからないため、よく使われるテーブル名を確認します...');
             const commonTables = [
                 'machines', 'machine_codes', 'items', 'products', 'orders', 't_acceptorder', '取引先',
-                't_staffcode', 't_workcode', 't_workdepartment', 't_construction', 't_companycode'
+                't_staffcode', 't_workcode', 't_workdepartment', 't_construction', 't_companycode',
+                't_accountcode'
             ];
             for (const tableName of commonTables) {
                 try {
@@ -4719,11 +5774,18 @@ function updateTableList() {
 async function loadTableData(tableName) {
     if (!tableName) return;
 
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+        console.error('loadTableData: Supabaseクライアントが初期化されていません');
+        showMessage('データベースに接続されていません。ページを再読み込みしてください。', 'error');
+        return;
+    }
+
     console.log('テーブルデータの読み込みを開始:', tableName);
     
     try {
         // テーブル名にスペースが含まれる場合は、そのまま使用（Supabaseは引用符で自動処理）
-        const { data, error, count } = await getSupabaseClient()
+        const { data, error, count } = await supabase
             .from(tableName)
             .select('*', { count: 'exact' })
             .limit(10000);
@@ -4754,6 +5816,7 @@ async function loadTableData(tableName) {
         updateSearchFields(tableData);
         displayTable();
         updateSelectionInfo();
+        updatePolarisSurplusCheckButtonVisibility();
     } catch (error) {
         console.error('テーブルデータ読み込みエラー:', error);
         const errorMessage = error.message || '不明なエラー';
@@ -5017,6 +6080,14 @@ function displayTable() {
 
         if (selectedRows.has(globalIndex)) {
             tr.classList.add('selected');
+        }
+
+        if (typeof window.PolarisProduction !== 'undefined' && currentTable) {
+            const style = window.PolarisProduction.getStatusStyle(row, currentTable);
+            if (style) {
+                tr.setAttribute('style', (tr.getAttribute('style') || '') + ';' + style);
+                tr._polarisStatusColor = true;
+            }
         }
 
         tbody.appendChild(tr);
@@ -5447,6 +6518,78 @@ function findTableConfig(tableName) {
     return null;
 }
 
+// Supabaseの.from()に渡すテーブル名を取得（スペースなしのキーを優先）
+function getTableNameForSupabase(tableName) {
+    if (!tableName || !window.TABLE_MODAL_CONFIGS) return tableName;
+    const norm = normalizeTableName(tableName);
+    let foundWithSpace = null;
+    for (const key in window.TABLE_MODAL_CONFIGS) {
+        if (normalizeTableName(key) !== norm) continue;
+        if (key.indexOf(' ') === -1) return key;
+        if (!foundWithSpace) foundWithSpace = key;
+    }
+    return foundWithSpace || tableName;
+}
+
+// テーブルのカラム一覧を取得（既存行のキーまたは Supabase から1件取得）
+async function getTableColumnsAsync(tableName, existingData) {
+    if (existingData && typeof existingData === 'object' && Object.keys(existingData).length > 0) {
+        return Object.keys(existingData);
+    }
+    const supabase = getSupabaseClient();
+    if (!supabase || !tableName) return [];
+    const nameForDb = getTableNameForSupabase(tableName);
+    try {
+        const { data, error } = await supabase.from(nameForDb).select('*').limit(1);
+        if (error || !data || data.length === 0) return [];
+        return Object.keys(data[0]);
+    } catch (e) {
+        console.warn('getTableColumnsAsync:', e);
+        return [];
+    }
+}
+
+// カラム名とサンプル値から入力タイプを推定
+function inferFieldType(colName, value) {
+    const col = (colName || '').toLowerCase();
+    if (/date|time|日付|日時/.test(col)) return 'date';
+    if (/mail|email|メール/.test(col)) return 'email';
+    if (/tel|phone|fax|電話|fax/.test(col)) return 'tel';
+    if (/price|amount|kingaku|金額|数|code.*num|numeric/.test(col) || col.endsWith('price') || col.endsWith('amount')) return 'number';
+    if (value != null && value !== '') {
+        if (typeof value === 'number' || (typeof value === 'string' && /^-?\d+(\.\d+)?$/.test(value))) return 'number';
+        if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return 'date';
+    }
+    return 'text';
+}
+
+// 実際のカラム一覧からモーダル用 config を生成（全テーブルでカラムと入力項目を一致させる）
+function buildConfigFromColumns(tableName, columns, sampleRow) {
+    const base = findTableConfig(tableName) || {};
+    const displayName = base.displayName || getTableDisplayName(tableName);
+    const color = base.color || { primary: '#6366f1', secondary: '#4f46e5', light: '#e0e7ff' };
+    const layout = base.layout || 'double';
+    const defaultSvg = `<svg width="80" height="80" viewBox="0 0 100 100" fill="none"><rect x="20" y="25" width="60" height="50" rx="4" fill="${color.primary}" opacity="0.2"/><rect x="28" y="35" width="44" height="6" rx="2" fill="${color.primary}"/><rect x="28" y="48" width="30" height="6" rx="2" fill="${color.primary}" opacity="0.7"/></svg>`;
+    const longTextCols = /name|address|memo|note|名称|住所|メモ|備考|内容|説明|remark|comment|description|詳細/i;
+    const fields = columns.map(col => {
+        const type = inferFieldType(col, sampleRow && sampleRow[col]);
+        const isLong = longTextCols.test(col) || type === 'textarea';
+        return {
+            name: col,
+            label: (typeof getColumnDisplayName === 'function' ? getColumnDisplayName(col) : col).replace(/<br\s*\/?>/gi, ' '),
+            type,
+            width: isLong ? 'full' : undefined
+        };
+    });
+    return {
+        displayName,
+        color,
+        layout,
+        svg: base.svg || defaultSvg,
+        sections: [{ title: '項目', icon: 'fa-list', color: color.primary, fields }]
+    };
+}
+
 function openDetailModal(data) {
     if (!data) {
         console.error('openDetailModal: data is null or undefined');
@@ -5736,8 +6879,8 @@ function generateWorkTicketFormPage(container) {
                                 </h3>
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
                                     <div>
-                                        <label style="display: block; margin-bottom: 4px; font-weight: 600; color: white; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">職種</label>
-                                        <select name="job_type_1" id="work-ticket-job-type-1" class="form-input" style="width: 100%; font-size: 12px; padding: 6px 8px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15); color: #333; background: white;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 600; color: white; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">職種 <span style="color: #fecaca;">*</span></label>
+                                        <select name="job_type_1" id="work-ticket-job-type-1" class="form-input" required style="width: 100%; font-size: 12px; padding: 6px 8px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15); color: #333; background: white;">
                                             <option value="">選択</option>
                                         </select>
                                     </div>
@@ -6069,6 +7212,7 @@ async function findTableName(variations) {
     }
     return null;
 }
+window.findTableName = findTableName;
 
 // 機械コードの選択肢を読み込む
 async function loadMachineCodesForWorkTicket() {
@@ -6848,10 +7992,8 @@ async function onWorkerChange(staffCode) {
                                 jobType1Select.appendChild(option);
                             });
 
-                            // 初期選択
-                            if (jobName && jobTypes.has(jobName)) {
-                                jobType1Select.value = jobName;
-                            } else if (jobTypesArray.length === 1) {
+                            // 職種が1つだけ決まっている場合のみ選択、複数ある場合は空白のまま
+                            if (jobTypesArray.length === 1) {
                                 jobType1Select.value = jobTypesArray[0];
                             }
                         }
@@ -7496,59 +8638,71 @@ function selectWorkName(option, name, code, kakemochi, mujin) {
 async function initializeProcessingProgressPage() {
     console.log('initializeProcessingProgressPage 開始');
     try {
-        // フィルターの選択肢をロード
         await loadPPFilterOptions();
-        
-        // 検索ボタンのイベントリスナー（HTMLに直接書いたので不要だが念のため）
+        // Enterキーで検索
+        const runSearch = () => searchProcessingProgress();
+        ['pp-filter-construct-no', 'pp-filter-drawing-no', 'pp-filter-part-no', 'pp-filter-order-start', 'pp-filter-order-end'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); runSearch(); } });
+        });
         console.log('加工進捗ページの初期化完了');
     } catch (e) {
         console.error('initializeProcessingProgressPage error:', e);
     }
 }
 
-// 加工進捗フィルターの選択肢をロード
+// 加工進捗フィルターの選択肢をロード（t_manufctparts の実データから取得）
 async function loadPPFilterOptions() {
     try {
         const supabase = getSupabaseClient();
         if (!supabase) return;
 
-        // 機械コードの取得
-        const machineTable = await findTableName(['t_machinecode', 'T_MachineCode', 'machinecode']);
-        if (machineTable) {
-            const { data } = await supabase.from(machineTable).select('MachineCode, MachineName').order('MachineCode');
-            const select = document.getElementById('pp-filter-machine');
-            if (select && data) {
-                select.innerHTML = '<option value="">すべて</option>';
-                data.forEach(m => {
-                    const option = document.createElement('option');
-                    option.value = m.MachineCode || m.machinecode;
-                    option.textContent = `${m.MachineCode || m.machinecode} : ${m.MachineName || m.machinename || ''}`;
-                    select.appendChild(option);
-                });
-            }
+        // t_manufctparts からユニーク機械コード・ユニットコードを取得
+        const { data: rows } = await supabase.from('t_manufctparts').select('symbolmachine, symbolunit').limit(5000);
+        if (!rows) return;
+
+        // 機械コード（末尾スペースをトリム・重複排除・ソート）
+        const machines = [...new Set(rows.map(r => (r.symbolmachine || '').trim()).filter(Boolean))].sort();
+        const machineSelect = document.getElementById('pp-filter-machine');
+        if (machineSelect) {
+            machineSelect.innerHTML = '<option value="">すべて</option>';
+            machines.forEach(code => {
+                const option = document.createElement('option');
+                option.value = code;
+                option.textContent = code;
+                machineSelect.appendChild(option);
+            });
         }
 
-        // ユニットコードの取得
-        const unitTable = await findTableName(['t_unitcode', 'T_UnitCode', 'unitcode']);
-        if (unitTable) {
-            const { data } = await supabase.from(unitTable).select('UnitCode, UnitName').order('UnitCode');
-            const select = document.getElementById('pp-filter-unit');
-            if (select && data) {
-                select.innerHTML = '<option value="">すべて</option>';
-                data.forEach(u => {
-                    const option = document.createElement('option');
-                    option.value = u.UnitCode || u.unitcode;
-                    option.textContent = `${u.UnitCode || u.unitcode} : ${u.UnitName || u.unitname || ''}`;
-                    select.appendChild(option);
-                });
-            }
+        // ユニットコード（末尾スペースをトリム・重複排除・ソート）
+        const units = [...new Set(rows.map(r => (r.symbolunit || '').trim()).filter(Boolean))].sort();
+        const unitSelect = document.getElementById('pp-filter-unit');
+        if (unitSelect) {
+            unitSelect.innerHTML = '<option value="">すべて</option>';
+            units.forEach(code => {
+                const option = document.createElement('option');
+                option.value = code;
+                option.textContent = code;
+                unitSelect.appendChild(option);
+            });
         }
     } catch (e) {
         console.warn('loadPPFilterOptions error:', e);
     }
 }
 
-// 加工進捗の検索
+// 加工進捗: 行オブジェクトからキー候補で値を取得（PascalCase/snake_case 両対応）
+function ppVal(row) {
+    const keys = Array.from(arguments).slice(1);
+    for (const k of keys) {
+        if (row == null) return '';
+        const v = row[k];
+        if (v !== undefined && v !== null && v !== '') return String(v);
+    }
+    return '';
+}
+
+// 加工進捗の検索（v_加工進捗 → t_manufctparts → t_zumendata_manufct の順で取得）
 async function searchProcessingProgress() {
     console.log('searchProcessingProgress 開始');
     const tbody = document.getElementById('pp-main-table-body');
@@ -7564,72 +8718,167 @@ async function searchProcessingProgress() {
         const machine = document.getElementById('pp-filter-machine').value;
         const unit = document.getElementById('pp-filter-unit').value;
         const drawingNo = document.getElementById('pp-filter-drawing-no').value.trim();
-        const partNo = document.getElementById('pp-filter-part-no').value.trim();
-        const orderStart = document.getElementById('pp-filter-order-start').value;
-        const orderEnd = document.getElementById('pp-filter-order-end').value;
+        const partNo = (document.getElementById('pp-filter-part-no')?.value || '').trim();
+        const orderStart = document.getElementById('pp-filter-order-start')?.value || '';
+        const orderEnd = document.getElementById('pp-filter-order-end')?.value || '';
         const status = document.querySelector('input[name="pp-status"]:checked').value;
 
-        // t_zumendata_manufct (製作図面データ) を主テーブルとして検索
-        const mainTable = await findTableName(['t_zumendata_manufct', 'T_ZumenData_Manufct', 'zumendata_manufct']);
+        // データ取得元: t_manufctparts を優先（確実に読めるように）、次に v_加工進捗
+        const mainTable = await findTableName([
+            't_manufctparts', 'T_ManufctParts', 'manufctparts',
+            'v_加工進捗', 'v_kakou_shinchoku',
+            't_zumendata_manufct', 'T_ZumenData_Manufct', 'zumendata_manufct'
+        ]);
         if (!mainTable) {
-            tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 20px; color: #ef4444;">テーブルが見つかりません</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 20px; color: #ef4444;">テーブル／ビューが見つかりません（v_加工進捗, t_manufctparts, t_zumendata_manufct のいずれかを用意してください）</td></tr>';
             return;
         }
 
+        // 絞り込み（末尾スペース対応: machine/unit は ilike で前方一致）
         let query = supabase.from(mainTable).select('*');
-
-        if (constructNo) query = query.ilike('constructno', `%${constructNo}%`);
-        if (machine) query = query.eq('machinecode', machine);
-        if (unit) query = query.eq('unitcode', unit);
+        if (constructNo) query = query.ilike('constructionno', `%${constructNo}%`);
+        if (machine) query = query.ilike('symbolmachine', `${machine}%`);
+        if (unit) query = query.ilike('symbolunit', `${unit}%`);
         if (drawingNo) query = query.ilike('drawingno', `%${drawingNo}%`);
         if (partNo) query = query.ilike('partno', `%${partNo}%`);
-        if (orderStart) query = query.gte('registerdate', orderStart);
-        if (orderEnd) query = query.lte('registerdate', orderEnd);
+        if (orderStart) query = query.gte('keydate', orderStart);
+        if (orderEnd) query = query.lte('keydate', orderEnd);
 
-        const { data, error } = await query.limit(100);
+        let rawData = null;
+        let error = null;
+        ({ data: rawData, error } = await query.limit(1000));
+        if (error && (error.message || '').indexOf('construct') >= 0) {
+            query = supabase.from(mainTable).select('*');
+            if (constructNo) query = query.ilike('constructno', `%${constructNo}%`);
+            if (machine) query = query.ilike('symbolmachine', `${machine}%`);
+            if (unit) query = query.ilike('symbolunit', `${unit}%`);
+            if (drawingNo) query = query.ilike('drawingno', `%${drawingNo}%`);
+            if (partNo) query = query.ilike('partno', `%${partNo}%`);
+            if (orderStart) query = query.gte('keydate', orderStart);
+            if (orderEnd) query = query.lte('keydate', orderEnd);
+            const res = await query.limit(1000);
+            rawData = res.data;
+            error = res.error;
+        }
 
-        if (error) throw error;
-
-        if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 40px; color: #94a3b8;">該当するデータが見つかりませんでした</td></tr>';
+        if (error) {
+            console.error('searchProcessingProgress API error:', error);
+            tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 20px; color: #dc2626;">データ取得エラー: ' + (error.message || String(error)) + '</td></tr>';
+            const countEl = document.getElementById('pp-result-count');
+            if (countEl) countEl.textContent = '—';
             return;
         }
+
+        let data = rawData || [];
+        // 図面番号が7文字超のものは優先表示のため残す（6文字以下も表示する）
+        // data = data.filter(r => (ppVal(r, 'drawingno') || '').trim().length > 6);
+        // 加工状況フィルタ（完了日の有無で判定）
+        if (status === 'completed') {
+            data = data.filter(r => ppVal(r, 'kanryodate', 'completion_date', 'complete_date'));
+        } else if (status === 'pending') {
+            data = data.filter(r => !ppVal(r, 'kanryodate', 'completion_date', 'complete_date'));
+        }
+        // 旧V_加工進捗の並び: kanryodate → drawingno → partno
+        data.sort((a, b) => {
+            const kA = ppVal(a, 'kanryodate', 'completion_date', 'complete_date');
+            const kB = ppVal(b, 'kanryodate', 'completion_date', 'complete_date');
+            if (kA !== kB) return (kA || '').localeCompare(kB || '', undefined, { numeric: true });
+            const dA = ppVal(a, 'drawingno');
+            const dB = ppVal(b, 'drawingno');
+            if (dA !== dB) return (dA || '').localeCompare(dB || '', undefined, { numeric: true });
+            const pA = ppVal(a, 'partno');
+            const pB = ppVal(b, 'partno');
+            return (pA || '').localeCompare(pB || '', undefined, { numeric: true });
+        });
+
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 40px; color: #94a3b8;">該当するデータが見つかりませんでした</td></tr>';
+            const countEl = document.getElementById('pp-result-count');
+            if (countEl) countEl.textContent = '0件';
+            return;
+        }
+
+        // 外注データを一括取得（t_purchaseparts: construction_no + symbol_machine + symbol_unit でジョイン）
+        let _osMap = {};
+        try {
+            if (data.length > 0) {
+                const constructNos = [...new Set(data.map(r => (ppVal(r, 'constructionno', 'constructno') || '').trim()).filter(Boolean))];
+                if (constructNos.length > 0) {
+                    const { data: osRows } = await supabase.from('t_purchaseparts').select('*').in('construction_no', constructNos).limit(3000);
+                    if (osRows && osRows.length > 0) {
+                        // 会社名を一括取得
+                        const companyCodes = [...new Set(osRows.map(o => o.order_company_code).filter(Boolean))];
+                        let companyMap = {};
+                        if (companyCodes.length > 0) {
+                            const { data: cc } = await supabase.from('t_companycode').select('companycode,companyname,shortname').in('companycode', companyCodes);
+                            (cc || []).forEach(c => { companyMap[c.companycode] = c.shortname || c.companyname || ''; });
+                        }
+                        osRows.forEach(o => {
+                            o._companyName = companyMap[o.order_company_code] || o.temp_company_name || '';
+                            const k = (o.construction_no || '').trim() + '___' + (o.symbol_machine || '').trim() + '___' + (o.symbol_unit || '').trim();
+                            if (!_osMap[k]) _osMap[k] = [];
+                            _osMap[k].push(o);
+                        });
+                    }
+                }
+            }
+        } catch (e) { console.warn('[PP] 外注一括取得失敗:', e); }
+        // グローバルに保存（印刷プレビューで使用）
+        window._ppOutsourceMap = _osMap;
+        window._ppLastSearchData = data;
+        window._ppLastConstructNo = constructNo;
+
+        const countEl = document.getElementById('pp-result-count');
+        if (countEl) countEl.textContent = `${data.length}件`;
 
         tbody.innerHTML = '';
         data.forEach((row, index) => {
             const tr = document.createElement('tr');
             tr.style.cursor = 'pointer';
             tr.onclick = () => selectPPRow(tr, row);
-            
-            // 状況に応じた背景色（仮のロジック）
+
+            const hasKanryo = !!ppVal(row, 'kanryodate', 'completion_date', 'complete_date');
+            const statusText = ppVal(row, 'processstatus', 'status_text', 'jotai');
             let bgColor = '';
-            if (row.status === 'completed') bgColor = '#f0f9ff';
-            else if (row.material_status === 'pending') bgColor = '#fee2e2';
-            
+            if (statusText && (statusText.includes('取消') || statusText === '取消')) bgColor = '#e2e8f0';
+            else if (hasKanryo) bgColor = '#e0f2fe';
+            else if (statusText && (statusText.includes('加工中') || statusText === '加工中')) bgColor = '#cffafe';
+            else if (statusText && (statusText.includes('外注') && statusText.includes('未'))) bgColor = '#fef9c3';
+            else if (statusText && (statusText.includes('材料') && statusText.includes('未'))) bgColor = '#fee2e2';
+            else if (statusText && (statusText.includes('材料'))) bgColor = '#ffedd5';
             tr.style.background = bgColor;
+
+            const fmtDate = (v) => { const s = String(v || ''); if (s.length >= 10) return s.slice(0, 10).replace(/-/g, '/'); return s; };
+
+            // 外注件数表示（construction_no + machine + unit キー）
+            const osKey = (ppVal(row, 'constructionno', 'constructno') || '').trim() + '___' + (ppVal(row, 'symbolmachine') || '').trim() + '___' + (ppVal(row, 'symbolunit') || '').trim();
+            const osCount = (_osMap[osKey] || []).length;
+            const osCountCell = osCount > 0
+                ? `<span style="color:#1d4ed8;font-weight:700;">${osCount}件</span>`
+                : ppVal(row, 'outsource_info');
 
             tr.innerHTML = `
                 <td style="text-align: center;"><input type="checkbox" value="${index}"></td>
-                <td>${row.constructno || ''}</td>
-                <td>${row.machinecode || ''}</td>
-                <td>${row.unitcode || ''}</td>
-                <td>${row.plan || ''}</td>
-                <td>${row.is_supplied ? '有' : ''}</td>
-                <td>${row.drawingno || ''}</td>
-                <td>${row.partno || ''}</td>
-                <td>${row.partname || ''}</td>
-                <td>${row.material || ''}</td>
-                <td>${row.quantity || ''}</td>
-                <td>${row.unit || ''}</td>
-                <td>${row.material_weight || ''}</td>
-                <td>${row.finish_weight || ''}</td>
-                <td>${row.drawing_date || ''}</td>
-                <td>${row.material_info || ''}</td>
-                <td>${row.internal_info || ''}</td>
-                <td>${row.outsource_info || ''}</td>
-                <td>${row.work_time || ''}</td>
-                <td>${row.complete_date || ''}</td>
-                <td>${row.status_text || ''}</td>
+                <td>${ppVal(row, 'constructionno', 'constructno')}</td>
+                <td>${ppVal(row, 'symbolmachine')}</td>
+                <td>${ppVal(row, 'symbolunit')}</td>
+                <td>${ppVal(row, 'plan')}</td>
+                <td>${row.supplyflag || row.is_supplied ? '有' : ''}</td>
+                <td>${ppVal(row, 'drawingno')}</td>
+                <td style="text-align:center;">${ppVal(row, 'partno')}</td>
+                <td>${ppVal(row, 'description', 'partname')}</td>
+                <td>${ppVal(row, 'materialcode', 'material')}</td>
+                <td>${ppVal(row, 'qty', 'quantity')}</td>
+                <td>${ppVal(row, 'qtyunit', 'unit')}</td>
+                <td>${ppVal(row, 'weightmaterial')}</td>
+                <td>${ppVal(row, 'weightfinished')}</td>
+                <td>${fmtDate(ppVal(row, 'printdate', 'drawing_date'))}</td>
+                <td>${ppVal(row, 'material_info')}</td>
+                <td>${ppVal(row, 'internal_info')}</td>
+                <td>${osCountCell}</td>
+                <td>${ppVal(row, 'work_time')}</td>
+                <td>${fmtDate(ppVal(row, 'kanryodate', 'completion_date', 'complete_date'))}</td>
+                <td>${statusText || (hasKanryo ? '加工完了' : '')}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -7637,26 +8886,30 @@ async function searchProcessingProgress() {
     } catch (e) {
         console.error('searchProcessingProgress error:', e);
         tbody.innerHTML = `<tr><td colspan="21" style="text-align: center; padding: 20px; color: #ef4444;">エラーが発生しました: ${e.message}</td></tr>`;
+        const countEl = document.getElementById('pp-result-count');
+        if (countEl) countEl.textContent = '—';
     }
 }
 
 // 行選択時の処理
 async function selectPPRow(tr, row) {
-    // 選択状態の視覚的フィードバック
     const tbody = tr.parentElement;
-    tbody.querySelectorAll('tr').forEach(r => r.style.outline = 'none');
+    tbody.querySelectorAll('tr').forEach(r => { r.style.outline = 'none'; r.removeAttribute('data-pp-selected'); });
     tr.style.outline = '2px solid var(--primary)';
     tr.style.outlineOffset = '-2px';
+    tr.setAttribute('data-pp-selected', 'true');
 
-    const drawingNo = row.drawingno || row.DrawingNo;
-    const partNo = row.partno || row.PartNo;
+    const drawingNo = ppVal(row, 'drawingno');
+    const partNo = ppVal(row, 'partno');
+    const constructNo = (ppVal(row, 'constructionno', 'constructno') || '').trim();
+    const machine = (ppVal(row, 'symbolmachine') || '').trim();
+    const unit = (ppVal(row, 'symbolunit') || '').trim();
 
-    // サブテーブルの更新
-    await loadPPSubTables(drawingNo, partNo);
+    await loadPPSubTables(drawingNo, partNo, constructNo, machine, unit);
 }
 
 // サブテーブル（加工作業、材料手配、外注加工）のロード
-async function loadPPSubTables(drawingNo, partNo) {
+async function loadPPSubTables(drawingNo, partNo, constructNo, machine, unit) {
     const workTbody = document.getElementById('pp-work-table-body');
     const materialTbody = document.getElementById('pp-material-table-body');
     const outsourceTbody = document.getElementById('pp-outsource-table-body');
@@ -7669,25 +8922,24 @@ async function loadPPSubTables(drawingNo, partNo) {
         const supabase = getSupabaseClient();
         if (!supabase) return;
 
-        // 1. 加工作業 (t_worktime)
-        const workTable = await findTableName(['t_worktime', 'T_WorkTime', 'worktime']);
+        const subRow = (o, ...keys) => { for (const k of keys) { const v = o[k]; if (v !== undefined && v !== null && v !== '') return String(v); } return ''; };
+        const subDate = (o, ...keys) => { const s = subRow(o, ...keys); return s.length >= 10 ? s.slice(0, 10).replace(/-/g, '/') : s; };
+
+        // 1. 加工作業（t_worktimekako / t_sagyofl / t_worktime）
+        const workTable = await findTableName(['t_worktimekako', 'T_WorkTimeKako', 't_sagyofl', 't_worktime', 'T_WorkTime', 'worktime']);
         if (workTable) {
-            const { data } = await supabase.from(workTable)
-                .select('*')
-                .eq('drawingno', drawingNo)
-                .eq('partno', partNo);
-            
+            const { data } = await supabase.from(workTable).select('*').eq('drawingno', drawingNo).eq('partno', partNo);
             workTbody.innerHTML = '';
             if (data && data.length > 0) {
                 data.forEach(w => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${w.workdate || ''}</td>
-                        <td>${w.workcode || ''}</td>
-                        <td>${w.workname || ''}</td>
-                        <td>${w.quantity || ''}</td>
-                        <td>${w.worktime || ''}</td>
-                        <td>${w.staffname || ''}</td>
+                        <td>${subDate(w, 'WorkDate', 'workdate')}</td>
+                        <td>${subRow(w, 'WorkCode', 'workcode')}</td>
+                        <td>${subRow(w, 'WorkName', 'workname')}</td>
+                        <td>${subRow(w, 'Quantity', 'quantity')}</td>
+                        <td>${subRow(w, 'WorkTime', 'worktime')}</td>
+                        <td>${subRow(w, 'StaffName', 'staffname')}</td>
                     `;
                     workTbody.appendChild(tr);
                 });
@@ -7696,62 +8948,82 @@ async function loadPPSubTables(drawingNo, partNo) {
             }
         }
 
-        // 2. 材料手配 (t_purchaseparts)
-        const materialTable = await findTableName(['t_purchaseparts', 'T_PurchaseParts', 'purchaseparts']);
-        if (materialTable) {
-            const { data } = await supabase.from(materialTable)
-                .select('*')
-                .eq('drawingno', drawingNo)
-                .eq('partno', partNo);
-            
+        // 2. 材料手配 (t_purchaseparts: construction_no + symbol_machine + symbol_unit)
+        if (constructNo) {
+            let matQ = supabase.from('t_purchaseparts').select('*').eq('construction_no', constructNo);
+            if (machine) matQ = matQ.eq('symbol_machine', machine);
+            if (unit)    matQ = matQ.eq('symbol_unit', unit);
+            const { data: matData } = await matQ.limit(200);
+            // 会社名取得
+            let matCompanyMap = {};
+            if (matData && matData.length > 0) {
+                const codes = [...new Set(matData.map(o => o.order_company_code).filter(Boolean))];
+                if (codes.length > 0) {
+                    const { data: cc } = await supabase.from('t_companycode').select('companycode,companyname,shortname').in('companycode', codes);
+                    (cc || []).forEach(c => { matCompanyMap[c.companycode] = c.shortname || c.companyname || ''; });
+                }
+            }
             materialTbody.innerHTML = '';
-            if (data && data.length > 0) {
-                data.forEach(m => {
+            if (matData && matData.length > 0) {
+                matData.forEach(m => {
+                    const cname = matCompanyMap[m.order_company_code] || m.temp_company_name || m.order_company_code || '';
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${m.orderno || ''}</td>
-                        <td>${m.standard || ''}</td>
-                        <td>${m.dimension || ''}</td>
-                        <td>${m.quantity || ''}</td>
-                        <td>${m.supplier || ''}</td>
-                        <td>${m.orderdate || ''}</td>
-                        <td>${m.deliverydate || ''}</td>
-                        <td>${m.receivedate || ''}</td>
+                        <td>${subRow(m, 'consecutive_no')}</td>
+                        <td>${subRow(m, 'description')}</td>
+                        <td>${subRow(m, 'order_div')}</td>
+                        <td>${cname}</td>
+                        <td>${subDate(m, 'order_date')}</td>
+                        <td>${subDate(m, 'delivery_date')}</td>
+                        <td>${subDate(m, 'nounyu_date')}</td>
+                        <td>${subRow(m, 'paper_id')}</td>
                     `;
                     materialTbody.appendChild(tr);
                 });
             } else {
                 materialTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 10px; color: #94a3b8;">データなし</td></tr>';
             }
+        } else {
+            materialTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 10px; color: #94a3b8;">データなし</td></tr>';
         }
 
-        // 3. 外注加工 (t_outsource)
-        const outsourceTable = await findTableName(['t_outsource', 'T_Outsource', 'outsource']);
-        if (outsourceTable) {
-            const { data } = await supabase.from(outsourceTable)
-                .select('*')
-                .eq('drawingno', drawingNo)
-                .eq('partno', partNo);
-            
+        // 3. 外注加工（t_purchaseparts: construction_no + symbol_machine + symbol_unit）
+        if (constructNo) {
+            let osQ = supabase.from('t_purchaseparts').select('*').eq('construction_no', constructNo);
+            if (machine) osQ = osQ.eq('symbol_machine', machine);
+            if (unit)    osQ = osQ.eq('symbol_unit', unit);
+            const { data: osData } = await osQ.limit(200);
+            // 会社名取得
+            let companyMap = {};
+            if (osData && osData.length > 0) {
+                const codes = [...new Set(osData.map(o => o.order_company_code).filter(Boolean))];
+                if (codes.length > 0) {
+                    const { data: cc } = await supabase.from('t_companycode').select('companycode,companyname,shortname').in('companycode', codes);
+                    (cc || []).forEach(c => { companyMap[c.companycode] = c.shortname || c.companyname || ''; });
+                }
+            }
             outsourceTbody.innerHTML = '';
-            if (data && data.length > 0) {
-                data.forEach(o => {
+            if (osData && osData.length > 0) {
+                osData.forEach(o => {
+                    const cname = companyMap[o.order_company_code] || o.temp_company_name || o.order_company_code || '';
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${o.orderno || ''}</td>
-                        <td>${o.workname || ''}</td>
-                        <td>${o.quantity || ''}</td>
-                        <td>${o.supplier || ''}</td>
-                        <td>${o.orderdate || ''}</td>
-                        <td>${o.deliverydate || ''}</td>
-                        <td>${o.receivedate || ''}</td>
-                        <td>${o.returndate || ''}</td>
+                        <td>${subRow(o, 'consecutive_no')}</td>
+                        <td>${subRow(o, 'description', 'order_div')}</td>
+                        <td></td>
+                        <td>${cname}</td>
+                        <td>${subDate(o, 'order_date')}</td>
+                        <td>${subDate(o, 'delivery_date')}</td>
+                        <td>${subDate(o, 'nounyu_date')}</td>
+                        <td></td>
                     `;
                     outsourceTbody.appendChild(tr);
                 });
             } else {
                 outsourceTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 10px; color: #94a3b8;">データなし</td></tr>';
             }
+        } else {
+            outsourceTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 10px; color: #94a3b8;">データなし</td></tr>';
         }
 
     } catch (e) {
@@ -7765,20 +9037,179 @@ function clearPPSearch() {
     document.getElementById('pp-filter-machine').value = '';
     document.getElementById('pp-filter-unit').value = '';
     document.getElementById('pp-filter-drawing-no').value = '';
-    document.getElementById('pp-filter-part-no').value = '';
-    document.getElementById('pp-filter-order-start').value = '';
-    document.getElementById('pp-filter-order-end').value = '';
+    const partNoEl = document.getElementById('pp-filter-part-no');
+    const orderStartEl = document.getElementById('pp-filter-order-start');
+    const orderEndEl = document.getElementById('pp-filter-order-end');
+    if (partNoEl) partNoEl.value = '';
+    if (orderStartEl) orderStartEl.value = '';
+    if (orderEndEl) orderEndEl.value = '';
     document.querySelector('input[name="pp-status"][value="all"]').checked = true;
-    
-    document.getElementById('pp-main-table-body').innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 40px; color: #94a3b8;"><i class="fas fa-search" style="font-size: 32px; opacity: 0.2; margin-bottom: 10px; display: block;"></i>検索条件を入力して検索してください</td></tr>';
+    const countEl = document.getElementById('pp-result-count');
+    if (countEl) countEl.textContent = '—';
+    document.getElementById('pp-main-table-body').innerHTML = '<tr><td colspan="21" class="pp-empty-msg">条件を入力して「検索」を押すか、そのまま検索で一覧を表示します（Enterでも検索）</td></tr>';
     document.getElementById('pp-work-table-body').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #cbd5e1;">行を選択してください</td></tr>';
     document.getElementById('pp-material-table-body').innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #cbd5e1;">行を選択してください</td></tr>';
     document.getElementById('pp-outsource-table-body').innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #cbd5e1;">行を選択してください</td></tr>';
 }
 
-// 印刷スタブ
-function printProcessingProgress() { window.print(); }
-function printSelectedParts() { alert('選択部品の準備印刷を開始します（デモ）'); }
+// ── 加工進捗一覧 印刷プレビュー ──────────────────────────────
+async function printProcessingProgress() {
+    const data = window._ppLastSearchData || [];
+    if (data.length === 0) {
+        alert('先に検索ボタンで一覧を表示してから印刷プレビューを開いてください。');
+        return;
+    }
+
+    const constructNo = window._ppLastConstructNo || '';
+    const osMap = window._ppOutsourceMap || {};
+    const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/');
+
+    // 機械・ユニット取得
+    const machineEl = document.getElementById('pp-filter-machine');
+    const unitEl = document.getElementById('pp-filter-unit');
+    const machine = machineEl ? machineEl.value : '';
+    const unit = unitEl ? unitEl.value : '';
+    const kojiLabel = constructNo + (machine ? machine : '') + (unit ? unit : '');
+
+    // MM/DD 形式変換
+    function mmdd(v) {
+        const s = String(v || '');
+        const m = s.match(/(\d{4})[-/](\d{2})[-/](\d{2})/);
+        if (m) return m[2] + '/' + m[3];
+        if (s.length === 5 && s.includes('/')) return s;
+        return s.slice(0, 5) || '';
+    }
+    function os(o, ...keys) { for (const k of keys) { const v = o[k]; if (v !== undefined && v !== null && v !== '') return String(v); } return ''; }
+
+    // 行生成
+    let rows = '';
+    data.forEach(row => {
+        const drawingNo = ppVal(row, 'drawingno');
+        const partNo    = ppVal(row, 'partno');
+        const name      = ppVal(row, 'description', 'partname');
+        const qty       = ppVal(row, 'qty', 'quantity');
+        const material  = ppVal(row, 'materialcode', 'material');
+        const naikoInfo = ppVal(row, 'internal_info', 'naikojokyo') || '';
+        const kanryo    = ppVal(row, 'kanryodate', 'completion_date', 'complete_date');
+        const fmtKanryo = kanryo ? String(kanryo).slice(0, 10).replace(/-/g, '/') : '';
+
+        // 外注テキスト生成（t_purchaseparts: construction_no + symbol_machine + symbol_unit キー）
+        const osKey  = (ppVal(row, 'constructionno', 'constructno') || '').trim() + '___' + (ppVal(row, 'symbolmachine') || '').trim() + '___' + (ppVal(row, 'symbolunit') || '').trim();
+        const osList = osMap[osKey] || [];
+        let osLines  = osList.map(o => {
+            const sup    = o._companyName || os(o, 'temp_company_name', 'order_company_code');
+            const oDate  = mmdd(os(o, 'order_date'));
+            const nouki  = mmdd(os(o, 'delivery_date'));
+            const nouny  = mmdd(os(o, 'nounyu_date'));
+            const kname  = os(o, 'description', 'order_div');
+            const parts  = [];
+            if (sup)   parts.push(sup + ':');
+            if (oDate) parts.push('発注 ' + oDate);
+            if (nouki) parts.push('納期 ' + nouki);
+            if (nouny) parts.push('納入 ' + nouny);
+            if (kname) parts.push(kname);
+            return parts.join(' ');
+        }).filter(Boolean);
+
+        // 外注情報がない場合、t_manufctparts のカラムから補完
+        if (osLines.length === 0) {
+            const rawOsInfo = ppVal(row, 'outsource_info', 'gaichuu_info', 'gaichuuinfo');
+            if (rawOsInfo) osLines = [rawOsInfo];
+        }
+
+        const osHtml = osLines.map(l => `<div style="border-bottom:1px dotted #ccc;padding:1px 0;min-height:14px;">${l}</div>`).join('') || '<div style="min-height:14px;"></div>';
+
+        rows += `<tr>
+            <td class="c-henko">----</td>
+            <td class="c-draw">${drawingNo}</td>
+            <td class="c-pno">${partNo}</td>
+            <td class="c-name">${name}</td>
+            <td class="c-qty">${qty}</td>
+            <td class="c-mat">${material}</td>
+            <td class="c-naiko">${naikoInfo}</td>
+            <td class="c-os">${osHtml}</td>
+            <td class="c-biko">${ppVal(row, 'biko', 'note', 'memo', '備考') || ''}</td>
+            <td class="c-kanryo">${fmtKanryo}</td>
+        </tr>`;
+    });
+
+    const html = `<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8">
+<title>加工進捗一覧 ${kojiLabel}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'MS Gothic','ＭＳ ゴシック','Meiryo',sans-serif;font-size:9pt;background:white;padding:8mm 10mm;}
+.ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.ph-koji{border:2px solid #000;padding:3px 14px;font-size:13pt;font-weight:bold;letter-spacing:0.05em;}
+.ph-title{font-size:15pt;font-weight:bold;}
+.ph-date{font-size:9pt;}
+table{width:100%;border-collapse:collapse;font-size:8.5pt;}
+th{background:#e8e8e8;border:1px solid #666;padding:3px 4px;text-align:center;font-weight:bold;white-space:nowrap;font-size:8pt;}
+td{border:1px solid #999;padding:2px 3px;vertical-align:top;}
+.c-henko{width:28px;color:#777;font-size:7pt;text-align:center;}
+.c-draw{min-width:76px;font-size:8.5pt;white-space:nowrap;}
+.c-pno{width:26px;text-align:center;}
+.c-name{min-width:68px;}
+.c-qty{width:34px;text-align:center;}
+.c-mat{width:62px;font-size:8pt;}
+.c-naiko{width:68px;font-size:8pt;color:#1a3a6b;}
+.c-os{min-width:220px;font-size:8pt;color:#1a3a6b;line-height:1.5;}
+.c-biko{min-width:48px;}
+.c-kanryo{width:62px;text-align:center;}
+tfoot td{border:none;text-align:center;padding-top:4px;font-size:8pt;color:#666;}
+@media print{
+    body{padding:5mm 8mm;}
+    @page{size:A4 landscape;margin:8mm;}
+    .no-print{display:none!important;}
+}
+</style></head><body>
+<div class="no-print" style="text-align:right;margin-bottom:6px;">
+    <button onclick="window.print()" style="padding:6px 18px;background:#1d4ed8;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-weight:bold;">🖨 印刷する</button>
+    <button onclick="window.close()" style="padding:6px 14px;background:#64748b;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px;margin-left:8px;">✕ 閉じる</button>
+</div>
+<div class="ph">
+    <div class="ph-koji">${kojiLabel}</div>
+    <div class="ph-title">加工進捗一覧</div>
+    <div class="ph-date">印刷日&nbsp;&nbsp;${today}</div>
+</div>
+<table>
+<thead><tr>
+    <th>変更</th><th>図面番号</th><th>品<br>番</th><th>品名</th><th>製作<br>数</th>
+    <th>材&nbsp;&nbsp;料</th><th>社内加工</th><th style="min-width:220px;">外&nbsp;&nbsp;注</th><th>備考</th><th>加工完了日</th>
+</tr></thead>
+<tbody>${rows}</tbody>
+<tfoot><tr><td colspan="10">${data.length} 件</td></tr></tfoot>
+</table>
+</body></html>`;
+
+    const win = window.open('', '_blank', 'width=1200,height=750,scrollbars=yes');
+    if (win) {
+        win.document.write(html);
+        win.document.close();
+    } else {
+        alert('ポップアップがブロックされています。ブラウザのポップアップ許可設定を確認してください。');
+    }
+}
+function printSelectedParts() {
+    // チェックされた行のみを印刷プレビューに出力
+    const checked = document.querySelectorAll('#pp-main-table-body input[type="checkbox"]:checked');
+    if (checked.length === 0) {
+        const msg = document.getElementById('pp-result-count');
+        if (msg) {
+            const orig = msg.textContent;
+            msg.textContent = '⚠ 行を選択してください';
+            msg.style.color = '#dc2626';
+            setTimeout(() => { msg.textContent = orig; msg.style.color = ''; }, 2500);
+        }
+        return;
+    }
+    const allData = window._ppLastSearchData || [];
+    const selectedData = Array.from(checked).map(cb => allData[parseInt(cb.value)]).filter(Boolean);
+    const orig = window._ppLastSearchData;
+    window._ppLastSearchData = selectedData;
+    printProcessingProgress();
+    window._ppLastSearchData = orig;
+}
 
 // グローバルに公開
 window.initializeProcessingProgressPage = initializeProcessingProgressPage;
@@ -7788,6 +9219,374 @@ window.printProcessingProgress = printProcessingProgress;
 window.printSelectedParts = printSelectedParts;
 window.selectPPRow = selectPPRow;
 
+// ========== 機械の加工進捗状況 ==========
+function initMachineProgressPage() {
+    var calcBtn = document.getElementById('mp-calc-btn');
+    if (calcBtn) calcBtn.onclick = runMachineProgressCalc;
+    var orderDate = document.getElementById('mp-order-date');
+    if (orderDate && !orderDate.value) orderDate.value = new Date().toISOString().slice(0, 10);
+    document.querySelectorAll('.mp-filter-btn').forEach(function(btn) {
+        btn.onclick = function() { setMachineProgressFilter(btn.getAttribute('data-filter')); };
+    });
+    loadMachineProgressMachineOptions();
+}
+
+function loadMachineProgressMachineOptions() {
+    var supabase = getSupabaseClient();
+    if (!supabase) return;
+    findTableName(['t_machinecode', 'T_MachineCode', 'machinecode']).then(function(machineTable) {
+        if (!machineTable) return;
+        supabase.from(machineTable).select('machinecode, machinename').order('machinecode').then(function(_ref) {
+            var data = _ref.data;
+            var select = document.getElementById('mp-machine');
+            if (!select || !data) return;
+            select.innerHTML = '<option value="">—</option>';
+            data.forEach(function(m) {
+                var code = (m.machinecode != null ? m.machinecode : m.MachineCode || '').toString().trim();
+                var name = (m.machinename != null ? m.machinename : m.MachineName || '').toString().trim();
+                var option = document.createElement('option');
+                option.value = code;
+                option.textContent = code ? (name ? code + ' : ' + name : code) : name || '(未設定)';
+                select.appendChild(option);
+            });
+        });
+    });
+}
+
+function setMachineProgressFilter(filter) {
+    console.log('機械進捗フィルター:', filter);
+}
+
+function runMachineProgressCalc() {
+    var constructNo = document.getElementById('mp-construct-no');
+    var tbody = document.getElementById('machine-progress-tbody');
+    if (!tbody) return;
+    var no = (constructNo && constructNo.value) ? constructNo.value.trim() : '';
+    if (!no) {
+        tbody.innerHTML = '<tr><td colspan="8" class="mp-empty">工事番号を入力し「計算」を押してください</td></tr>';
+        return;
+    }
+    tbody.innerHTML = '<tr><td colspan="8" class="mp-empty"><i class="fas fa-spinner fa-spin"></i> 取得中...</td></tr>';
+    loadMachineProgressData(no).then(function(rows) {
+        if (!rows || rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="mp-empty">該当データはありません</td></tr>';
+            return;
+        }
+        var html = '';
+        rows.forEach(function(r) {
+            html += '<tr><td>' + escapeHtml(r.unit || '') + '</td><td>' + (r.drawCount != null ? r.drawCount : '') + '</td><td>' + (r.unprocessed != null ? r.unprocessed : '') + '</td><td>' + (r.inProgress != null ? r.inProgress : '') + '</td><td>' + (r.complete != null ? r.complete : '') + '</td><td>' + (r.outsourcePartial != null ? r.outsourcePartial : '') + '</td><td>' + (r.outsourceFull != null ? r.outsourceFull : '') + '</td><td>' + (r.percent != null ? r.percent + '%' : '') + '</td></tr>';
+        });
+        tbody.innerHTML = html;
+    }).catch(function() {
+        tbody.innerHTML = '<tr><td colspan="8" class="mp-empty">取得に失敗しました</td></tr>';
+    });
+    loadMachineProgressHeader(no);
+}
+
+function loadMachineProgressHeader(constructNo) {
+    var supabase = getSupabaseClient();
+    if (!supabase) return;
+    var tbl = 't_acceptorder';
+    var col = 'constructno';
+    supabase.from(tbl).select('orderdate, constructno, machine, customername, deliveryto, salesperson, projectname, shipdate').eq(col, constructNo).limit(1).maybeSingle().then(function(_ref) {
+        var data = _ref.data;
+        var err = _ref.error;
+        if (err || !data) return;
+        var orderDate = document.getElementById('mp-order-date');
+        if (orderDate) orderDate.value = (data.orderdate || data.OrderDate || '').toString().slice(0, 10);
+        var machine = document.getElementById('mp-machine');
+        if (machine) { machine.value = data.machine || data.Machine || ''; }
+        var client = document.getElementById('mp-client');
+        if (client) client.value = data.customername || data.customer_name || data.CustomerName || '';
+        var delivery = document.getElementById('mp-delivery-to');
+        if (delivery) delivery.value = data.deliveryto || data.delivery_to || data.DeliveryTo || '';
+        var sales = document.getElementById('mp-sales');
+        if (sales) sales.value = data.salesperson || data.sales_person || data.SalesPerson || '';
+        var project = document.getElementById('mp-project-name');
+        if (project) project.value = data.projectname || data.project_name || data.ProjectName || '';
+        var ship = document.getElementById('mp-ship-date');
+        if (ship) ship.value = (data.shipdate || data.ShipDate || '').toString().slice(0, 10);
+    });
+}
+
+async function loadMachineProgressData(constructNo) {
+    var supabase = getSupabaseClient();
+    if (!supabase) return [];
+    try {
+        var tbl = await findTableName(['t_manufctparts', 't_zumendata_manufct', 'v_加工進捗']);
+        if (!tbl) return [];
+        var _ref2 = await supabase.from(tbl).select('unit, constructno').eq('constructno', constructNo);
+        var data = _ref2.data || [];
+        var byUnit = {};
+        data.forEach(function(r) {
+            var u = (r.unit || r.Unit || '').toString().trim() || '—';
+            if (!byUnit[u]) byUnit[u] = { unit: u, drawCount: 0, unprocessed: 0, inProgress: 0, complete: 0, outsourcePartial: 0, outsourceFull: 0, percent: '0.00' };
+            byUnit[u].drawCount += 1;
+            byUnit[u].complete += 1;
+        });
+        return Object.keys(byUnit).sort().map(function(k) {
+            var o = byUnit[k];
+            o.percent = o.drawCount ? ((o.complete / o.drawCount) * 100).toFixed(2) : '0.00';
+            return o;
+        });
+    } catch (e) { return []; }
+}
+
+// ========== 納入予定カレンダー ==========
+let deliveryCalYear = new Date().getFullYear();
+let deliveryCalMonth = new Date().getMonth() + 1;
+let deliveryCalCategory = 'purchased';
+let deliveryCalCountByDate = {}; // { "YYYY-MM-DD": number }
+
+function initDeliveryCalendarPage() {
+    const now = new Date();
+    deliveryCalYear = now.getFullYear();
+    deliveryCalMonth = now.getMonth() + 1;
+    deliveryCalCategory = 'purchased';
+    document.querySelectorAll('.delivery-cal-tab').forEach(t => t.classList.remove('active'));
+    const activeTab = document.querySelector('.delivery-cal-tab[data-category="purchased"]');
+    if (activeTab) activeTab.classList.add('active');
+    document.getElementById('delivery-cal-undelivered-only').checked = true;
+    var calPage = document.getElementById('delivery-calendar-page');
+    if (calPage) calPage.setAttribute('data-category', 'purchased');
+
+    document.getElementById('delivery-cal-prev').onclick = () => { deliveryCalMonth--; if (deliveryCalMonth < 1) { deliveryCalMonth = 12; deliveryCalYear--; } renderDeliveryCalendar(); };
+    document.getElementById('delivery-cal-next').onclick = () => { deliveryCalMonth++; if (deliveryCalMonth > 12) { deliveryCalMonth = 1; deliveryCalYear++; } renderDeliveryCalendar(); };
+    document.querySelectorAll('.delivery-cal-tab').forEach(t => {
+        t.onclick = () => {
+            document.querySelectorAll('.delivery-cal-tab').forEach(x => x.classList.remove('active'));
+            t.classList.add('active');
+            deliveryCalCategory = t.getAttribute('data-category');
+            if (calPage) calPage.setAttribute('data-category', deliveryCalCategory || 'purchased');
+            renderDeliveryCalendar();
+        };
+    });
+    document.getElementById('delivery-cal-undelivered-only').addEventListener('change', () => renderDeliveryCalendar());
+
+    renderDeliveryCalendar();
+}
+
+function renderDeliveryCalendar() {
+    const yearMonthEl = document.getElementById('delivery-cal-year-month');
+    if (yearMonthEl) yearMonthEl.textContent = `${deliveryCalYear} 年 ${deliveryCalMonth} 月`;
+
+    const undeliveredOnly = document.getElementById('delivery-cal-undelivered-only')?.checked !== false;
+    loadDeliveryCalendarData(deliveryCalYear, deliveryCalMonth, deliveryCalCategory, undeliveredOnly).then(countByDate => {
+        deliveryCalCountByDate = countByDate || {};
+        const tbody = document.getElementById('delivery-cal-body');
+        if (!tbody) return;
+
+        const first = new Date(deliveryCalYear, deliveryCalMonth - 1, 1);
+        const last = new Date(deliveryCalYear, deliveryCalMonth, 0);
+        const startDow = first.getDay();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let html = '';
+        for (let row = 0; row < 5; row++) {
+            html += '<tr>';
+            for (let col = 0; col < 7; col++) {
+                const dayOffset = 1 - startDow + row * 7 + col;
+                const d = new Date(deliveryCalYear, deliveryCalMonth - 1, dayOffset);
+                const y = d.getFullYear(), m = d.getMonth() + 1, date = d.getDate();
+                const key = `${y}-${String(m).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+                const count = deliveryCalCountByDate[key] || 0;
+                const isOtherMonth = d.getMonth() !== deliveryCalMonth - 1;
+                const isToday = d.getTime() === today.getTime();
+                const isWeekend = col === 0 || col === 6;
+                const cls = [isOtherMonth ? 'other-month' : '', isToday ? 'today' : '', isWeekend ? 'weekend' : ''].filter(Boolean).join(' ');
+                const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+                html += `<td class="${cls}" data-date="${dateStr}"><span class="cal-date">${date}</span><span class="cal-count">${count}</span></td>`;
+            }
+            html += '</tr>';
+        }
+        tbody.innerHTML = html;
+        attachDeliveryCalCellClick();
+        scrollCalendarToToday();
+    });
+}
+
+function scrollCalendarToToday() {
+    requestAnimationFrame(function() {
+        var wrap = document.querySelector('.delivery-cal-grid-wrap');
+        if (!wrap) return;
+        var todayTd = document.querySelector('#delivery-cal-grid td.today');
+        if (!todayTd) return;
+        var tr = todayTd.closest('tr');
+        if (!tr) return;
+        var table = document.getElementById('delivery-cal-grid');
+        var theadH = table && table.tHead ? table.tHead.offsetHeight : 0;
+        var trTop = tr.offsetTop;
+        /* 今日の行がヘッダー直下～やや上に来る位置（ヘッダーに重ならず、下にも寄りすぎない） */
+        wrap.scrollTop = Math.max(0, theadH + trTop - 24);
+    });
+}
+
+function attachDeliveryCalCellClick() {
+    const grid = document.getElementById('delivery-cal-grid');
+    if (!grid) return;
+    grid.removeEventListener('click', onDeliveryCalGridClick);
+    grid.addEventListener('click', onDeliveryCalGridClick);
+}
+function onDeliveryCalGridClick(e) {
+    const td = e.target.closest('td');
+    if (!td || !td.dataset.date) return;
+    openDeliveryDetailModal(td.dataset.date);
+}
+
+let deliveryDetailCurrentDate = '';
+let deliveryDetailCurrentCategory = 'purchased';
+
+function openDeliveryDetailModal(dateStr) {
+    deliveryDetailCurrentDate = dateStr;
+    deliveryDetailCurrentCategory = deliveryCalCategory || 'purchased';
+    const modal = document.getElementById('delivery-detail-modal');
+    const dateEl = document.getElementById('delivery-detail-date');
+    if (dateEl) dateEl.textContent = dateStr.replace(/-/g, '/');
+    if (modal) modal.style.display = 'flex';
+    document.querySelectorAll('#delivery-detail-tabs .delivery-detail-tab').forEach(t => {
+        t.classList.toggle('active', t.getAttribute('data-category') === deliveryDetailCurrentCategory);
+    });
+    renderDeliveryDetailTable();
+    document.querySelectorAll('#delivery-detail-tabs .delivery-detail-tab').forEach(t => {
+        t.onclick = () => {
+            deliveryDetailCurrentCategory = t.getAttribute('data-category');
+            document.querySelectorAll('#delivery-detail-tabs .delivery-detail-tab').forEach(x => x.classList.remove('active'));
+            t.classList.add('active');
+            renderDeliveryDetailTable();
+        };
+    });
+}
+
+function closeDeliveryDetailModal() {
+    const modal = document.getElementById('delivery-detail-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function renderDeliveryDetailTable() {
+    const tbody = document.getElementById('delivery-detail-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;padding:24px;color:#64748b;">読み込み中...</td></tr>';
+    loadDeliveryDetailData(deliveryDetailCurrentDate, deliveryDetailCurrentCategory).then(rows => {
+        tbody.innerHTML = '';
+        if (!rows || rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;padding:24px;color:#64748b;">該当データはありません</td></tr>';
+            return;
+        }
+        const get = (r, ...keys) => {
+            for (const k of keys) {
+                let v = r[k];
+                if (v === undefined && typeof k === 'string') {
+                    const low = k.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+                    v = r[low] ?? r[k.replace(/_/g, '')];
+                }
+                if (v !== undefined && v !== null) return String(v);
+            }
+            return '';
+        };
+        rows.forEach((r, i) => {
+            const tr = document.createElement('tr');
+            if (i === 0) tr.classList.add('selected');
+            tr.innerHTML = '<td>' + escapeHtml(get(r, 'order_no', 'OrderNo', 'orderno')) + '</td><td>' + escapeHtml(get(r, 'batch_order_no', 'BatchOrderNo', '一括注文番号')) + '</td><td>' + escapeHtml(get(r, 'construct_no', 'ConstructNo', 'constructno', '工事番号')) + '</td><td>' + escapeHtml(get(r, 'machine', 'Machine', '機械')) + '</td><td>' + escapeHtml(get(r, 'unit', 'Unit', 'ユニット')) + '</td><td>' + escapeHtml(get(r, 'tsuuban', 'serial_no', 'Tsuuban', '通番')) + '</td><td>' + escapeHtml(get(r, 'product_name', 'ProductName', '品名', 'part_name')) + '</td><td>' + escapeHtml(get(r, 'dimension', 'Dimension', '寸法', 'spec', '型式')) + '</td><td>' + escapeHtml(get(r, 'quantity', 'Quantity', 'qty', '個数')) + '</td><td>' + escapeHtml(get(r, 'unit_name', 'UnitName', '単位')) + '</td><td>' + escapeHtml(get(r, 'delivery_date', 'DeliveryDate', '納期', 'due_date')) + '</td><td>' + escapeHtml(get(r, 'orderer', 'Orderer', '発注者')) + '</td><td>' + escapeHtml(get(r, 'supplier', 'Supplier', 'order_to', '発注先')) + '</td><td>' + escapeHtml(get(r, 'comment', 'Comment', 'コメント')) + '</td>';
+            tr.addEventListener('click', () => { tbody.querySelectorAll('tr').forEach(x => x.classList.remove('selected')); tr.classList.add('selected'); });
+            tbody.appendChild(tr);
+        });
+    });
+}
+
+async function loadDeliveryDetailData(dateStr, category) {
+    const supabase = getSupabaseClient();
+    if (!supabase) return [];
+    try {
+        var data = [];
+        if (category === 'purchased') {
+            const tbl = await findTableName(['t_purchaseparts', 'T_PurchaseParts', 'purchaseparts']);
+            if (tbl) {
+                const { data: d } = await supabase.from(tbl).select('*').eq('delivery_date', dateStr);
+                if (d && d.length) data = d;
+                else { const { data: d2 } = await supabase.from(tbl).select('*').eq('deliverydate', dateStr); data = d2 || []; }
+            }
+            return data;
+        }
+        if (category === 'outsource' || category === 'material') {
+            const tbl = await findTableName(['t_manufctpurchase', 'T_ManufctPurchase', 't_purchase', 'T_Purchase']);
+            if (tbl) {
+                const { data: d } = await supabase.from(tbl).select('*').eq('delivery_date', dateStr);
+                if (d && d.length) data = d;
+                else { const { data: d2 } = await supabase.from(tbl).select('*').eq('deliverydate', dateStr); data = d2 || []; }
+            }
+            return data;
+        }
+        if (category === 'misc') {
+            const tbl = await findTableName(['t_expense', 't_misc', 'expense']);
+            if (tbl) {
+                const { data: d } = await supabase.from(tbl).select('*').eq('delivery_date', dateStr);
+                if (d && d.length) data = d;
+                else { const { data: d2 } = await supabase.from(tbl).select('*').eq('deliverydate', dateStr); data = d2 || []; }
+            }
+            return data;
+        }
+    } catch (e) { console.warn('loadDeliveryDetailData error:', e); }
+    return [];
+}
+window.closeDeliveryDetailModal = closeDeliveryDetailModal;
+window.openDeliveryDetailModal = openDeliveryDetailModal;
+window.printDeliveryDetailPreview = function() { window.print(); };
+window.printDeliveryDetail = function() { window.print(); };
+
+async function loadDeliveryCalendarData(year, month, category, undeliveredOnly) {
+    const countByDate = {};
+    const supabase = getSupabaseClient();
+    if (!supabase) return countByDate;
+
+    const monthStart = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const monthEnd = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    try {
+        const toKey = (d) => d ? String(d).slice(0, 10) : '';
+        if (category === 'purchased') {
+            const tbl = await findTableName(['t_purchaseparts', 'T_PurchaseParts', 'purchaseparts']);
+            if (tbl) {
+                let q = supabase.from(tbl).select('delivery_date, nounyu_date').gte('delivery_date', monthStart).lte('delivery_date', monthEnd);
+                if (undeliveredOnly) q = q.is('nounyu_date', null);
+                const { data } = await q;
+                (data || []).forEach(r => {
+                    const d = r.delivery_date ?? r.deliverydate;
+                    const k = toKey(d);
+                    if (k) countByDate[k] = (countByDate[k] || 0) + 1;
+                });
+            }
+        } else if (category === 'outsource' || category === 'material') {
+            const tbl = await findTableName(['t_manufctpurchase', 'T_ManufctPurchase', 't_purchase', 'T_Purchase']);
+            if (tbl) {
+                let q = supabase.from(tbl).select('delivery_date, nounyu_date').gte('delivery_date', monthStart).lte('delivery_date', monthEnd);
+                if (undeliveredOnly) q = q.is('nounyu_date', null);
+                const { data } = await q;
+                (data || []).forEach(r => {
+                    const d = r.delivery_date ?? r.deliverydate;
+                    const k = toKey(d);
+                    if (k) countByDate[k] = (countByDate[k] || 0) + 1;
+                });
+            }
+        } else if (category === 'misc') {
+            const tbl = await findTableName(['t_expense', 't_misc', 'expense']);
+            if (tbl) {
+                let q = supabase.from(tbl).select('delivery_date, nounyu_date').gte('delivery_date', monthStart).lte('delivery_date', monthEnd);
+                if (undeliveredOnly) q = q.is('nounyu_date', null);
+                const { data } = await q;
+                (data || []).forEach(r => {
+                    const d = r.delivery_date ?? r.deliverydate;
+                    const k = toKey(d);
+                    if (k) countByDate[k] = (countByDate[k] || 0) + 1;
+                });
+            }
+        }
+    } catch (e) {
+        console.warn('loadDeliveryCalendarData error:', e);
+    }
+    return countByDate;
+}
 
 // 作業票を保存
 // 作業票の部門別バリデーションと表示切り替え
@@ -7816,8 +9615,10 @@ async function saveWorkTicket() {
     const constructNoInput = document.getElementById('work-ticket-construct-no');
     const drawingNoInput = document.getElementById('work-ticket-drawing-no');
     
+    const jobType1Input = document.getElementById('work-ticket-job-type-1');
     // 基本バリデーション
     if (!workerInput?.value) { showMessage('作業者を選択してください', 'warning'); return; }
+    if (!jobType1Input?.value) { showMessage('職種を選択してください', 'warning'); if (jobType1Input) jobType1Input.focus(); return; }
     if (!constructNoInput?.value) { showMessage('工事番号を入力してください', 'warning'); return; }
     
     // 加工部門の場合は図面番号を必須にする
@@ -7865,6 +9666,7 @@ async function saveWorkTicket() {
     const baseData = {
         date: dateInput?.value,
         worker_code: workerInput?.value,
+        job_type_1: jobType1Input?.value || null,
         department: department,
         construct_no: constructNoInput?.value,
         drawing_no: drawingNoInput?.value || null,
@@ -7888,9 +9690,9 @@ async function saveWorkTicket() {
         showMessage(`${items.length} 件の作業票を登録しました`, 'success');
         clearWorkTicketForm();
         
-        // 登録成功時に流れ星を降らせる
-        createShootingStars();
-    } catch (error) {
+    // 登録成功時に流れ星を降らせる
+    createShootingStars(true);
+} catch (error) {
         console.error('作業票保存エラー:', error);
         // テーブルがない場合はシミュレーション
         if (error.message.includes('not found')) {
@@ -9025,64 +10827,102 @@ function showMessage(message, type = 'info') {
 
     // 成功メッセージの場合、流れ星エフェクトを表示
     if (type === 'success') {
-        createShootingStars();
+        createShootingStars(true);
     }
 }
 
-// 流れ星エフェクトの生成
-function createShootingStars() {
+// キラリと光るエフェクトの生成
+function createShootingStars(isBigJob = false) {
     const container = document.createElement('div');
-    container.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99999; overflow: hidden;';
+    container.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99999;';
     document.body.appendChild(container);
 
-    const starCount = 15;
-    for (let i = 0; i < starCount; i++) {
+    const createSparkle = (x, y, scale = 1, delay = 0) => {
         setTimeout(() => {
-            const star = document.createElement('div');
-            const startX = Math.random() * window.innerWidth;
-            const startY = Math.random() * (window.innerHeight / 2);
-            const duration = 1000 + Math.random() * 1000;
-            
-            star.style.cssText = `
+            const sparkle = document.createElement('div');
+            sparkle.style.cssText = `
                 position: absolute;
-                top: ${startY}px;
-                left: ${startX}px;
+                top: ${y}px;
+                left: ${x}px;
                 width: 2px;
                 height: 2px;
                 background: white;
                 border-radius: 50%;
-                box-shadow: 0 0 10px 2px white, 0 0 20px 4px rgba(165, 180, 252, 0.5);
-                opacity: 0;
-                transform: rotate(-45deg);
+                transform: translate(-50%, -50%);
+                box-shadow: 0 0 30px 15px white, 0 0 60px 30px rgba(165, 180, 252, 0.8);
             `;
+            
+            // 十字の光（より鋭く、長く）
+            const hLine = document.createElement('div');
+            hLine.style.cssText = `position: absolute; top: 50%; left: 50%; width: ${300 * scale}px; height: 2px; background: linear-gradient(to right, transparent, white, transparent); transform: translate(-50%, -50%);`;
+            const vLine = document.createElement('div');
+            vLine.style.cssText = `position: absolute; top: 50%; left: 50%; width: 2px; height: ${300 * scale}px; background: linear-gradient(to bottom, transparent, white, transparent); transform: translate(-50%, -50%);`;
+            
+            // 斜めの光を追加
+            const d1Line = document.createElement('div');
+            d1Line.style.cssText = `position: absolute; top: 50%; left: 50%; width: ${200 * scale}px; height: 1px; background: linear-gradient(to right, transparent, white, transparent); transform: translate(-50%, -50%) rotate(45deg);`;
+            const d2Line = document.createElement('div');
+            d2Line.style.cssText = `position: absolute; top: 50%; left: 50%; width: ${200 * scale}px; height: 1px; background: linear-gradient(to right, transparent, white, transparent); transform: translate(-50%, -50%) rotate(-45deg);`;
 
-            const tail = document.createElement('div');
-            tail.style.cssText = `
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100px;
-                height: 1px;
-                background: linear-gradient(to right, white, transparent);
-                transform-origin: left center;
-            `;
-            star.appendChild(tail);
-            container.appendChild(star);
+            sparkle.appendChild(hLine);
+            sparkle.appendChild(vLine);
+            sparkle.appendChild(d1Line);
+            sparkle.appendChild(d2Line);
+            container.appendChild(sparkle);
 
-            const animation = star.animate([
-                { transform: 'translate(0, 0) rotate(-45deg)', opacity: 0 },
-                { transform: 'translate(0, 0) rotate(-45deg)', opacity: 1, offset: 0.1 },
-                { transform: 'translate(400px, 400px) rotate(-45deg)', opacity: 0 }
+            sparkle.animate([
+                { transform: 'translate(-50%, -50%) scale(0) rotate(0deg)', opacity: 0 },
+                { transform: `translate(-50%, -50%) scale(${scale}) rotate(90deg)`, opacity: 1, offset: 0.3 },
+                { transform: `translate(-50%, -50%) scale(${scale * 1.5}) rotate(180deg)`, opacity: 0 }
             ], {
-                duration: duration,
+                duration: 500,
                 easing: 'ease-out'
-            });
+            }).onfinish = () => sparkle.remove();
+        }, delay);
+    };
 
-            animation.onfinish = () => star.remove();
-        }, Math.random() * 1000);
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+
+    // 派手にキラーん！
+    // 中心で特大の輝き
+    createSparkle(centerX, centerY, isBigJob ? 2.5 : 1.8, 0);
+    
+    // 周囲にランダムな輝きを散らす
+    const count = isBigJob ? 12 : 5;
+    for (let i = 0; i < count; i++) {
+        const x = centerX + (Math.random() - 0.5) * 400;
+        const y = centerY + (Math.random() - 0.5) * 400;
+        const scale = 0.5 + Math.random();
+        const delay = Math.random() * 300;
+        createSparkle(x, y, scale, delay);
     }
 
-    setTimeout(() => container.remove(), 3000);
+    if (isBigJob) {
+        // 大きな仕事の時だけメッセージ
+        setTimeout(() => {
+            const catchMsg = document.createElement('div');
+            catchMsg.innerHTML = '<div style="font-family: \'Outfit\', sans-serif; font-weight: 900; font-size: 60px; color: white; text-shadow: 0 0 30px rgba(255,255,255,1), 0 0 60px rgba(99,102,241,0.8); letter-spacing: 8px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));">Registration complete</div>';
+            catchMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5); opacity: 0; pointer-events: none; z-index: 100000; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);';
+            document.body.appendChild(catchMsg);
+
+            requestAnimationFrame(() => {
+                catchMsg.style.opacity = '1';
+                catchMsg.style.transform = 'translate(-50%, -50%) scale(1)';
+            });
+
+            setTimeout(() => {
+                catchMsg.style.opacity = '0';
+                catchMsg.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                setTimeout(() => {
+                    catchMsg.remove();
+                    container.remove();
+                }, 500);
+            }, 1500);
+        }, 200);
+    } else {
+        setTimeout(() => container.remove(), 1500);
+    }
 }
 
 // HTMLエスケープ関数
@@ -11483,7 +13323,9 @@ function applyConstructNumber() {
                 const saved = await saveUsedConstructNumberToTable(constructNumber, today);
                 if (saved) {
                     console.log('✓ t_constructionnumberテーブルに保存しました:', constructNumber);
-                    
+                    // 受注モーダル等の edit-constructno に入力がある場合は反映
+                    const editConstructNo = document.getElementById('edit-constructno');
+                    if (editConstructNo) editConstructNo.value = constructNumber;
                     // ローカルストレージにも保存（既存の処理）
                     await saveUsedConstructNumber(constructNumber, today);
                     console.log('ローカルストレージに保存しました');
@@ -13258,30 +15100,22 @@ window.editStaffProfileFromModal = function() {
 };
 
 
-// テーブル別カスタムモーダルシステム
-window.openCustomTableModal = function(tableName, data, mode = 'view') {
+// テーブル別カスタムモーダルシステム（カラムから入力フォーマットを動的生成）
+window.openCustomTableModal = async function(tableName, data, mode = 'view') {
     console.log('=== openCustomTableModal ===');
     console.log('tableName:', tableName);
     console.log('mode:', mode);
     
-    const config = findTableConfig(tableName);
-    
-    console.log('Config found:', !!config);
-    if (config) {
-        console.log('Config name:', config.displayName);
-    }
-    
-    // 設定がない場合はスタッフコードの処理へ
-    if (!config) {
-        const normalizedTable = normalizeTableName(tableName || '');
-        if (normalizedTable === 'tstaffcode' || normalizedTable === 'staffcode') {
-            console.log('→ Fallback to staff profile modal');
-            return window.openStaffProfileModal(data, mode);
-        }
-        // デフォルトのモーダルを使用
-        console.warn('No config found for table:', tableName);
+    const rowData = data || {};
+    const columns = await getTableColumnsAsync(tableName, rowData);
+    if (columns.length === 0) {
+        console.warn('No columns for table:', tableName);
+        showMessage('このテーブルのカラムを取得できません。テーブルが空か、接続を確認してください。', 'warning');
         return;
     }
+    
+    const config = buildConfigFromColumns(tableName, columns, rowData);
+    window.currentTableModalConfig = config;
     
     const modal = document.getElementById('custom-table-modal');
     if (!modal) {
@@ -13289,11 +15123,10 @@ window.openCustomTableModal = function(tableName, data, mode = 'view') {
         return;
     }
     
-    window.currentTableData = data || {};
+    window.currentTableData = rowData;
     window.currentTableMode = mode;
     window.currentTableName = tableName;
     
-    // レイアウトに応じてモーダルの幅を調整
     const modalContent = modal.querySelector('.modal-content');
     if (modalContent) {
         if (config.layout === 'triple') {
@@ -13305,28 +15138,28 @@ window.openCustomTableModal = function(tableName, data, mode = 'view') {
         }
     }
     
-    // ヘッダーを生成
     const header = modal.querySelector('.custom-modal-header');
     if (!header) {
         console.error('custom-modal-header not found!');
         return;
     }
-    header.innerHTML = generateCustomHeader(config, data, mode);
+    header.innerHTML = generateCustomHeader(config, rowData, mode);
     
-    // コンテンツを生成
     const content = modal.querySelector('.custom-modal-content');
     if (mode === 'view') {
-        content.innerHTML = generateCustomViewContent(config, data);
+        content.innerHTML = generateCustomViewContent(config, rowData);
     } else {
-        content.innerHTML = generateCustomEditContent(config, data, mode);
+        content.innerHTML = generateCustomEditContent(config, rowData, mode);
     }
     
-    // モーダルを表示
     modal.style.display = 'flex';
     modal.style.opacity = '1';
     setTimeout(() => {
-        modal.querySelector('.modal-content').style.transform = 'scale(1)';
-        modal.querySelector('.modal-content').style.opacity = '1';
+        const mc = modal.querySelector('.modal-content');
+        if (mc) {
+            mc.style.transform = 'scale(1)';
+            mc.style.opacity = '1';
+        }
     }, 10);
 };
 
@@ -13349,19 +15182,18 @@ function generateCustomHeader(config, data, mode) {
            </button>`;
     
     return `
-        <div class="custom-modal-header-inner" style="background: linear-gradient(135deg, ${color.primary} 0%, ${color.secondary} 100%); padding: 28px 40px; position: relative; overflow: hidden;">
-            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.08; background-image: repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(255,255,255,0.15) 12px, rgba(255,255,255,0.15) 24px);"></div>
-            <div style="position: absolute; top: -50%; right: -20%; width: 60%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06)); transform: skewX(-12deg); pointer-events: none;"></div>
-            <button type="button" onclick="closeCustomTableModal()" class="custom-modal-close-btn" style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.2); border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 100;" aria-label="閉じる">
-                <i class="fas fa-times" style="color: white; font-size: 16px;"></i>
+        <div class="custom-modal-header-inner" style="background: linear-gradient(135deg, ${color.primary} 0%, ${color.secondary} 100%); padding: 18px 24px; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.06; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.12) 10px, rgba(255,255,255,0.12) 20px);"></div>
+            <button type="button" onclick="closeCustomTableModal()" class="custom-modal-close-btn" style="position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.2); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 100;" aria-label="閉じる">
+                <i class="fas fa-times" style="color: white; font-size: 14px;"></i>
             </button>
-            <div style="display: flex; align-items: center; gap: 28px; position: relative; z-index: 5; padding-right: 56px;">
-                <div class="custom-modal-header-icon" style="width: 72px; height: 72px; background: rgba(255,255,255,0.22); border-radius: 18px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(12px); flex-shrink: 0; border: 1px solid rgba(255,255,255,0.25); box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+            <div style="display: flex; align-items: center; gap: 16px; position: relative; z-index: 5; padding-right: 48px;">
+                <div class="custom-modal-header-icon" style="width: 48px; height: 48px; background: rgba(255,255,255,0.25); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                     ${svg}
                 </div>
-                <div style="flex: 1;">
-                    <h2 style="margin: 0 0 6px; color: white; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; text-shadow: 0 2px 8px rgba(0,0,0,0.2);">${titles[mode]}</h2>
-                    <div style="color: rgba(255,255,255,0.92); font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">${displayName}の${mode === 'view' ? '詳細情報' : '入力フォーム'}</div>
+                <div style="flex: 1; min-width: 0;">
+                    <h2 style="margin: 0 0 2px; color: white; font-size: 18px; font-weight: 700; letter-spacing: -0.02em;">${titles[mode]}</h2>
+                    <div style="color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 500;">${displayName}の${mode === 'view' ? '詳細' : '入力'}</div>
                 </div>
                 ${buttonHtml}
             </div>
@@ -13369,22 +15201,30 @@ function generateCustomHeader(config, data, mode) {
     `;
 }
 
+// 項目数に応じて列数（スクロール不要で収めるため多めに）
+function getSectionColumnCount(fieldCount) {
+    if (fieldCount <= 3) return 2;
+    if (fieldCount <= 6) return 3;
+    if (fieldCount <= 12) return 4;
+    if (fieldCount <= 20) return 5;
+    return 6;
+}
+
 function generateCustomViewContent(config, data) {
     const { sections, layout } = config;
-    const columns = layout === 'triple' ? 3 : layout === 'double' ? 2 : 1;
+    const outerCols = layout === 'triple' ? 3 : layout === 'double' ? 2 : 1;
     
-    let html = `<div style="display: grid; grid-template-columns: repeat(${columns}, 1fr); gap: 24px; align-items: start;">`;
+    let html = `<div class="custom-modal-inner custom-modal-view" style="display: grid; grid-template-columns: repeat(${outerCols}, 1fr); gap: 16px; align-items: start;">`;
     
     sections.forEach(section => {
-        // セクション内は常に2列を基本とする（全幅指定で1列に調整可能）
-        const sectionColumns = 2;
+        const sectionColumns = getSectionColumnCount(section.fields.length);
         html += `
-            <div class="config-section-card" style="border-top: 4px solid ${section.color};">
-                <h3 style="margin: 0 0 18px; color: #1e293b; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+            <div class="config-section-card" style="border-left: 4px solid ${section.color}; grid-column: 1 / -1; padding: 14px 18px; border-radius: 12px; background: linear-gradient(135deg, #fafbfc 0%, #f1f5f9 100%); box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                <h3 style="margin: 0 0 12px; color: #334155; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
                     <i class="fas ${section.icon || 'fa-info-circle'}" style="color: ${section.color};"></i>
                     ${section.title}
                 </h3>
-                <div style="display: grid; grid-template-columns: repeat(${sectionColumns}, 1fr); gap: 14px;">
+                <div style="display: grid; grid-template-columns: repeat(${sectionColumns}, 1fr); gap: 10px 16px;">
         `;
         
         section.fields.forEach(field => {
@@ -13395,9 +15235,8 @@ function generateCustomViewContent(config, data) {
                 ? parseFloat(value).toLocaleString('ja-JP')
                 : value;
             
-            // width: 'full' または textarea の場合は2列分占有
-            const isFullWidth = field.width === 'full' || (field.type === 'textarea');
-            const gridSpan = isFullWidth ? `grid-column: span ${sectionColumns};` : '';
+            const isFullWidth = field.width === 'full' || field.type === 'textarea';
+            const gridSpan = isFullWidth ? `grid-column: 1 / -1;` : '';
             
             html += `
                 <div class="profile-field-compact" style="${gridSpan}">
@@ -13419,9 +15258,8 @@ function generateCustomViewContent(config, data) {
 
 function generateCustomEditContent(config, data, mode) {
     const { sections, layout } = config;
-    const columns = layout === 'triple' ? 3 : layout === 'double' ? 2 : 1;
+    const outerCols = layout === 'triple' ? 3 : layout === 'double' ? 2 : 1;
     
-    // 複製モードの場合はIDをクリア
     if (mode === 'duplicate') {
         data = { ...data };
         delete data.id;
@@ -13432,18 +15270,17 @@ function generateCustomEditContent(config, data, mode) {
         });
     }
     
-    let html = `<div style="display: grid; grid-template-columns: repeat(${columns}, 1fr); gap: 24px; align-items: start;">`;
+    let html = `<div class="custom-modal-inner custom-modal-edit" style="display: grid; grid-template-columns: repeat(${outerCols}, 1fr); gap: 16px; align-items: start;">`;
     
     sections.forEach(section => {
-        // セクション内は常に2列を基本とする（全幅指定で1列に調整可能）
-        const sectionColumns = 2;
+        const sectionColumns = getSectionColumnCount(section.fields.length);
         html += `
-            <div class="config-section-card" style="border-top: 4px solid ${section.color};">
-                <h3 style="margin: 0 0 18px; color: #1e293b; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+            <div class="config-section-card" style="border-left: 4px solid ${section.color}; grid-column: 1 / -1; padding: 14px 18px; border-radius: 12px; background: linear-gradient(135deg, #fafbfc 0%, #f1f5f9 100%); box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                <h3 style="margin: 0 0 12px; color: #334155; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
                     <i class="fas ${section.icon || 'fa-info-circle'}" style="color: ${section.color};"></i>
                     ${section.title}
                 </h3>
-                <div style="display: grid; grid-template-columns: repeat(${sectionColumns}, 1fr); gap: 14px;">
+                <div style="display: grid; grid-template-columns: repeat(${sectionColumns}, 1fr); gap: 10px 16px;">
         `;
         
         section.fields.forEach(field => {
@@ -13453,9 +15290,8 @@ function generateCustomEditContent(config, data, mode) {
                 : value;
             
             const requiredMark = field.required ? ' *' : '';
-            // width: 'full' または textarea の場合は2列分占有
             const isFullWidth = field.width === 'full' || field.type === 'textarea';
-            const gridSpan = isFullWidth ? `grid-column: span ${sectionColumns};` : '';
+            const gridSpan = isFullWidth ? `grid-column: 1 / -1;` : '';
             
             html += `
                 <div class="profile-field-compact" style="${gridSpan}">
@@ -13465,10 +15301,10 @@ function generateCustomEditContent(config, data, mode) {
                     </label>
             `;
             
-            const commonStyle = `width: 100%; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: all 0.3s; box-sizing: border-box;`;
+            const commonStyle = `width: 100%; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box;`;
             
             if (field.type === 'textarea') {
-                html += `<textarea id="edit-${field.name}" rows="3" style="${commonStyle} resize: vertical;" onfocus="this.style.borderColor='${section.color}'; this.style.boxShadow='0 0 0 3px ${section.color}20'" onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none'">${value}</textarea>`;
+                html += `<textarea id="edit-${field.name}" rows="2" style="${commonStyle} resize: vertical; min-height: 52px;" onfocus="this.style.borderColor='${section.color}'; this.style.boxShadow='0 0 0 3px ${section.color}20'" onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none'">${value}</textarea>`;
             } else if (field.type === 'select' && field.options) {
                 html += `<select id="edit-${field.name}" style="${commonStyle}" onfocus="this.style.borderColor='${section.color}'; this.style.boxShadow='0 0 0 3px ${section.color}20'" onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none'">`;
                 html += `<option value="">選択してください</option>`;
@@ -13490,6 +15326,9 @@ function generateCustomEditContent(config, data, mode) {
                                 onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none'">
                             <i class="fas fa-calendar-alt" style="position: absolute; right: 12px; color: ${section.color}; cursor: pointer;" onclick="openCustomCalendar(document.getElementById('edit-${field.name}'))"></i>
                         </div>`;
+                } else if (field.button && field.button.label && field.button.onclick) {
+                    const btnOnclick = field.button.onclick === 'openConstructNumberModal' ? 'openConstructNumberModal()' : field.button.onclick;
+                    html += `<div style="display: flex; gap: 8px; align-items: center;"><input type="${field.type}" id="edit-${field.name}" value="${inputValue}" style="${commonStyle} flex:1;" onfocus="this.style.borderColor='${section.color}'; this.style.boxShadow='0 0 0 3px ${section.color}20'" onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none'"><button type="button" class="btn-secondary" style="padding: 8px 14px; white-space: nowrap; flex-shrink: 0;" onclick="${btnOnclick}">${field.button.label}</button></div>`;
                 } else {
                     html += `<input type="${field.type}" id="edit-${field.name}" value="${inputValue}" style="${commonStyle}" onfocus="this.style.borderColor='${section.color}'; this.style.boxShadow='0 0 0 3px ${section.color}20'" onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none'">`;
                 }
@@ -13515,34 +15354,71 @@ window.editCustomTableModal = function() {
     window.openCustomTableModal(window.currentTableName, window.currentTableData, 'edit');
 };
 
+// t_acceptorder の config フィールド名（小文字）→ DB カラム名（PascalCase）マッピング
+const T_ACCEPTORDER_FIELD_MAP = {
+    constructno: 'ConstructNo', constructname: 'ConstructName', registerdate: 'RegisterDate',
+    eigyomanno: 'EigyoManno', orderprice: 'OrderPrice', orderdate: 'OrderDate', deliverydate: 'DeliveryDate',
+    ownercode: 'OwnerCode', usercode: 'UserCode',
+    dealingdocmitsumori: 'DealingDocMitsumori', dealingdocchuumon: 'DealingDocChuumon', dealingdocseikyu: 'DealingDocSeikyu'
+};
+
+function mapAcceptOrderFormDataToDb(formData) {
+    const out = {};
+    for (const [key, value] of Object.entries(formData)) {
+        const dbKey = T_ACCEPTORDER_FIELD_MAP[key] || key;
+        if (value === '' || value === null || value === undefined) {
+            out[dbKey] = null;
+            continue;
+        }
+        if (['registerdate', 'orderdate', 'deliverydate'].includes(key) && typeof value === 'string') {
+            out[dbKey] = value.replace(/\//g, '-');
+        } else if (key === 'orderprice' && value !== null) {
+            out[dbKey] = parseFloat(value) || null;
+        } else {
+            out[dbKey] = value;
+        }
+    }
+    return out;
+}
+
 window.saveCustomTableData = async function() {
-    const config = window.TABLE_MODAL_CONFIGS?.[window.currentTableName.toLowerCase()];
-    if (!config) return;
+    const tableName = window.currentTableName;
+    const config = window.currentTableModalConfig || findTableConfig(tableName);
+    if (!config || !config.sections) return;
     
-    // フォームデータを収集
     const formData = {};
     config.sections.forEach(section => {
-        section.fields.forEach(field => {
-            const element = document.getElementById(`edit-${field.name}`);
-            if (element) {
-                formData[field.name] = element.value || null;
-            }
+        (section.fields || []).forEach(field => {
+            const el = document.getElementById(`edit-${field.name}`);
+            if (el) formData[field.name] = el.value !== '' ? el.value : null;
         });
     });
     
-    // 必須チェック
     const requiredFields = [];
     config.sections.forEach(section => {
-        section.fields.forEach(field => {
-            if (field.required && !formData[field.name]) {
+        (section.fields || []).forEach(field => {
+            if (field.required && (formData[field.name] == null || formData[field.name] === '')) {
                 requiredFields.push(field.label);
             }
         });
     });
-    
     if (requiredFields.length > 0) {
         showMessage(`以下の項目は必須です: ${requiredFields.join(', ')}`, 'error');
         return;
+    }
+    
+    const tableNameForDb = getTableNameForSupabase(tableName);
+    let payload = { ...formData };
+    if (window.currentTableMode === 'new') {
+        delete payload.id;
+        if (payload.regino != null) delete payload.regino;
+    }
+    const norm = normalizeTableName(tableName || '');
+    if (norm === 'tacceptorder') {
+        if (window.currentTableMode === 'new') {
+            payload.CancelFlg = false;
+            if (!payload.RegisterDate) payload.RegisterDate = new Date().toISOString().split('T')[0];
+        }
     }
     
     try {
@@ -13551,32 +15427,40 @@ window.saveCustomTableData = async function() {
             throw new Error('Supabaseクライアントが初期化されていません');
         }
         
-        let result;
-        const primaryKey = Object.keys(window.currentTableData).find(key => 
-            key.toLowerCase().includes('id') || key.toLowerCase() === 'regino'
+        const primaryKey = Object.keys(window.currentTableData || {}).find(key => 
+            key.toLowerCase() === 'id' || key.toLowerCase() === 'regino'
         );
         
-        if (window.currentTableMode === 'edit' && primaryKey && window.currentTableData[primaryKey]) {
-            // 更新
+        let result;
+        if (window.currentTableMode === 'edit' && primaryKey && (window.currentTableData[primaryKey] != null && window.currentTableData[primaryKey] !== '')) {
             result = await supabase
-                .from(window.currentTableName)
-                .update(formData)
+                .from(tableNameForDb)
+                .update(payload)
                 .eq(primaryKey, window.currentTableData[primaryKey]);
-            
             if (result.error) throw result.error;
             showMessage(`${config.displayName}を更新しました`, 'success');
         } else {
-            // 新規追加
             result = await supabase
-                .from(window.currentTableName)
-                .insert([formData]);
-            
+                .from(tableNameForDb)
+                .insert([payload]);
             if (result.error) throw result.error;
             showMessage(`${config.displayName}を登録しました`, 'success');
         }
         
         closeCustomTableModal();
-        await loadTableData(currentTable);
+        try {
+            if (typeof loadTableData === 'function' && currentTable) {
+                await loadTableData(currentTable);
+            }
+            const acceptOrderPage = document.getElementById('accept-order-list-page');
+            if (acceptOrderPage && acceptOrderPage.classList.contains('active') && typeof loadAcceptOrderList === 'function') {
+                const cn = document.getElementById('accept-order-search-constructno');
+                const cust = document.getElementById('accept-order-search-customer');
+                loadAcceptOrderList(cn ? cn.value : '', cust ? cust.value : '');
+            }
+        } catch (refreshErr) {
+            console.warn('一覧の更新に失敗しました（保存は完了しています）:', refreshErr);
+        }
         
     } catch (error) {
         console.error('保存エラー:', error);
@@ -13757,8 +15641,573 @@ function closeOrderRegistrationModal() {
     if (modal) modal.remove();
 }
 
+// 受注登録ページを閉じて登録メニューに戻る（モーダルではなくフル画面ページ用）
+function closeOrderRegistrationPage() {
+    showPage('register');
+}
+
+// 受注登録ページの初期化（日付デフォルト・フォーム送信バインド）
+let orderRegistrationFormBound = false;
+function initOrderRegistrationPage() {
+    const today = new Date();
+    const todayStr = today.getFullYear() + '/' + String(today.getMonth() + 1).padStart(2, '0') + '/' + String(today.getDate()).padStart(2, '0');
+    const orderDateEl = document.getElementById('reg-OrderDate');
+    const deliveryDateEl = document.getElementById('reg-DeliveryDate');
+    if (orderDateEl && !orderDateEl.value) orderDateEl.value = todayStr;
+    if (deliveryDateEl && !deliveryDateEl.value) deliveryDateEl.value = todayStr;
+    const salesRepDisplay = document.getElementById('reg-sales-rep-display');
+    if (salesRepDisplay && typeof window.currentUserName === 'string') salesRepDisplay.textContent = window.currentUserName;
+    const staffCodeEl = document.getElementById('reg-StaffCode');
+    if (staffCodeEl && typeof window.currentUserCode === 'string') staffCodeEl.value = window.currentUserCode;
+    if (orderRegistrationFormBound) return;
+    const form = document.getElementById('order-registration-form');
+    if (!form) return;
+    orderRegistrationFormBound = true;
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn ? submitBtn.textContent : '';
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '登録中...'; }
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        if (data.OrderDate) data.OrderDate = data.OrderDate.replace(/\//g, '-');
+        if (data.DeliveryDate) data.DeliveryDate = data.DeliveryDate.replace(/\//g, '-');
+        if (data.FactoryShipDate) data.FactoryShipDate = data.FactoryShipDate.replace(/\//g, '-');
+        if (data.OrderPrice) data.OrderPrice = parseFloat(data.OrderPrice) || 0;
+        data.RegisterDate = new Date().toISOString();
+        try {
+            const { error } = await getSupabaseClient().from('t_acceptorder').insert([data]);
+            if (error) throw error;
+            alert('受注登録が完了しました。\n製造指図書のPDF出力と関連部署への通知準備を行ってください。');
+            closeOrderRegistrationPage();
+            if (window.currentTableName === 't_acceptorder') displayTable();
+        } catch (err) {
+            console.error('登録エラー:', err);
+            alert('登録に失敗しました: ' + (err.message || err));
+        } finally {
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalText; }
+        }
+    });
+}
+
+// --- 受注データ一覧・検索ページ（t_acceptorder） ---
+async function loadAcceptOrderList(constructNo, customerName) {
+    const tbody = document.getElementById('accept-order-tbody');
+    const countEl = document.getElementById('accept-order-list-count');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="9" style="padding: 24px; text-align: center; color: #94a3b8;"><i class="fas fa-spinner fa-spin"></i> 読み込み中...</td></tr>';
+    try {
+        let query = getSupabaseClient().from('t_acceptorder').select('*').order('registerdate', { ascending: false });
+        if (constructNo && constructNo.trim()) {
+            query = query.ilike('constructno', '%' + constructNo.trim() + '%');
+        }
+        if (customerName && customerName.trim()) {
+            const term = customerName.trim();
+            query = query.or('constructname.ilike.%' + term + '%,ownercode.ilike.%' + term + '%,usercode.ilike.%' + term + '%');
+        }
+        const { data: rows, error } = await query;
+        if (error) throw error;
+        const list = rows || [];
+        if (list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="padding: 24px; text-align: center; color: #64748b;">該当する受注データがありません。</td></tr>';
+        } else {
+            const PP = window.PolarisProduction;
+            tbody.innerHTML = list.map(row => {
+                const cn = row.ConstructNo ?? row.constructno ?? '-';
+                const cname = row.ConstructName ?? row.constructname ?? '-';
+                const owner = row.OwnerCode ?? row.ownercode ?? '-';
+                const user = row.UserCode ?? row.usercode ?? '-';
+                const price = row.OrderPrice ?? row.orderprice;
+                const priceStr = price != null ? Number(price).toLocaleString('ja-JP') : '-';
+                const orderDate = row.OrderDate ?? row.orderdate;
+                const orderDateStr = orderDate ? new Date(orderDate).toLocaleDateString('ja-JP') : '-';
+                const deliveryDate = row.DeliveryDate ?? row.deliverydate;
+                const deliveryStr = deliveryDate ? new Date(deliveryDate).toLocaleDateString('ja-JP') : '-';
+                const regDate = row.RegisterDate ?? row.registerdate;
+                const regStr = regDate ? new Date(regDate).toLocaleDateString('ja-JP') : '-';
+                const phaseSummary = PP ? PP.getPaymentPhaseSummary(row) : { nextPhase: '-', unpaidPhases: [] };
+                const nextPhaseStr = phaseSummary.nextPhase || '-';
+                const rowStyle = (PP && PP.getStatusStyle(row, 't_acceptorder')) ? PP.getStatusStyle(row, 't_acceptorder') : '';
+                const rowJson = JSON.stringify(row).replace(/"/g, '&quot;');
+                return `<tr class="accept-order-row" data-row='${rowJson}' style="cursor: pointer; transition: background 0.2s; ${rowStyle}" onmouseover="if(!this._polarisColor) this.style.background='#f1f5f9'" onmouseout="if(!this._polarisColor) this.style.background=''">
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">${escapeHtml(String(cn))}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${escapeHtml(String(cname))}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${escapeHtml(String(owner))}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${escapeHtml(String(user))}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">${priceStr}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${orderDateStr}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${deliveryStr}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${regStr}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 12px; font-weight: 600; color: #475569;">${escapeHtml(nextPhaseStr)}</td>
+                </tr>`;
+            }).join('');
+            tbody.querySelectorAll('.accept-order-row').forEach(tr => {
+                const style = tr.getAttribute('style') || '';
+                if (style.indexOf('background:') !== -1) tr._polarisColor = true;
+            });
+            tbody.querySelectorAll('.accept-order-row').forEach(tr => {
+                tr.addEventListener('click', function () {
+                    try {
+                        const row = JSON.parse(this.getAttribute('data-row').replace(/&quot;/g, '"'));
+                        if (typeof window.openCustomTableModal === 'function') {
+                            window.openCustomTableModal('t_acceptorder', row, 'view');
+                        }
+                    } catch (e) { console.warn(e); }
+                });
+            });
+        }
+        if (countEl) countEl.textContent = list.length;
+    } catch (err) {
+        console.error('受注一覧取得エラー:', err);
+        tbody.innerHTML = '<tr><td colspan="9" style="padding: 24px; text-align: center; color: var(--error);">読み込みに失敗しました: ' + (err.message || err) + '</td></tr>';
+        if (countEl) countEl.textContent = '0';
+    }
+}
+
+function initAcceptOrderListPage() {
+    const newBtn = document.getElementById('accept-order-new-btn');
+    const searchBtn = document.getElementById('accept-order-search-btn');
+    const clearBtn = document.getElementById('accept-order-search-clear-btn');
+    const inputConstruct = document.getElementById('accept-order-search-constructno');
+    const inputCustomer = document.getElementById('accept-order-search-customer');
+    if (newBtn) {
+        newBtn.onclick = function () {
+            if (typeof window.openCustomTableModal === 'function') {
+                window.openCustomTableModal('t_acceptorder', {}, 'new');
+            }
+        };
+    }
+    if (searchBtn) {
+        searchBtn.onclick = function () {
+            const cn = inputConstruct ? inputConstruct.value : '';
+            const cust = inputCustomer ? inputCustomer.value : '';
+            loadAcceptOrderList(cn, cust);
+        };
+    }
+    if (clearBtn) {
+        clearBtn.onclick = function () {
+            if (inputConstruct) inputConstruct.value = '';
+            if (inputCustomer) inputCustomer.value = '';
+            loadAcceptOrderList('', '');
+        };
+    }
+    loadAcceptOrderList('', '');
+}
+
 // グローバルに公開
 window.closeOrderRegistrationModal = closeOrderRegistrationModal;
+window.closeOrderRegistrationPage = closeOrderRegistrationPage;
+
+// 諸掛購入登録ページを閉じて登録メニューに戻る
+function closeMiscPurchasePage() {
+    showPage('register');
+}
+window.closeMiscPurchasePage = closeMiscPurchasePage;
+
+// 納入処理ページを閉じて登録メニューに戻る
+function closeMiscDeliveryPage() {
+    showPage('register');
+}
+window.closeMiscDeliveryPage = closeMiscDeliveryPage;
+
+// 部品単位出荷管理ページを閉じて登録メニューに戻る
+function closeShippingPage() {
+    showPage('register');
+}
+window.closeShippingPage = closeShippingPage;
+
+// 外注・材料納入処理ページを閉じて登録メニューに戻る
+function closeOutsourceDeliveryPage() {
+    showPage('register');
+}
+window.closeOutsourceDeliveryPage = closeOutsourceDeliveryPage;
+
+// 購入部品納入処理ページを閉じて登録メニューに戻る
+function closePartsDeliveryPage() {
+    showPage('register');
+}
+window.closePartsDeliveryPage = closePartsDeliveryPage;
+
+// 余り品登録ページを閉じて登録メニューに戻る
+function closeSurplusRegisterPage() {
+    showPage('register');
+}
+window.closeSurplusRegisterPage = closeSurplusRegisterPage;
+
+// 余り品検索ページを閉じて登録メニューに戻る
+function closeSurplusSearchPage() {
+    showPage('register');
+}
+window.closeSurplusSearchPage = closeSurplusSearchPage;
+
+// 工事番号出荷登録ページを閉じて登録メニューに戻る
+function closeProjectShippingPage() {
+    showPage('register');
+}
+window.closeProjectShippingPage = closeProjectShippingPage;
+
+// 納入処理ページの初期化（t_acceptorder で紐づけ・工事番号で検索）
+function initMiscDeliveryPage() {
+    const searchBtn = document.getElementById('delivery-search-btn');
+    const copyAllBtn = document.getElementById('delivery-copy-all-btn');
+    const registerBtn = document.getElementById('delivery-register-btn');
+    const tbody = document.getElementById('misc-delivery-result-body');
+    const emptyRow = '<tr><td colspan="18" style="text-align: center; padding: 24px; color: #64748b;">検索条件を入力して「データ検索」を押してください</td></tr>';
+
+    if (searchBtn && tbody) {
+        searchBtn.addEventListener('click', async () => {
+            const constructNo = (document.getElementById('delivery-construct-no') || {}).value.trim();
+            const orderTo = (document.getElementById('delivery-order-to') || {}).value.trim();
+            const orderNo = (document.getElementById('delivery-order-no') || {}).value.trim();
+            tbody.innerHTML = '<tr><td colspan="18" style="text-align: center; padding: 24px;"><i class="fas fa-spinner fa-spin"></i> 検索中...</td></tr>';
+            try {
+                let query = getSupabaseClient().from('t_acceptorder').select('*');
+                if (constructNo) query = query.ilike('constructno', '%' + constructNo + '%');
+                if (orderTo) {
+                    const pat = '%' + orderTo + '%';
+                    query = query.or('ownercode.ilike.' + pat + ',usercode.ilike.' + pat);
+                }
+                const { data, error } = await query.order('constructno');
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="18" style="text-align: center; padding: 24px; color: #64748b;">該当データがありません</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.map(row => {
+                    const c = row.constructno ?? '';
+                    const name = row.constructname ?? '';
+                    const delivery = row.deliverydate ?? '';
+                    const price = row.orderprice ?? '';
+                    const owner = row.ownercode ?? '';
+                    return '<tr>' +
+                        '<td>' + escapeHtml(c) + '</td><td></td><td></td><td></td><td></td><td></td><td></td>' +
+                        '<td>' + escapeHtml(name) + '</td><td></td><td></td><td></td>' +
+                        '<td></td><td>' + escapeHtml(delivery) + '</td><td></td><td></td><td></td><td>' + escapeHtml(String(price)) + '</td>' +
+                        '<td>' + escapeHtml(owner) + '</td></tr>';
+                }).join('');
+            } catch (e) {
+                console.error('納入処理検索エラー:', e);
+                tbody.innerHTML = '<tr><td colspan="18" style="text-align: center; padding: 24px; color: #dc2626;">検索に失敗しました</td></tr>';
+            }
+        });
+    }
+    if (copyAllBtn) copyAllBtn.addEventListener('click', () => { console.log('納入日を全行にコピー'); });
+    if (registerBtn) registerBtn.addEventListener('click', () => { console.log('納入日を登録'); });
+}
+
+// 外注・材料納入処理ページの初期化（t_acceptorder で紐づけ・工事番号で検索）
+function initOutsourceDeliveryPage() {
+    const searchBtn = document.getElementById('outsource-search-btn');
+    const copyAllBtn = document.getElementById('outsource-copy-all-btn');
+    const registerBtn = document.getElementById('outsource-register-date-btn');
+    const detailBtn = document.getElementById('outsource-detail-btn');
+    const tbody = document.getElementById('outsource-delivery-result-body');
+    if (!tbody) return;
+    if (searchBtn) {
+        searchBtn.addEventListener('click', async () => {
+            const constructNo = (document.getElementById('outsource-construct-no') || {}).value.trim();
+            const orderTo = (document.getElementById('outsource-order-to') || {}).value.trim();
+            const orderNo = (document.getElementById('outsource-order-no') || {}).value.trim();
+            tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 24px;"><i class="fas fa-spinner fa-spin"></i> 検索中...</td></tr>';
+            try {
+                let query = getSupabaseClient().from('t_acceptorder').select('*');
+                if (constructNo) query = query.ilike('constructno', '%' + constructNo + '%');
+                if (orderTo) {
+                    const pat = '%' + orderTo + '%';
+                    query = query.or('ownercode.ilike.' + pat + ',usercode.ilike.' + pat);
+                }
+                const { data, error } = await query.order('constructno');
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 24px; color: #64748b;">該当データがありません</td></tr>';
+                    return;
+                }
+                const esc = (v) => (v == null || v === '') ? '' : escapeHtml(String(v));
+                tbody.innerHTML = data.map(row => '<tr>' +
+                    '<td>' + esc(row.constructno) + '</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>' + esc(row.deliverydate) + '</td><td></td><td></td><td></td>' +
+                    '<td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>' + esc(row.orderprice) + '</td></tr>').join('');
+            } catch (e) {
+                console.error('外注・材料納入処理検索エラー:', e);
+                tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 24px; color: #dc2626;">検索に失敗しました</td></tr>';
+            }
+        });
+    }
+    if (copyAllBtn) copyAllBtn.addEventListener('click', () => { console.log('納入日を全行にコピー'); });
+    if (registerBtn) registerBtn.addEventListener('click', () => { console.log('納入日を登録'); });
+    if (detailBtn) detailBtn.addEventListener('click', () => { console.log('詳細表示'); });
+}
+
+// 部品単位出荷管理ページの初期化
+function initShippingPage() {
+    const searchBtn = document.getElementById('shipping-search-btn');
+    const clearBtn = document.getElementById('shipping-clear-btn');
+    const tbody = document.getElementById('shipping-result-body');
+    const countEl = document.getElementById('shipping-result-count');
+    const tabDescEl = document.getElementById('shipping-tab-desc');
+    var lastShippingResultCount = 0;
+
+    function updateShippingCount(n) {
+        lastShippingResultCount = n;
+        if (countEl) countEl.textContent = (n >= 0) ? (n + ' 件') : '—';
+    }
+
+    function runShippingSearch() {
+        if (!searchBtn) return;
+        searchBtn.click();
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+            var form = document.getElementById('shipping-form');
+            if (form) {
+                form.reset();
+                var radios = form.querySelectorAll('input[type="radio"]');
+                var all = form.querySelector('input[name="shipping-number-type"][value="all"]');
+                var prep = form.querySelector('input[name="shipping-status2"][value="prep-incomplete"]');
+                if (all) all.checked = true;
+                if (prep) prep.checked = true;
+            }
+            if (tbody) tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 32px; color: #64748b;">工事番号や番号範囲を選び、「検索」を押してください（Enterでも検索できます）</td></tr>';
+            updateShippingCount(-1);
+        });
+    }
+
+    document.querySelectorAll('.shipping-tab').forEach(tab => {
+        tab.addEventListener('click', function () {
+            document.querySelectorAll('.shipping-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            var tabLabels = { unit: '部品単位: 検索で工事・部品一覧を表示します。', construct: '工事番号単位: 工事ごとの出荷状況を表示します。', unshipped: '未出荷リスト: 未出荷の部品一覧です。', pending: 'ペンディング: 保留中のリストです。', cancel: '出荷キャンセル: キャンセル一覧です。', unsold7000: '未売上7000番: 7000番で出荷済み・未売上の一覧です。' };
+            if (tabDescEl) tabDescEl.textContent = tabLabels[tab.getAttribute('data-tab')] || '';
+        });
+    });
+
+    document.querySelectorAll('.shipping-quick-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            var v = this.getAttribute('data-filter');
+            var r = document.querySelector('input[name="shipping-number-type"][value="' + v + '"]');
+            if (r) { r.checked = true; runShippingSearch(); }
+        });
+    });
+
+    ['shipping-construct-no', 'shipping-sales-rep', 'shipping-delivery-to'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); runShippingSearch(); } });
+    });
+
+    if (searchBtn && tbody) {
+        searchBtn.addEventListener('click', async function () {
+            var constructNo = (document.getElementById('shipping-construct-no') || {}).value.trim();
+            var salesRep = (document.getElementById('shipping-sales-rep') || {}).value.trim();
+            var deliveryTo = (document.getElementById('shipping-delivery-to') || {}).value.trim();
+            var numberType = (document.querySelector('input[name="shipping-number-type"]:checked') || {}).value || 'all';
+            tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 24px;"><i class="fas fa-spinner fa-spin"></i> 検索中...</td></tr>';
+            updateShippingCount(-1);
+            try {
+                var supabase = getSupabaseClient();
+                if (!supabase) { throw new Error('データベースに接続されていません'); }
+                var query = supabase.from('t_acceptorder').select('*');
+                if (constructNo) query = query.ilike('constructno', '%' + constructNo + '%');
+                if (salesRep) query = query.ilike('eigyomanno', '%' + salesRep + '%');
+                if (deliveryTo) query = query.or('ownercode.ilike.%' + deliveryTo + '%,usercode.ilike.%' + deliveryTo + '%,constructname.ilike.%' + deliveryTo + '%');
+                if (numberType === '5000') query = query.gte('constructno', '5000').lt('constructno', '6000');
+                else if (numberType === '8000') query = query.gte('constructno', '8000').lt('constructno', '9000');
+                else if (numberType === '7000') query = query.gte('constructno', '7000').lt('constructno', '8000');
+                var result = await query.order('constructno').limit(500);
+                var data = result.data, error = result.error;
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 24px; color: #64748b;">該当データがありません。条件を変えて再検索してください。</td></tr>';
+                    updateShippingCount(0);
+                    return;
+                }
+                var esc = function (v) { return (v == null || v === '') ? '' : escapeHtml(String(v)); };
+                tbody.innerHTML = data.map(row => '<tr>' +
+                    '<td>' + esc(row.constructno) + '</td><td></td><td></td><td></td><td></td><td></td><td>' + esc(row.constructname) + '</td><td></td><td></td><td></td>' +
+                    '<td>' + esc(row.eigyomanno || row.eigyomanname) + '</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td>' + esc(row.deliverydate) + '</td><td></td><td></td></tr>').join('');
+                updateShippingCount(data.length);
+            } catch (e) {
+                console.error('出荷管理検索エラー:', e);
+                tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 24px; color: #dc2626;">検索に失敗しました: ' + escapeHtml(e.message || String(e)) + '</td></tr>';
+                updateShippingCount(-1);
+            }
+        });
+    }
+}
+
+// 購入部品納入処理ページの初期化（t_acceptorder で紐づけ・工事番号で検索、諸掛納入処理と同じレイアウト）
+function initPartsDeliveryPage() {
+    const searchBtn = document.getElementById('parts-delivery-search-btn');
+    const copyAllBtn = document.getElementById('parts-delivery-copy-all-btn');
+    const registerBtn = document.getElementById('parts-delivery-register-btn');
+    const tbody = document.getElementById('parts-delivery-result-body');
+    if (!tbody) return;
+    if (searchBtn) {
+        searchBtn.addEventListener('click', async () => {
+            const constructNo = (document.getElementById('parts-delivery-construct-no') || {}).value.trim();
+            const orderTo = (document.getElementById('parts-delivery-order-to') || {}).value.trim();
+            tbody.innerHTML = '<tr><td colspan="18" style="text-align: center; padding: 24px;"><i class="fas fa-spinner fa-spin"></i> 検索中...</td></tr>';
+            try {
+                let query = getSupabaseClient().from('t_acceptorder').select('*');
+                if (constructNo) query = query.ilike('constructno', '%' + constructNo + '%');
+                if (orderTo) {
+                    const pat = '%' + orderTo + '%';
+                    query = query.or('ownercode.ilike.' + pat + ',usercode.ilike.' + pat);
+                }
+                const { data, error } = await query.order('constructno');
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="18" style="text-align: center; padding: 24px; color: #64748b;">該当データがありません</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.map(row => {
+                    const c = row.constructno ?? '';
+                    const name = row.constructname ?? '';
+                    const delivery = row.deliverydate ?? '';
+                    const price = row.orderprice ?? '';
+                    const owner = row.ownercode ?? '';
+                    return '<tr>' +
+                        '<td>' + escapeHtml(c) + '</td><td></td><td></td><td></td><td></td><td></td><td></td>' +
+                        '<td>' + escapeHtml(name) + '</td><td></td><td></td><td></td>' +
+                        '<td></td><td>' + escapeHtml(delivery) + '</td><td></td><td></td><td></td><td>' + escapeHtml(String(price)) + '</td>' +
+                        '<td>' + escapeHtml(owner) + '</td></tr>';
+                }).join('');
+            } catch (e) {
+                console.error('購入部品納入処理検索エラー:', e);
+                tbody.innerHTML = '<tr><td colspan="18" style="text-align: center; padding: 24px; color: #dc2626;">検索に失敗しました</td></tr>';
+            }
+        });
+    }
+    if (copyAllBtn) copyAllBtn.addEventListener('click', () => { console.log('納入日を全行にコピー'); });
+    if (registerBtn) registerBtn.addEventListener('click', () => { console.log('納入日を登録'); });
+}
+
+// 余り品検索ページの初期化
+function initSurplusSearchPage() {
+    const form = document.getElementById('surplus-search-form');
+    const searchBtn = document.getElementById('surplus-search-btn');
+    const clearBtn = document.getElementById('surplus-clear-display-btn');
+    const tbody = document.getElementById('surplus-search-result-body');
+    const emptyRow = '<tr><td colspan="21" style="text-align: center; padding: 24px; color: #64748b;">検索条件を入力して「検索」を押してください</td></tr>';
+    if (!form) return;
+    if (searchBtn && tbody) {
+        searchBtn.addEventListener('click', async () => {
+            const constructNo = (document.getElementById('surplus-construct-no') || {}).value.trim();
+            const inventoryNo = (document.getElementById('surplus-inventory-no') || {}).value.trim();
+            const partName = (document.getElementById('surplus-name') || {}).value.trim();
+            tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 24px;"><i class="fas fa-spinner fa-spin"></i> 検索中...</td></tr>';
+            try {
+                const tableName = 't_surplus';
+                let query = getSupabaseClient().from(tableName).select('*');
+                if (constructNo) query = query.ilike('constructno', '%' + constructNo + '%');
+                if (inventoryNo) query = query.ilike('inventoryno', '%' + inventoryNo + '%');
+                if (partName) query = query.ilike('partname', '%' + partName + '%');
+                const { data, error } = await query.order('inventoryno', { nullsFirst: false }).limit(500);
+                if (error) throw error;
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 24px; color: #64748b;">該当データがありません</td></tr>';
+                    return;
+                }
+                const esc = (v) => (v == null || v === '') ? '' : escapeHtml(String(v));
+                tbody.innerHTML = data.map(row => '<tr>' +
+                    '<td>' + esc(row.inventoryno) + '</td><td>' + esc(row.surplusno) + '</td><td>' + esc(row.subno) + '</td><td>' + esc(row.rev) + '</td>' +
+                    '<td>' + esc(row.constructno) + '</td><td>' + esc(row.machine) + '</td><td>' + esc(row.unit) + '</td><td>' + esc(row.serialno) + '</td>' +
+                    '<td>' + esc(row.partname) + '</td><td>' + esc(row.drawing) + '</td><td>' + esc(row.partno) + '</td><td>' + esc(row.material) + '</td><td>' + esc(row.commercial) + '</td>' +
+                    '<td>' + esc(row.quantity) + '</td><td>' + esc(row.unitname) + '</td><td>' + esc(row.newused) + '</td><td>' + esc(row.storage) + '</td>' +
+                    '<td>' + esc(row.manufactured) + '</td><td>' + esc(row.purchased) + '</td><td>' + esc(row.conclusion) + '</td><td>' + esc(row.registrationstatus) + '</td></tr>').join('');
+            } catch (e) {
+                console.warn('余り品検索:', e.message || e);
+                tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 24px; color: #64748b;">検索条件を入力して「検索」を押してください</td></tr>';
+            }
+        });
+    }
+    if (clearBtn && form) {
+        clearBtn.addEventListener('click', () => {
+            form.querySelectorAll('input[type="text"], input[type="number"]').forEach(el => { el.value = el.id === 'surplus-qty' ? '1' : (el.id === 'surplus-qty-unit' ? '個' : ''); });
+            form.querySelectorAll('input[type="checkbox"]').forEach(el => { el.checked = (el.id === 'surplus-purchased' || el.id === 'surplus-manufactured'); });
+            form.querySelectorAll('input[type="radio"]').forEach(el => { el.checked = el.value === 'new'; });
+            if (tbody) tbody.innerHTML = emptyRow;
+        });
+    }
+    document.querySelectorAll('#surplus-update-btn, #surplus-delete-btn, #surplus-dispose-btn, #surplus-edit-btn, #surplus-print-order-btn, #surplus-print-label-btn, #surplus-print-list-btn').forEach(btn => {
+        if (btn) btn.addEventListener('click', () => { console.log(btn.textContent.trim(), '(未実装)'); });
+    });
+}
+
+// 余り品登録ページの初期化
+function initSurplusRegisterPage() {
+    const form = document.getElementById('surplus-register-form');
+    const constructNoEl = document.getElementById('surplus-reg-construct-no');
+    const serialArea = document.getElementById('surplus-reg-serial-area');
+    const drawingArea = document.getElementById('surplus-reg-drawing-area');
+    document.querySelectorAll('.surplus-reg-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.surplus-reg-type-btn').forEach(b => { b.classList.remove('active'); b.classList.add('btn-secondary'); b.classList.remove('btn-primary'); });
+            btn.classList.add('active'); btn.classList.remove('btn-secondary'); btn.classList.add('btn-primary');
+            const isPurchased = btn.dataset.type === 'purchased';
+            if (serialArea) serialArea.style.display = isPurchased ? '' : 'none';
+            if (drawingArea) drawingArea.style.display = isPurchased ? 'none' : '';
+        });
+    });
+    if (constructNoEl) {
+        constructNoEl.addEventListener('blur', async () => {
+            const no = constructNoEl.value.trim();
+            if (!no) return;
+            try {
+                const { data } = await getSupabaseClient().from('t_acceptorder').select('constructname, ownercode, usercode').eq('constructno', no).maybeSingle();
+                const nameEl = document.getElementById('surplus-reg-construct-name');
+                const clientEl = document.getElementById('surplus-reg-client');
+                const deliveryEl = document.getElementById('surplus-reg-delivery');
+                const salesEl = document.getElementById('surplus-reg-sales');
+                const shipEl = document.getElementById('surplus-reg-ship-date');
+                if (data && nameEl) { nameEl.value = data.constructname || ''; }
+                if (data && clientEl) { clientEl.value = data.ownercode || ''; }
+                if (data && deliveryEl) { deliveryEl.value = data.usercode || ''; }
+                if (salesEl) salesEl.value = '';
+                if (shipEl) shipEl.value = '';
+            } catch (e) { console.warn('受注情報取得:', e); }
+        });
+    }
+    document.getElementById('surplus-reg-search-btn')?.addEventListener('click', () => { console.log('検索'); });
+    document.getElementById('surplus-reg-submit-btn')?.addEventListener('click', (e) => { e.preventDefault(); console.log('新規登録'); });
+    form?.querySelectorAll('button[type="button"]').forEach(btn => {
+        if (btn.id === 'surplus-reg-submit-btn' || btn.onclick) return;
+        if (btn.textContent.includes('在庫払出') || btn.textContent.includes('編集画面') || btn.textContent.includes('閉')) {
+            btn.addEventListener('click', () => { if (btn.textContent.includes('閉')) closeSurplusRegisterPage(); else console.log(btn.textContent.trim()); });
+        }
+    });
+}
+
+// 工事番号出荷登録ページの初期化（検索・登録のイベント束縛）
+function initProjectShippingPage() {
+    const form = document.getElementById('project-shipping-form');
+    const searchBtn = document.getElementById('project-ship-search-btn');
+    if (!form) return;
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            const no = (document.getElementById('project-ship-construct-no') || {}).value;
+            if (!no) return;
+            // TODO: 工事番号で受注情報を取得して右カラムに表示
+            console.log('工事番号検索:', no);
+        });
+    }
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const no = (document.getElementById('project-ship-construct-no') || {}).value;
+        const shipDate = (document.getElementById('project-ship-date') || {}).value;
+        // TODO: 出荷日を登録（空の場合は消去）
+        console.log('出荷登録:', { no, shipDate });
+    });
+}
+
+// 諸掛購入登録ページの初期化（日付デフォルト等）
+function initMiscPurchasePage() {
+    const form = document.getElementById('misc-purchase-form');
+    if (!form) return;
+    const today = new Date();
+    const todayStr = today.getFullYear() + '/' + String(today.getMonth() + 1).padStart(2, '0') + '/' + String(today.getDate()).padStart(2, '0');
+    form.querySelectorAll('input.date-input').forEach(el => { if (!el.value) el.value = todayStr; });
+}
 
 // 購入部品発注（資材課用）の専用モーダルを開く
 async function openPurchaseOrderModal() {

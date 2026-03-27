@@ -1,4 +1,5 @@
 // テーブル別カスタムモーダル設定（統合版）
+// ラベル・用語は docs/用語・番号体系.md に準拠
 const TABLE_MODAL_CONFIGS = {
     // 会社コード（取引先）
     't_companycode': {
@@ -32,7 +33,7 @@ const TABLE_MODAL_CONFIGS = {
                     { name: '電話', label: '電話', type: 'tel' },
                     { name: '住所1', label: '住所1', type: 'text', width: 'full' },
                     { name: '住所2', label: '住所2', type: 'text', width: 'full' },
-                    { name: 'FAX', label: 'FAX', type: 'tel' },
+                    { name: 'fax', label: 'FAX', type: 'tel' },
                     { name: '担当者1', label: '担当1', type: 'text' }
                 ]
             },
@@ -48,20 +49,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                <rect x="20" y="30" width="60" height="55" rx="3" fill="#3b82f6" opacity="0.2"/>
-                <rect x="25" y="35" width="50" height="8" rx="2" fill="#3b82f6"/>
-                <rect x="30" y="48" width="8" height="10" rx="1" fill="#60a5fa"/>
-                <rect x="42" y="48" width="8" height="10" rx="1" fill="#60a5fa"/>
-                <rect x="54" y="48" width="8" height="10" rx="1" fill="#60a5fa"/>
-                <rect x="66" y="48" width="8" height="10" rx="1" fill="#60a5fa"/>
-                <rect x="30" y="62" width="8" height="10" rx="1" fill="#60a5fa"/>
-                <rect x="42" y="62" width="8" height="10" rx="1" fill="#60a5fa"/>
-                <rect x="54" y="62" width="8" height="10" rx="1" fill="#60a5fa"/>
-                <rect x="66" y="62" width="8" height="10" rx="1" fill="#60a5fa"/>
-            </svg>
-        `
+        svg: `<i class="fas fa-building" style="font-size: 28px; color: white;"></i>`
     },
     
     // 受注情報
@@ -110,16 +98,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                <rect x="25" y="20" width="50" height="65" rx="4" fill="white" stroke="#10b981" stroke-width="3"/>
-                <line x1="35" y1="35" x2="65" y2="35" stroke="#10b981" stroke-width="2"/>
-                <line x1="35" y1="45" x2="65" y2="45" stroke="#10b981" stroke-width="2"/>
-                <line x1="35" y1="55" x2="55" y2="55" stroke="#10b981" stroke-width="2"/>
-                <circle cx="75" cy="75" r="15" fill="#10b981"/>
-                <path d="M70 75 L73 78 L80 70" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-            </svg>
-        `
+        svg: `<i class="fas fa-file-invoice" style="font-size: 28px; color: white;"></i>`
     },
     
     // スタッフコード
@@ -167,12 +146,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                <circle cx="50" cy="35" r="15" fill="#667eea"/>
-                <path d="M30 75 Q30 55 50 55 Q70 55 70 75" fill="#764ba2"/>
-            </svg>
-        `
+        svg: `<i class="fas fa-user" style="font-size: 28px; color: white;"></i>`
     },
     
     // 機械コード
@@ -197,17 +171,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                <rect x="20" y="30" width="60" height="45" rx="4" fill="#6366f1" opacity="0.2"/>
-                <rect x="30" y="40" width="40" height="25" rx="2" fill="#6366f1"/>
-                <circle cx="35" cy="52" r="3" fill="white"/>
-                <circle cx="65" cy="52" r="3" fill="white"/>
-                <rect x="45" y="50" width="10" height="4" rx="2" fill="white"/>
-                <path d="M25 75 L35 75 L35 85 L25 85 Z" fill="#4f46e5"/>
-                <path d="M65 75 L75 75 L75 85 L65 85 Z" fill="#4f46e5"/>
-            </svg>
-        `
+        svg: `<i class="fas fa-cog" style="font-size: 28px; color: white;"></i>`
     },
     
     // 部署コード
@@ -233,23 +197,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                <circle cx="50" cy="30" r="8" fill="#8b5cf6"/>
-                <circle cx="30" cy="60" r="6" fill="#a78bfa"/>
-                <circle cx="50" cy="60" r="6" fill="#a78bfa"/>
-                <circle cx="70" cy="60" r="6" fill="#a78bfa"/>
-                <line x1="50" y1="38" x2="30" y2="54" stroke="#8b5cf6" stroke-width="2"/>
-                <line x1="50" y1="38" x2="50" y2="54" stroke="#8b5cf6" stroke-width="2"/>
-                <line x1="50" y1="38" x2="70" y2="54" stroke="#8b5cf6" stroke-width="2"/>
-                <circle cx="25" cy="80" r="4" fill="#c4b5fd"/>
-                <circle cx="35" cy="80" r="4" fill="#c4b5fd"/>
-                <circle cx="45" cy="80" r="4" fill="#c4b5fd"/>
-                <circle cx="55" cy="80" r="4" fill="#c4b5fd"/>
-                <circle cx="65" cy="80" r="4" fill="#c4b5fd"/>
-                <circle cx="75" cy="80" r="4" fill="#c4b5fd"/>
-            </svg>
-        `
+        svg: `<i class="fas fa-sitemap" style="font-size: 28px; color: white;"></i>`
     },
     
     // 工事番号
@@ -283,15 +231,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                <rect x="30" y="40" width="15" height="40" rx="2" fill="#f59e0b"/>
-                <rect x="55" y="30" width="15" height="50" rx="2" fill="#fbbf24"/>
-                <polygon points="30,40 37.5,25 45,40" fill="#f59e0b"/>
-                <polygon points="55,30 62.5,15 70,30" fill="#fbbf24"/>
-                <rect x="25" y="80" width="50" height="5" rx="2" fill="#d97706"/>
-            </svg>
-        `
+        svg: `<i class="fas fa-hashtag" style="font-size: 28px; color: white;"></i>`
     },
     
     // 会計コード
@@ -317,18 +257,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                <rect x="25" y="25" width="50" height="50" rx="4" fill="#ec4899" opacity="0.2"/>
-                <rect x="30" y="30" width="40" height="8" rx="2" fill="#ec4899"/>
-                <rect x="30" y="42" width="15" height="6" rx="1" fill="#f9a8d4"/>
-                <rect x="30" y="52" width="15" height="6" rx="1" fill="#f9a8d4"/>
-                <rect x="30" y="62" width="15" height="6" rx="1" fill="#f9a8d4"/>
-                <rect x="50" y="42" width="15" height="6" rx="1" fill="#f9a8d4"/>
-                <rect x="50" y="52" width="15" height="6" rx="1" fill="#f9a8d4"/>
-                <rect x="50" y="62" width="15" height="6" rx="1" fill="#f9a8d4"/>
-            </svg>
-        `
+        svg: `<i class="fas fa-calculator" style="font-size: 28px; color: white;"></i>`
     },
     
     // 材料コード
@@ -415,14 +344,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                <rect x="20" y="25" width="60" height="40" rx="4" fill="#4b5563" opacity="0.2"/>
-                <rect x="25" y="30" width="50" height="30" rx="2" fill="#4b5563"/>
-                <rect x="15" y="65" width="70" height="6" rx="2" fill="#1f2937"/>
-                <rect x="40" y="65" width="20" height="10" fill="#1f2937"/>
-            </svg>
-        `
+        svg: `<i class="fas fa-laptop" style="font-size: 28px; color: white;"></i>`
     },
 
     // 通貨コード
@@ -448,12 +370,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                <circle cx="50" cy="50" r="35" fill="#10b981" opacity="0.2"/>
-                <text x="50" y="65" font-family="Arial" font-size="40" fill="#10b981" text-anchor="middle" font-weight="bold">¥</text>
-            </svg>
-        `
+        svg: `<i class="fas fa-money-bill-wave" style="font-size: 28px; color: white;"></i>`
     },
 
     // 機種記号
@@ -477,13 +394,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                <path d="M20 30 L80 30 L80 70 L20 70 Z" fill="#6366f1" opacity="0.2"/>
-                <circle cx="35" cy="50" r="8" fill="#6366f1"/>
-                <circle cx="65" cy="50" r="8" fill="#6366f1"/>
-            </svg>
-        `
+        svg: `<i class="fas fa-tag" style="font-size: 28px; color: white;"></i>`
     },
 
     // ユニットコード
@@ -508,12 +419,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                <path d="M30 30 H70 V70 H30 Z" fill="#f59e0b" opacity="0.2"/>
-                <rect x="40" y="40" width="20" height="20" fill="#f59e0b"/>
-            </svg>
-        `
+        svg: `<i class="fas fa-puzzle-piece" style="font-size: 28px; color: white;"></i>`
     },
 
     // 入金情報
@@ -548,13 +454,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `
-            <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                <rect x="25" y="20" width="50" height="60" rx="4" fill="#ec4899" opacity="0.2"/>
-                <circle cx="50" cy="45" r="15" fill="#ec4899"/>
-                <text x="50" y="52" font-family="Arial" font-size="20" fill="white" text-anchor="middle" font-weight="bold">¥</text>
-            </svg>
-        `
+        svg: `<i class="fas fa-hand-holding-usd" style="font-size: 28px; color: white;"></i>`
     },
 
     // 購入部品
@@ -595,7 +495,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="30" stroke="#3b82f6" stroke-width="8" stroke-dasharray="40 10"/><circle cx="50" cy="50" r="10" fill="#3b82f6"/></svg>`
+        svg: `<i class="fas fa-shopping-cart" style="font-size: 28px; color: white;"></i>`
     },
 
     // 採番情報
@@ -665,7 +565,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100" fill="none"><path d="M20 30 H80 M20 50 H80 M20 70 H80" stroke="#10b981" stroke-width="8" stroke-linecap="round"/><circle cx="25" cy="30" r="5" fill="white"/><circle cx="25" cy="50" r="5" fill="white"/><circle cx="25" cy="70" r="5" fill="white"/></svg>`
+        svg: `<i class="fas fa-stream" style="font-size: 28px; color: white;"></i>`
     },
 
     // 発注情報
@@ -734,7 +634,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100" fill="none"><rect x="25" y="25" width="20" height="20" fill="#6366f1"/><rect x="55" y="25" width="20" height="20" fill="#6366f1"/><rect x="25" y="55" width="20" height="20" fill="#6366f1"/><rect x="55" y="55" width="20" height="20" fill="#6366f1"/></svg>`
+        svg: `<i class="fas fa-cube" style="font-size: 28px; color: white;"></i>`
     },
 
     // 作業コード
@@ -763,7 +663,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100" fill="none"><path d="M30 70 L70 30 L80 40 L40 80 Z" fill="#ef4444"/><rect x="20" y="60" width="20" height="20" rx="4" fill="#b91c1c"/></svg>`
+        svg: `<i class="fas fa-tools" style="font-size: 28px; color: white;"></i>`
     },
 
     // 作業部署
@@ -792,7 +692,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="35" r="15" fill="#8b5cf6"/><path d="M30 75 Q30 55 50 55 Q70 55 70 75" fill="#6d28d9"/></svg>`
+        svg: `<i class="fas fa-user-tie" style="font-size: 28px; color: white;"></i>`
     },
 
     // 原価集計ビュー
@@ -832,7 +732,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100" fill="none"><path d="M20 80 V40 H40 V80 M40 80 V30 H60 V80 M60 80 V50 H80 V80" stroke="#10b981" stroke-width="6" stroke-linecap="round"/></svg>`
+        svg: `<i class="fas fa-chart-pie" style="font-size: 28px; color: white;"></i>`
     },
 
     // 購入部品
@@ -866,13 +766,13 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100"><rect x="20" y="30" width="60" height="50" rx="5" fill="#3b82f6" opacity="0.2"/><path d="M30 30 L30 20 L70 20 L70 30" stroke="#3b82f6" stroke-width="5" fill="none"/></svg>`
+        svg: `<i class="fas fa-shopping-cart" style="font-size: 28px; color: white;"></i>`
     },
 
     // 図面番号採番
     't_saiban': {
         displayName: '図面番号採番',
-        icon: 'blueprint',
+        icon: 'drafting-compass',
         color: { primary: '#6366f1', secondary: '#4338ca', light: '#e0e7ff' },
         layout: 'double',
         sections: [
@@ -900,7 +800,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="#6366f1" opacity="0.2"/><line x1="30" y1="30" x2="70" y2="70" stroke="#6366f1" stroke-width="2"/><line x1="70" y1="30" x2="30" y2="70" stroke="#6366f1" stroke-width="2"/></svg>`
+        svg: `<i class="fas fa-drafting-compass" style="font-size: 28px; color: white;"></i>`
     },
 
     // 工程コード
@@ -921,13 +821,13 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="#8b5cf6" opacity="0.2"/><path d="M35 50 L45 60 L65 40" stroke="#8b5cf6" stroke-width="6" fill="none"/></svg>`
+        svg: `<i class="fas fa-stream" style="font-size: 28px; color: white;"></i>`
     },
 
     // 仕入情報
     't_purchase': {
         displayName: '仕入情報',
-        icon: 'file-invoice-dollar',
+        icon: 'truck-loading',
         color: { primary: '#f59e0b', secondary: '#d97706', light: '#fffbeb' },
         layout: 'double',
         sections: [
@@ -954,7 +854,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100"><rect x="25" y="20" width="50" height="60" rx="4" fill="#f59e0b" opacity="0.2"/><line x1="35" y1="40" x2="65" y2="40" stroke="#f59e0b" stroke-width="3"/></svg>`
+        svg: `<i class="fas fa-truck-loading" style="font-size: 28px; color: white;"></i>`
     },
 
     // ユニットコード
@@ -975,7 +875,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100"><path d="M50 20 L80 35 L80 65 L50 80 L20 65 L20 35 Z" fill="#06b6d4" opacity="0.2"/></svg>`
+        svg: `<i class="fas fa-cube" style="font-size: 28px; color: white;"></i>`
     },
 
     // 作業コード
@@ -996,7 +896,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="#ec4899" opacity="0.2"/><path d="M40 60 L60 40 M35 55 L45 65 M55 35 L65 45" stroke="#ec4899" stroke-width="5"/></svg>`
+        svg: `<i class="fas fa-tools" style="font-size: 28px; color: white;"></i>`
     },
 
     // 作業部署
@@ -1017,7 +917,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100"><circle cx="35" cy="40" r="10" fill="#10b981" opacity="0.4"/><circle cx="65" cy="40" r="10" fill="#10b981" opacity="0.4"/><path d="M20 70 Q50 50 80 70" stroke="#10b981" stroke-width="5" fill="none"/></svg>`
+        svg: `<i class="fas fa-users" style="font-size: 28px; color: white;"></i>`
     },
 
     // 原価集計ビュー
@@ -1050,7 +950,7 @@ const TABLE_MODAL_CONFIGS = {
                 ]
             }
         ],
-        svg: `<svg width="80" height="80" viewBox="0 0 100 100"><path d="M50 50 L50 15 A35 35 0 0 1 85 50 Z" fill="#f43f5e" opacity="0.6"/><circle cx="50" cy="50" r="35" stroke="#f43f5e" stroke-width="2" fill="none"/></svg>`
+        svg: `<i class="fas fa-chart-pie" style="font-size: 28px; color: white;"></i>`
     }
 };
 
