@@ -1557,11 +1557,7 @@ function setupEventListeners() {
         btn.addEventListener('click', (e) => {
             const type = btn.dataset.type || e.target.closest('.register-btn')?.dataset.type;
             // 以下は onclick でページ表示するためモーダルを開かない
-<<<<<<< HEAD
             if (type === 'construct-number' || type === 'work-ticket' || type === 'drawing-number' || type === 'accept-order' || type === 'misc-purchase' || type === 'misc-delivery' || type === 'shipping' || type === 'outsource-delivery' || type === 'parts-delivery' || type === 'surplus-register' || type === 'surplus-search' || type === 'project-shipping' || type === 'estimate-request' || type === 'quotation' || type === 'barcode-work-ticket') {
-=======
-            if (type === 'construct-number' || type === 'work-ticket' || type === 'drawing-number' || type === 'accept-order' || type === 'misc-purchase' || type === 'misc-delivery' || type === 'shipping' || type === 'outsource-delivery' || type === 'parts-delivery' || type === 'surplus-register' || type === 'surplus-search' || type === 'project-shipping') {
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
                 return;
             } else {
                 e.preventDefault();
@@ -1811,18 +1807,12 @@ function showPage(pageName) {
         menuEl.classList.add('active');
     } else {
         // 納入予定カレンダー・加工進捗・機械の加工進捗は検索から開くため、検索をアクティブに
-<<<<<<< HEAD
         if (pageName === 'delivery-calendar' || pageName === 'processing-progress' || pageName === 'machine-progress' || pageName === 'cost-summary' || pageName === 'worktime-entry' || pageName === 'bom-import' || pageName === 'acceptance') {
             const searchMenu = document.querySelector('[data-page="search"]');
             if (searchMenu) searchMenu.classList.add('active');
         } else if (pageName === 'estimate-request' || pageName === 'quotation' || pageName === 'barcode-work-ticket') {
             const regMenu = document.querySelector('[data-page="register"]');
             if (regMenu) regMenu.classList.add('active');
-=======
-        if (pageName === 'delivery-calendar' || pageName === 'processing-progress' || pageName === 'machine-progress' || pageName === 'cost-summary') {
-            const searchMenu = document.querySelector('[data-page="search"]');
-            if (searchMenu) searchMenu.classList.add('active');
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
         } else {
             console.warn(`[data-page="${pageName}"]要素が見つかりません`);
         }
@@ -1894,7 +1884,6 @@ function showPage(pageName) {
                 if (typeof goToToday === 'function') goToToday();
             }, 200);
         }, 100);
-<<<<<<< HEAD
     } else if (pageName === 'worktime-entry') {
         setTimeout(() => { if (typeof initWorktimeEntryPage === 'function') initWorktimeEntryPage(); }, 100);
     } else if (pageName === 'bom-import') {
@@ -1907,8 +1896,6 @@ function showPage(pageName) {
         setTimeout(() => { if (typeof initQuotationPage === 'function') initQuotationPage(); }, 100);
     } else if (pageName === 'barcode-work-ticket') {
         setTimeout(() => { if (typeof initBarcodeWorkTicketPage === 'function') initBarcodeWorkTicketPage(); }, 100);
-=======
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
     } else if (pageName === 'bulletin') {
         // 掲示板ページを開いた時の初期化
         setTimeout(() => {
@@ -8670,7 +8657,6 @@ async function loadPPFilterOptions() {
         const supabase = getSupabaseClient();
         if (!supabase) return;
 
-<<<<<<< HEAD
         // t_manufctparts からユニーク機械コード・ユニットコードを取得
         const { data: rows } = await supabase.from('t_manufctparts').select('symbolmachine, symbolunit').limit(5000);
         if (!rows) return;
@@ -8699,42 +8685,6 @@ async function loadPPFilterOptions() {
                 option.textContent = code;
                 unitSelect.appendChild(option);
             });
-=======
-        // 機械コードの取得（列名は小文字で取得）
-        const machineTable = await findTableName(['t_machinecode', 'T_MachineCode', 'machinecode']);
-        if (machineTable) {
-            const { data } = await supabase.from(machineTable).select('machinecode, machinename').order('machinecode');
-            const select = document.getElementById('pp-filter-machine');
-            if (select && data) {
-                select.innerHTML = '<option value="">すべて</option>';
-                data.forEach(m => {
-                    const code = m.machinecode ?? m.MachineCode ?? '';
-                    const name = m.machinename ?? m.MachineName ?? '';
-                    const option = document.createElement('option');
-                    option.value = code;
-                    option.textContent = code ? `${code} : ${name}` : name || '(未設定)';
-                    select.appendChild(option);
-                });
-            }
-        }
-
-        // ユニットコードの取得（列名は小文字で取得）
-        const unitTable = await findTableName(['t_machineunitcode', 't_unitcode', 'T_UnitCode', 'unitcode']);
-        if (unitTable) {
-            const { data } = await supabase.from(unitTable).select('unitcode, unitname').order('unitcode');
-            const select = document.getElementById('pp-filter-unit');
-            if (select && data) {
-                select.innerHTML = '<option value="">すべて</option>';
-                data.forEach(u => {
-                    const code = u.unitcode ?? u.UnitCode ?? '';
-                    const name = u.unitname ?? u.UnitName ?? '';
-                    const option = document.createElement('option');
-                    option.value = code;
-                    option.textContent = code ? `${code} : ${name}` : name || '(未設定)';
-                    select.appendChild(option);
-                });
-            }
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
         }
     } catch (e) {
         console.warn('loadPPFilterOptions error:', e);
@@ -8784,19 +8734,11 @@ async function searchProcessingProgress() {
             return;
         }
 
-<<<<<<< HEAD
         // 絞り込み（末尾スペース対応: machine/unit は ilike で前方一致）
         let query = supabase.from(mainTable).select('*');
         if (constructNo) query = query.ilike('constructionno', `%${constructNo}%`);
         if (machine) query = query.ilike('symbolmachine', `${machine}%`);
         if (unit) query = query.ilike('symbolunit', `${unit}%`);
-=======
-        // 絞り込み（constructionno / constructno の両対応でエラー時は再試行）
-        let query = supabase.from(mainTable).select('*');
-        if (constructNo) query = query.ilike('constructionno', `%${constructNo}%`);
-        if (machine) query = query.eq('symbolmachine', machine);
-        if (unit) query = query.eq('symbolunit', unit);
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
         if (drawingNo) query = query.ilike('drawingno', `%${drawingNo}%`);
         if (partNo) query = query.ilike('partno', `%${partNo}%`);
         if (orderStart) query = query.gte('keydate', orderStart);
@@ -8804,30 +8746,17 @@ async function searchProcessingProgress() {
 
         let rawData = null;
         let error = null;
-<<<<<<< HEAD
         ({ data: rawData, error } = await query.limit(1000));
         if (error && (error.message || '').indexOf('construct') >= 0) {
             query = supabase.from(mainTable).select('*');
             if (constructNo) query = query.ilike('constructno', `%${constructNo}%`);
             if (machine) query = query.ilike('symbolmachine', `${machine}%`);
             if (unit) query = query.ilike('symbolunit', `${unit}%`);
-=======
-        ({ data: rawData, error } = await query.limit(500));
-        if (error && (error.message || '').indexOf('construct') >= 0) {
-            query = supabase.from(mainTable).select('*');
-            if (constructNo) query = query.ilike('constructno', `%${constructNo}%`);
-            if (machine) query = query.eq('symbolmachine', machine);
-            if (unit) query = query.eq('symbolunit', unit);
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
             if (drawingNo) query = query.ilike('drawingno', `%${drawingNo}%`);
             if (partNo) query = query.ilike('partno', `%${partNo}%`);
             if (orderStart) query = query.gte('keydate', orderStart);
             if (orderEnd) query = query.lte('keydate', orderEnd);
-<<<<<<< HEAD
             const res = await query.limit(1000);
-=======
-            const res = await query.limit(500);
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
             rawData = res.data;
             error = res.error;
         }
@@ -8869,7 +8798,6 @@ async function searchProcessingProgress() {
             return;
         }
 
-<<<<<<< HEAD
         // 外注データを一括取得（t_purchaseparts: construction_no + symbol_machine + symbol_unit でジョイン）
         let _osMap = {};
         try {
@@ -8900,8 +8828,6 @@ async function searchProcessingProgress() {
         window._ppLastSearchData = data;
         window._ppLastConstructNo = constructNo;
 
-=======
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
         const countEl = document.getElementById('pp-result-count');
         if (countEl) countEl.textContent = `${data.length}件`;
 
@@ -8924,7 +8850,6 @@ async function searchProcessingProgress() {
 
             const fmtDate = (v) => { const s = String(v || ''); if (s.length >= 10) return s.slice(0, 10).replace(/-/g, '/'); return s; };
 
-<<<<<<< HEAD
             // 外注件数表示（construction_no + machine + unit キー）
             const osKey = (ppVal(row, 'constructionno', 'constructno') || '').trim() + '___' + (ppVal(row, 'symbolmachine') || '').trim() + '___' + (ppVal(row, 'symbolunit') || '').trim();
             const osCount = (_osMap[osKey] || []).length;
@@ -8932,8 +8857,6 @@ async function searchProcessingProgress() {
                 ? `<span style="color:#1d4ed8;font-weight:700;">${osCount}件</span>`
                 : ppVal(row, 'outsource_info');
 
-=======
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
             tr.innerHTML = `
                 <td style="text-align: center;"><input type="checkbox" value="${index}"></td>
                 <td>${ppVal(row, 'constructionno', 'constructno')}</td>
@@ -8942,11 +8865,7 @@ async function searchProcessingProgress() {
                 <td>${ppVal(row, 'plan')}</td>
                 <td>${row.supplyflag || row.is_supplied ? '有' : ''}</td>
                 <td>${ppVal(row, 'drawingno')}</td>
-<<<<<<< HEAD
                 <td style="text-align:center;">${ppVal(row, 'partno')}</td>
-=======
-                <td>${ppVal(row, 'partno')}</td>
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
                 <td>${ppVal(row, 'description', 'partname')}</td>
                 <td>${ppVal(row, 'materialcode', 'material')}</td>
                 <td>${ppVal(row, 'qty', 'quantity')}</td>
@@ -8956,11 +8875,7 @@ async function searchProcessingProgress() {
                 <td>${fmtDate(ppVal(row, 'printdate', 'drawing_date'))}</td>
                 <td>${ppVal(row, 'material_info')}</td>
                 <td>${ppVal(row, 'internal_info')}</td>
-<<<<<<< HEAD
                 <td>${osCountCell}</td>
-=======
-                <td>${ppVal(row, 'outsource_info')}</td>
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
                 <td>${ppVal(row, 'work_time')}</td>
                 <td>${fmtDate(ppVal(row, 'kanryodate', 'completion_date', 'complete_date'))}</td>
                 <td>${statusText || (hasKanryo ? '加工完了' : '')}</td>
@@ -8986,16 +8901,11 @@ async function selectPPRow(tr, row) {
 
     const drawingNo = ppVal(row, 'drawingno');
     const partNo = ppVal(row, 'partno');
-<<<<<<< HEAD
     const constructNo = (ppVal(row, 'constructionno', 'constructno') || '').trim();
     const machine = (ppVal(row, 'symbolmachine') || '').trim();
     const unit = (ppVal(row, 'symbolunit') || '').trim();
 
     await loadPPSubTables(drawingNo, partNo, constructNo, machine, unit);
-=======
-
-    await loadPPSubTables(drawingNo, partNo);
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
 }
 
 // サブテーブル（加工作業、材料手配、外注加工）のロード
@@ -9038,7 +8948,6 @@ async function loadPPSubTables(drawingNo, partNo, constructNo, machine, unit) {
             }
         }
 
-<<<<<<< HEAD
         // 2. 材料手配 (t_purchaseparts: construction_no + symbol_machine + symbol_unit)
         if (constructNo) {
             let matQ = supabase.from('t_purchaseparts').select('*').eq('construction_no', constructNo);
@@ -9054,19 +8963,12 @@ async function loadPPSubTables(drawingNo, partNo, constructNo, machine, unit) {
                     (cc || []).forEach(c => { matCompanyMap[c.companycode] = c.shortname || c.companyname || ''; });
                 }
             }
-=======
-        // 2. 材料手配 (t_purchaseparts)
-        const materialTable = await findTableName(['t_purchaseparts', 'T_PurchaseParts', 'purchaseparts']);
-        if (materialTable) {
-            const { data } = await supabase.from(materialTable).select('*').eq('drawingno', drawingNo).eq('partno', partNo);
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
             materialTbody.innerHTML = '';
             if (matData && matData.length > 0) {
                 matData.forEach(m => {
                     const cname = matCompanyMap[m.order_company_code] || m.temp_company_name || m.order_company_code || '';
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-<<<<<<< HEAD
                         <td>${subRow(m, 'consecutive_no')}</td>
                         <td>${subRow(m, 'description')}</td>
                         <td>${subRow(m, 'order_div')}</td>
@@ -9075,16 +8977,6 @@ async function loadPPSubTables(drawingNo, partNo, constructNo, machine, unit) {
                         <td>${subDate(m, 'delivery_date')}</td>
                         <td>${subDate(m, 'nounyu_date')}</td>
                         <td>${subRow(m, 'paper_id')}</td>
-=======
-                        <td>${subRow(m, 'OrderNo', 'orderno')}</td>
-                        <td>${subRow(m, 'Standard', 'standard')}</td>
-                        <td>${subRow(m, 'Dimension', 'dimension')}</td>
-                        <td>${subRow(m, 'Quantity', 'quantity')}</td>
-                        <td>${subRow(m, 'Supplier', 'supplier')}</td>
-                        <td>${subDate(m, 'OrderDate', 'orderdate')}</td>
-                        <td>${subDate(m, 'DeliveryDate', 'deliverydate')}</td>
-                        <td>${subDate(m, 'ReceiveDate', 'receivedate')}</td>
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
                     `;
                     materialTbody.appendChild(tr);
                 });
@@ -9095,7 +8987,6 @@ async function loadPPSubTables(drawingNo, partNo, constructNo, machine, unit) {
             materialTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 10px; color: #94a3b8;">データなし</td></tr>';
         }
 
-<<<<<<< HEAD
         // 3. 外注加工（t_purchaseparts: construction_no + symbol_machine + symbol_unit）
         if (constructNo) {
             let osQ = supabase.from('t_purchaseparts').select('*').eq('construction_no', constructNo);
@@ -9111,19 +9002,12 @@ async function loadPPSubTables(drawingNo, partNo, constructNo, machine, unit) {
                     (cc || []).forEach(c => { companyMap[c.companycode] = c.shortname || c.companyname || ''; });
                 }
             }
-=======
-        // 3. 外注加工（t_manufctpurchase 優先 → t_outsource。納入日・再納入日）
-        const outsourceTable = await findTableName(['t_manufctpurchase', 'T_ManufctPurchase', 'manufctpurchase', 't_outsource', 'T_Outsource', 'outsource']);
-        if (outsourceTable) {
-            const { data } = await supabase.from(outsourceTable).select('*').eq('drawingno', drawingNo).eq('partno', partNo);
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
             outsourceTbody.innerHTML = '';
             if (osData && osData.length > 0) {
                 osData.forEach(o => {
                     const cname = companyMap[o.order_company_code] || o.temp_company_name || o.order_company_code || '';
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-<<<<<<< HEAD
                         <td>${subRow(o, 'consecutive_no')}</td>
                         <td>${subRow(o, 'description', 'order_div')}</td>
                         <td></td>
@@ -9132,16 +9016,6 @@ async function loadPPSubTables(drawingNo, partNo, constructNo, machine, unit) {
                         <td>${subDate(o, 'delivery_date')}</td>
                         <td>${subDate(o, 'nounyu_date')}</td>
                         <td></td>
-=======
-                        <td>${subRow(o, 'OrderNo', 'orderno')}</td>
-                        <td>${subRow(o, 'WorkName', 'workname', 'KakoName')}</td>
-                        <td>${subRow(o, 'Quantity', 'quantity')}</td>
-                        <td>${subRow(o, 'Supplier', 'supplier')}</td>
-                        <td>${subDate(o, 'OrderDate', 'orderdate')}</td>
-                        <td>${subDate(o, 'DeliveryDate', 'deliverydate', 'Nouki')}</td>
-                        <td>${subDate(o, 'NounyuDate', 'nounyudate', 'ReceiveDate', 'receivedate')}</td>
-                        <td>${subDate(o, 'ReturnDate', 'returndate', 'SaiNounyuDate', 'sainounyudate')}</td>
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
                     `;
                     outsourceTbody.appendChild(tr);
                 });
