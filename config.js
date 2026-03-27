@@ -1,8 +1,8 @@
 // Supabase接続設定
 // ⚠️ 注意: 本番環境では環境変数や別ファイルで管理することを推奨します
 const SUPABASE_CONFIG = {
-    url: "https://uevlguozshzwywzqtsvr.supabase.co",
-    key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVldmxndW96c2h6d3l3enF0c3ZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMjkzMDcsImV4cCI6MjA3NDkwNTMwN30.hx82K_19c5Mmh9NXCCf15_yGDPLJ5O_XM_CnWuVMyZ8"
+    url: "https://todnsebzbgndsxafbflc.supabase.co",
+    key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZG5zZWJ6YmduZHN4YWZiZmxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NTA0NjUsImV4cCI6MjA5MDEyNjQ2NX0.SkfRDk9FroEQfWACi5DLQi-cHfp_zk6_RdgNrvM5mn8"
 };
 // app.js など他スクリプトから参照できるようグローバルに公開
 if (typeof window !== 'undefined') {
