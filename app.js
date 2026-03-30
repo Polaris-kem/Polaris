@@ -5631,9 +5631,9 @@ async function loadTables() {
             const commonTables = [
                 't_acceptorder', 't_accountcode', 't_companycode', 't_computerdevice',
                 't_constructionnumber', 't_currencycode', 't_departmentcode', 't_machinecode',
-                't_machinemarkfolder', 't_machineunitcode', 't_manufctparts', 't_materialcode',
+                't_machinemarkforsaiban', 't_machineunitcode', 't_manufctparts', 't_materialcode',
                 't_moneyreceipt', 't_processcode', 't_purchase', 't_purchaseparts',
-                't_sagyoff', 't_saiban', 't_staffcode', 't_symbolmachine', 't_symbolunit',
+                't_sagyofl', 't_saiban', 't_staffcode', 't_symbolmachine', 't_symbolunit',
                 't_unitcode', 't_workcode', 't_workdepartment'
             ];
             for (const tableName of commonTables) {
