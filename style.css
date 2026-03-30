@@ -1903,7 +1903,6 @@ select.pp-input-eq {
     border-radius: 10px;
     border: 1px solid #d1d5db;
     box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-<<<<<<< HEAD
     flex-shrink: 0;
     min-height: 160px;
 }
@@ -1911,12 +1910,6 @@ select.pp-input-eq {
     overflow: auto;
     min-height: 80px;
     max-height: 460px;
-=======
-}
-.pp-table-scroll {
-    overflow: auto;
-    max-height: 440px;
->>>>>>> 4a45c5e195c8afd8bfc05417da5440a3655b041e
 }
 .pp-main-table {
     width: 100%;
