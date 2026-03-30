@@ -6966,7 +6966,7 @@ function generateWorkTicketFormPage(container) {
                     </div>
 
                     <!-- 受注情報 + アクションボタン -->
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div id="wt-order-info-section" style="display: flex; flex-direction: column; gap: 10px;">
                         <!-- 受注情報（自動取得） -->
                         <div style="background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%); border-radius: 12px; padding: 14px; box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3); position: relative; overflow: hidden; flex: 1;">
                             <div style="position: absolute; top: -10px; right: -10px; width: 50px; height: 50px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
@@ -7086,10 +7086,106 @@ function generateWorkTicketFormPage(container) {
                 const constructNo = event.target.value.trim();
                 if (constructNo) {
                     await fetchWorkTicketOrderInfo(constructNo);
+                    await loadMachinesFromManufctParts(constructNo);
+                    await loadKeydatesFromManufctParts(constructNo);
                 }
             });
         }
     }, 500);
+}
+
+// 工事番号からt_symbolmachineの機械を取得してドロップダウンに設定
+async function loadMachinesFromManufctParts(constructNo) {
+    const sb = getSupabaseClient();
+    if (!sb) return;
+    const { data, error } = await sb.from('t_symbolmachine')
+        .select('symbolmachine, machinename')
+        .ilike('constructionno', constructNo + '%')
+        .limit(200);
+    if (error || !data) return;
+
+    const seen = new Set();
+    const machines = [];
+    data.forEach(r => {
+        const code = (r.symbolmachine || '').trim();
+        if (code && !seen.has(code)) { seen.add(code); machines.push({ code, name: (r.machinename || '').trim() }); }
+    });
+    machines.sort((a, b) => a.code.localeCompare(b.code));
+
+    const sel = document.getElementById('work-ticket-machine-type');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">選択</option>';
+    machines.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.code;
+        opt.textContent = m.name ? `${m.code} : ${m.name}` : m.code;
+        sel.appendChild(opt);
+    });
+
+    // 機械選択時にユニットを絞り込む
+    sel.onchange = () => loadUnitsFromManufctParts(constructNo, sel.value);
+}
+
+// 工事番号+機械からt_symbolunitのユニットを取得
+async function loadUnitsFromManufctParts(constructNo, machine) {
+    const sb = getSupabaseClient();
+    if (!sb) return;
+    let query = sb.from('t_symbolunit')
+        .select('symbolunit, unitname')
+        .ilike('constructionno', constructNo + '%')
+        .limit(200);
+    if (machine) query = query.ilike('symbolmachine', machine + '%');
+    const { data, error } = await query;
+    if (error || !data) return;
+
+    const seen = new Set();
+    const units = [];
+    data.forEach(r => {
+        const code = (r.symbolunit || '').trim();
+        if (code && !seen.has(code)) { seen.add(code); units.push({ code, name: (r.unitname || '').trim() }); }
+    });
+    units.sort((a, b) => a.code.localeCompare(b.code));
+
+    const sel = document.getElementById('work-ticket-unit-select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">選択</option>';
+    units.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.code;
+        opt.textContent = u.name ? `${u.code} : ${u.name}` : u.code;
+        sel.appendChild(opt);
+    });
+}
+
+// 工事番号のkeydateを取得してチェックボックス表示
+async function loadKeydatesFromManufctParts(constructNo) {
+    const sb = getSupabaseClient();
+    if (!sb) return;
+    const { data, error } = await sb.from('t_manufctparts')
+        .select('keydate')
+        .ilike('constructionno', constructNo + '%')
+        .limit(500);
+    if (error || !data) return;
+
+    const dates = [...new Set(data.map(r => r.keydate).filter(Boolean))].sort();
+    let container = document.getElementById('wt-keydate-container');
+    if (!container) {
+        // コンテナを動的に作成して工事図面情報の下に挿入
+        const orderInfoSection = document.getElementById('wt-order-info-section');
+        if (!orderInfoSection) return;
+        container = document.createElement('div');
+        container.id = 'wt-keydate-container';
+        container.style.cssText = 'margin-top:12px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;';
+        orderInfoSection.after(container);
+    }
+
+    if (dates.length === 0) { container.style.display = 'none'; return; }
+    container.style.display = 'block';
+    container.innerHTML = '<div style="font-size:13px;font-weight:600;color:#334155;margin-bottom:8px;"><i class="fas fa-calendar-alt" style="margin-right:6px;color:#6366f1;"></i>巡（日付）の選択</div>' +
+        dates.map(d => `<label style="display:inline-flex;align-items:center;gap:5px;margin-right:14px;margin-bottom:4px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" value="${d}" checked style="width:15px;height:15px;accent-color:#6366f1;"> ${d}
+        </label>`).join('') +
+        '<div style="font-size:11px;color:#94a3b8;margin-top:6px;">チェックした日付の部品のみ対象になります</div>';
 }
 
 // 作業票登録用：工事番号から受注情報を取得
@@ -7287,7 +7383,7 @@ async function loadUnitCodesForWorkTicket() {
         const { data, error } = await supabase
             .from(foundTable)
             .select('*')
-            .order('UnitCode', { ascending: true });
+            .order('unitcode', { ascending: true });
 
         if (error) {
             console.error('ユニットコードの取得に失敗:', error);
