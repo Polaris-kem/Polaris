@@ -5607,17 +5607,38 @@ async function loadTables() {
             console.warn('REST APIからのテーブル取得でエラーが発生しました:', fetchErr);
         }
 
-        // テーブルが見つからない場合は、よく使われるテーブル名を試す
+        // テーブルが見つからない場合は、information_schemaから取得を試みる
         if (availableTables.length === 0) {
-            console.log('テーブルが見つからないため、よく使われるテーブル名を確認します...');
+            console.log('REST APIからの取得に失敗。information_schemaを確認します...');
+            try {
+                const { data: schemaData, error: schemaError } = await getSupabaseClient()
+                    .from('information_schema.tables')
+                    .select('table_name')
+                    .eq('table_schema', 'public')
+                    .eq('table_type', 'BASE TABLE');
+                if (!schemaError && schemaData && schemaData.length > 0) {
+                    availableTables = schemaData.map(r => r.table_name).sort();
+                    console.log('information_schemaから取得:', availableTables);
+                }
+            } catch(e) {
+                console.warn('information_schema取得エラー:', e);
+            }
+        }
+
+        // それでも見つからない場合は既知のテーブル名を試す
+        if (availableTables.length === 0) {
+            console.log('既知のテーブル名を確認します...');
             const commonTables = [
-                'machines', 'machine_codes', 'items', 'products', 'orders', 't_acceptorder', '取引先',
-                't_staffcode', 't_workcode', 't_workdepartment', 't_construction', 't_companycode',
-                't_accountcode'
+                't_acceptorder', 't_accountcode', 't_companycode', 't_computerdevice',
+                't_constructionnumber', 't_currencycode', 't_departmentcode', 't_machinecode',
+                't_machinemarkfolder', 't_machineunitcode', 't_manufctparts', 't_materialcode',
+                't_moneyreceipt', 't_processcode', 't_purchase', 't_purchaseparts',
+                't_sagyoff', 't_saiban', 't_staffcode', 't_symbolmachine', 't_symbolunit',
+                't_unitcode', 't_workcode', 't_workdepartment'
             ];
             for (const tableName of commonTables) {
                 try {
-                    const { error } = await getSupabaseClient().from(tableName).select('id').limit(1);
+                    const { error } = await getSupabaseClient().from(tableName).select('*').limit(1);
                     if (!error) {
                         availableTables.push(tableName);
                         console.log('テーブルが見つかりました:', tableName);
