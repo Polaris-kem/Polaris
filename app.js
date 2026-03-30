@@ -6837,7 +6837,7 @@ function generateWorkTicketFormPage(container) {
             <!-- メインフォーム -->
             <div style="display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0;">
                 <!-- 上段：基本情報（横並び） -->
-                <div style="display: grid; grid-template-columns: 280px 1.5fr 1.5fr; gap: 10px; flex-shrink: 0;">
+                <div style="display: grid; grid-template-columns: 240px 2.2fr 1fr; gap: 10px; flex-shrink: 0;">
                     <!-- 作業者情報 -->
                     <div style="background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%); border-radius: 12px; padding: 14px; box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3); position: relative; overflow: hidden;">
                         <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
@@ -6890,7 +6890,7 @@ function generateWorkTicketFormPage(container) {
                     </div>
 
                     <!-- 職種・オプション + 工事図面情報（横並び） -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px;">
                         <!-- 職種・オプション -->
                         <div style="background: linear-gradient(135deg, #6BCB77 0%, #4CAF50 100%); border-radius: 12px; padding: 12px; box-shadow: 0 4px 12px rgba(107, 203, 119, 0.3); position: relative; overflow: hidden;">
                             <div style="position: absolute; top: -15px; right: -15px; width: 60px; height: 60px; background: rgba(255,255,255,0.15); border-radius: 50%;"></div>
@@ -6936,20 +6936,32 @@ function generateWorkTicketFormPage(container) {
                                     <i class="fas fa-hashtag" style="font-size: 14px;"></i> 工事・図面情報
                                 </h3>
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <!-- 工事番号＋機械＋ユニット 1行 -->
                                     <div>
-                                        <label style="display: block; margin-bottom: 4px; font-weight: 600; color: white; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">
-                                            工事番号 <span style="color: #FFD700;">*</span>
-                                        </label>
-                                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
-                                            <input type="text" name="construct_no" id="work-ticket-construct-no" class="form-input" placeholder="工事番号" required style="width: 100%; font-size: 12px; padding: 6px 8px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
-                                            <select name="machine_type" id="work-ticket-machine-type" class="form-input" style="width: 100%; font-size: 12px; padding: 6px 4px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
-                                                <option value="">機械</option>
-                                            </select>
-                                            <select name="unit" id="work-ticket-unit-select" class="form-input" style="width: 100%; font-size: 12px; padding: 6px 4px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
-                                                <option value="">ユニット</option>
-                                            </select>
+                                        <!-- 行1：工事番号 -->
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 600; color: white; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">工事番号 <span style="color: #FFD700;">*</span></label>
+                                        <input type="text" name="construct_no" id="work-ticket-construct-no" class="form-input" placeholder="工事番号" required maxlength="6" style="width: 80px; font-size: 13px; padding: 6px 8px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15); text-align: center; font-weight: 700; letter-spacing: 1px; box-sizing: border-box;">
+                                        <!-- 日付（巡）選択 -->
+                                        <div id="wt-keydate-anchor" style="display:none; margin-top:6px;"></div>
+                                        <!-- 行2：機械＋ユニット -->
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;">
+                                            <div>
+                                                <select name="machine_type" id="work-ticket-machine-type" class="form-input" style="width: 100%; font-size: 12px; padding: 5px 4px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                                                    <option value="">機械</option>
+                                                </select>
+                                                <div id="wt-machine-name-display" style="font-size: 9px; color: rgba(255,255,255,0.9); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                                            </div>
+                                            <div>
+                                                <select name="unit" id="work-ticket-unit-select" class="form-input" style="width: 100%; font-size: 12px; padding: 5px 4px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                                                    <option value="">ユニット</option>
+                                                </select>
+                                                <div id="wt-unit-name-display" style="font-size: 9px; color: rgba(255,255,255,0.9); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                                            </div>
                                         </div>
+                                        <!-- 特殊機械（現地打合せ等）の表示 -->
+                                        <div id="wt-special-machine-display" style="display:none; margin-top:4px; font-size:10px; color:rgba(255,255,255,0.85); font-style:italic;"></div>
                                     </div>
+                                    <!-- 図面番号＋品番 -->
                                     <div style="display: flex; gap: 8px; width: 100%;">
                                         <div style="flex: 1; min-width: 0;">
                                             <label style="display: block; margin-bottom: 4px; font-weight: 600; color: white; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">図面番号</label>
@@ -7087,7 +7099,6 @@ function generateWorkTicketFormPage(container) {
                 if (constructNo) {
                     await fetchWorkTicketOrderInfo(constructNo);
                     await loadMachinesFromManufctParts(constructNo);
-                    await loadKeydatesFromManufctParts(constructNo);
                 }
             });
         }
@@ -7112,18 +7123,46 @@ async function loadMachinesFromManufctParts(constructNo) {
     });
     machines.sort((a, b) => a.code.localeCompare(b.code));
 
+    // 特殊機械（打合せ・業務系）を分離
+    const SPECIAL_KEYWORDS = ['打合せ', '打ち合わせ', '業務'];
+    const normalMachines = machines.filter(m => !SPECIAL_KEYWORDS.some(k => m.name.includes(k)));
+    const specialMachines = machines.filter(m => SPECIAL_KEYWORDS.some(k => m.name.includes(k)));
+
     const sel = document.getElementById('work-ticket-machine-type');
     if (!sel) return;
-    sel.innerHTML = '<option value="">選択</option>';
-    machines.forEach(m => {
+    sel.innerHTML = '<option value="">機械</option>';
+    normalMachines.forEach(m => {
         const opt = document.createElement('option');
         opt.value = m.code;
-        opt.textContent = m.name ? `${m.code} : ${m.name}` : m.code;
+        opt.textContent = m.code;  // コードのみ表示
         sel.appendChild(opt);
     });
 
-    // 機械選択時にユニットを絞り込む
-    sel.onchange = () => loadUnitsFromManufctParts(constructNo, sel.value);
+    // 特殊機械を小さく表示
+    const specialDiv = document.getElementById('wt-special-machine-display');
+    if (specialDiv) {
+        if (specialMachines.length > 0) {
+            specialDiv.style.display = 'block';
+            specialDiv.innerHTML = specialMachines.map(m => `<span style="margin-right:8px;">▸ ${m.code}:${m.name}</span>`).join('');
+        } else {
+            specialDiv.style.display = 'none';
+        }
+    }
+
+    // 機械選択時: ユニット絞り込み＋名前表示
+    const machNameDiv = document.getElementById('wt-machine-name-display');
+    sel.onchange = () => {
+        const selectedMachine = machines.find(m => m.code === sel.value);
+        if (machNameDiv) machNameDiv.textContent = selectedMachine ? selectedMachine.name : '';
+        loadUnitsFromManufctParts(constructNo, sel.value);
+    };
+
+    // 機械が1件だけなら自動選択
+    if (normalMachines.length === 1) {
+        sel.value = normalMachines[0].code;
+        if (machNameDiv) machNameDiv.textContent = normalMachines[0].name;
+        await loadUnitsFromManufctParts(constructNo, normalMachines[0].code);
+    }
 }
 
 // 工事番号+機械からt_symbolunitのユニットを取得
@@ -7148,13 +7187,19 @@ async function loadUnitsFromManufctParts(constructNo, machine) {
 
     const sel = document.getElementById('work-ticket-unit-select');
     if (!sel) return;
-    sel.innerHTML = '<option value="">選択</option>';
+    const unitNameDiv = document.getElementById('wt-unit-name-display');
+    sel.innerHTML = '<option value="">ユニット</option>';
     units.forEach(u => {
         const opt = document.createElement('option');
         opt.value = u.code;
-        opt.textContent = u.name ? `${u.code} : ${u.name}` : u.code;
+        opt.textContent = u.code;  // コードのみ表示
         sel.appendChild(opt);
     });
+    // ユニット選択時に名前を下に表示
+    sel.onchange = () => {
+        const selectedUnit = units.find(u => u.code === sel.value);
+        if (unitNameDiv) unitNameDiv.textContent = selectedUnit ? selectedUnit.name : '';
+    };
 }
 
 // 工事番号のkeydateを取得してチェックボックス表示
@@ -7168,24 +7213,86 @@ async function loadKeydatesFromManufctParts(constructNo) {
     if (error || !data) return;
 
     const dates = [...new Set(data.map(r => r.keydate).filter(Boolean))].sort();
-    let container = document.getElementById('wt-keydate-container');
-    if (!container) {
-        // コンテナを動的に作成して工事図面情報の下に挿入
-        const orderInfoSection = document.getElementById('wt-order-info-section');
-        if (!orderInfoSection) return;
-        container = document.createElement('div');
-        container.id = 'wt-keydate-container';
-        container.style.cssText = 'margin-top:12px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;';
-        orderInfoSection.after(container);
-    }
+    const anchor = document.getElementById('wt-keydate-anchor');
+    if (!anchor) return;
 
-    if (dates.length === 0) { container.style.display = 'none'; return; }
-    container.style.display = 'block';
-    container.innerHTML = '<div style="font-size:13px;font-weight:600;color:#334155;margin-bottom:8px;"><i class="fas fa-calendar-alt" style="margin-right:6px;color:#6366f1;"></i>巡（日付）の選択</div>' +
-        dates.map(d => `<label style="display:inline-flex;align-items:center;gap:5px;margin-right:14px;margin-bottom:4px;font-size:13px;cursor:pointer;">
-            <input type="checkbox" value="${d}" checked style="width:15px;height:15px;accent-color:#6366f1;"> ${d}
-        </label>`).join('') +
-        '<div style="font-size:11px;color:#94a3b8;margin-top:6px;">チェックした日付の部品のみ対象になります</div>';
+    if (dates.length <= 1) { anchor.style.display = 'none'; anchor.innerHTML = ''; return; }
+    anchor.style.display = 'block';
+
+    // ボタン式ラジオ選択（1つだけ選ぶ）
+    const btnId = (d) => 'wt-date-btn-' + d.replace(/[^0-9]/g, '');
+    anchor.innerHTML = '<div style="padding:7px 9px;background:rgba(255,255,255,0.9);border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.12);">' +
+        '<div style="font-size:10px;font-weight:700;color:#7c3aed;margin-bottom:5px;"><i class="fas fa-redo-alt" style="margin-right:3px;"></i>巡を選択（' + dates.length + '巡あり）</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:4px;">' +
+        dates.map((d, i) => `<button type="button" id="${btnId(d)}" data-keydate="${d}"
+            onclick="wtSelectKeydate('${d}')"
+            style="font-size:11px;padding:4px 8px;border-radius:5px;border:2px solid #7c3aed;cursor:pointer;font-weight:600;transition:all 0.15s;
+            background:${i === 0 ? '#7c3aed' : 'white'};color:${i === 0 ? 'white' : '#7c3aed'};"
+            >${d}</button>`).join('') +
+        '</div></div>';
+
+    // hidden input に選択中の日付を保持
+    let hiddenInput = document.getElementById('wt-selected-keydate');
+    if (!hiddenInput) {
+        hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.id = 'wt-selected-keydate';
+        hiddenInput.name = 'keydate';
+        anchor.appendChild(hiddenInput);
+    }
+    hiddenInput.value = dates[0];
+}
+
+// t_acceptorderの受注登録日ボタンを表示
+function showWtOrderDateButtons(allRecords, dates) {
+    const anchor = document.getElementById('wt-keydate-anchor');
+    if (!anchor) return;
+    window._wtAllOrderRecords = allRecords; // 後から参照できるよう保存
+
+    anchor.style.display = 'block';
+    anchor.innerHTML = '<div style="padding:6px 8px;background:rgba(255,255,255,0.9);border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.12);">' +
+        '<div style="font-size:10px;font-weight:700;color:#7c3aed;margin-bottom:4px;"><i class="fas fa-redo-alt" style="margin-right:3px;"></i>巡を選択（' + dates.length + '巡）</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;max-height:80px;overflow-y:auto;">' +
+        dates.map((d, i) => `<button type="button" data-keydate="${d}"
+            onclick="wtSelectKeydate('${d}')"
+            style="font-size:10px;padding:3px 4px;border-radius:4px;border:1.5px solid #7c3aed;cursor:pointer;font-weight:600;
+            background:${i === 0 ? '#7c3aed' : 'white'};color:${i === 0 ? 'white' : '#7c3aed'};white-space:nowrap;"
+            >${d}</button>`).join('') +
+        '</div></div>';
+
+    // hidden input に選択中の日付を保持
+    let hidden = document.getElementById('wt-selected-keydate');
+    if (!hidden) {
+        hidden = document.createElement('input');
+        hidden.type = 'hidden'; hidden.id = 'wt-selected-keydate'; hidden.name = 'keydate';
+        anchor.appendChild(hidden);
+    }
+    hidden.value = dates[0];
+}
+
+// 巡（日付）ボタン選択 → 受注情報を該当レコードで更新
+function wtSelectKeydate(date) {
+    const anchor = document.getElementById('wt-keydate-anchor');
+    if (!anchor) return;
+    // ボタン色をリセット→選択ハイライト
+    anchor.querySelectorAll('button[data-keydate]').forEach(btn => {
+        btn.style.background = 'white'; btn.style.color = '#7c3aed';
+    });
+    const sel = anchor.querySelector(`button[data-keydate="${date}"]`);
+    if (sel) { sel.style.background = '#7c3aed'; sel.style.color = 'white'; }
+    const hidden = document.getElementById('wt-selected-keydate');
+    if (hidden) hidden.value = date;
+
+    // 選択された日付のレコードでフォームを更新
+    const records = window._wtAllOrderRecords;
+    if (!records) return;
+    const rec = records.find(r => r.registerdate === date) || records[0];
+    if (!rec) return;
+    const pn = document.getElementById('work-ticket-project-name');
+    const of = document.getElementById('work-ticket-order-from');
+    const dt = document.getElementById('work-ticket-delivery-to');
+    if (pn) pn.value = rec.constructname || '';
+    // 注文元・納品先はコードのままになる場合あり（会社名はfetchWorkTicketOrderInfoで解決済み）
 }
 
 // 作業票登録用：工事番号から受注情報を取得
@@ -7205,11 +7312,12 @@ async function fetchWorkTicketOrderInfo(constructNo) {
     try {
         const acceptOrderTable = await findTableName(['t_acceptorder', 'T_AcceptOrder', 'acceptorder', 't acceptorder']);
         if (acceptOrderTable) {
-            // 1. t_acceptorder から完全一致で検索（constructnoで検索、カラム名はすべて小文字）
+            // t_acceptorder から最新1件を取得
             let { data: acceptOrderData, error: acceptOrderError } = await supabase
                 .from(acceptOrderTable)
                 .select('constructno, constructname, ownercode, usercode, registerdate, orderdate, deliverydate')
                 .eq('constructno', constructNo)
+                .order('registerdate', { ascending: false })
                 .limit(1);
 
             if (acceptOrderData && acceptOrderData.length > 0) {
@@ -7353,16 +7461,7 @@ async function loadMachineCodesForWorkTicket() {
             return;
         }
 
-        const select = document.getElementById('work-ticket-machine-type');
-        if (select) {
-            select.innerHTML = '<option value="">選択</option>';
-            data.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.machinecode.trim();
-                option.textContent = item.machinecode.trim();
-                select.appendChild(option);
-            });
-        }
+        // work-ticket-machine-typeはt_symbolmachineから工事番号で絞り込んで表示するため、ここでは設定しない
     } catch (e) {
         console.error('loadMachineCodesForWorkTicket error:', e);
     }
@@ -7390,20 +7489,7 @@ async function loadUnitCodesForWorkTicket() {
             return;
         }
 
-        const select = document.getElementById('work-ticket-unit-select');
-        if (select) {
-            select.innerHTML = '<option value="">選択</option>';
-            data.forEach(item => {
-                const uCode = (item.UnitCode || item.unitcode || '').trim();
-                const uName = (item.UnitName || item.unitname || '').trim();
-                if (uCode) {
-                    const option = document.createElement('option');
-                    option.value = uCode;
-                    option.textContent = uName ? `${uCode} : ${uName}` : uCode;
-                    select.appendChild(option);
-                }
-            });
-        }
+        // work-ticket-unit-selectはt_symbolunitから工事番号+機械で絞り込んで表示するため、ここでは設定しない
     } catch (e) {
         console.error('loadUnitCodesForWorkTicket error:', e);
     }
