@@ -9139,13 +9139,14 @@ async function selectPPRow(tr, row) {
     tr.style.outlineOffset = '-2px';
     tr.setAttribute('data-pp-selected', 'true');
 
-    const drawingNo = ppVal(row, 'drawingno');
-    const partNo = ppVal(row, 'partno');
-    const constructNo = (ppVal(row, 'constructionno', 'constructno') || '').trim();
-    const machine = (ppVal(row, 'symbolmachine') || '').trim();
-    const unit = (ppVal(row, 'symbolunit') || '').trim();
+    const drawingNo     = (ppVal(row, 'drawingno') || '').trim();
+    const partNo        = (ppVal(row, 'partno') || '').trim();
+    const constructNo   = (ppVal(row, 'constructionno', 'constructno') || '').trim();
+    const machine       = (ppVal(row, 'symbolmachine') || '').trim();
+    const unit          = (ppVal(row, 'symbolunit') || '').trim();
+    const consecutiveNo = (ppVal(row, 'consecutiveno') || '').trim();
 
-    await loadPPSubTables(drawingNo, partNo, constructNo, machine, unit);
+    await loadPPSubTables(drawingNo, partNo, constructNo, machine, unit, consecutiveNo);
 }
 
 // サブテーブル（加工作業、発注データ）のロード
