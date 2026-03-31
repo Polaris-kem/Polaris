@@ -6953,7 +6953,7 @@ function generateWorkTicketFormPage(container) {
                                     <div>
                                         <!-- 行1：工事番号 -->
                                         <label style="display: block; margin-bottom: 4px; font-weight: 600; color: white; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">工事番号 <span style="color: #FFD700;">*</span></label>
-                                        <input type="text" name="construct_no" id="work-ticket-construct-no" class="form-input" placeholder="工事番号" required maxlength="6" style="width: 80px; font-size: 13px; padding: 6px 8px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15); text-align: center; font-weight: 700; letter-spacing: 1px; box-sizing: border-box;">
+                                        <input type="text" name="construct_no" id="work-ticket-construct-no" class="form-input" placeholder="工事番号" required maxlength="6" style="width: 80px; font-size: 12px; padding: 6px 8px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15); text-align: center; font-family: inherit; color: #334155; box-sizing: border-box;">
                                         <!-- 日付（巡）選択 -->
                                         <div id="wt-keydate-anchor" style="display:none; margin-top:6px;"></div>
                                         <!-- 行2：機械＋ユニット -->
