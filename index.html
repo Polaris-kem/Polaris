@@ -1941,12 +1941,9 @@
                                 <option value="">すべて</option>
                             </select>
                         </div>
-                        <div class="pp-cell pp-cell-drawing">
+                        <div class="pp-cell">
                             <label class="pp-label" for="pp-filter-drawing-no">図面番号</label>
-                            <div class="pp-drawing-inline">
-                                <input type="text" id="pp-filter-drawing-no" class="pp-input-eq" placeholder="">
-                                <span class="pp-drawing-note">※途中まででも検索可</span>
-                            </div>
+                            <input type="text" id="pp-filter-drawing-no" class="pp-input-eq" placeholder="途中一致OK" title="途中まででも検索できます">
                         </div>
                         <div class="pp-cell">
                             <label class="pp-label" for="pp-filter-part-no">品番</label>
@@ -1961,7 +1958,7 @@
                             </div>
                         </div>
                         <div class="pp-cell pp-cell-dates">
-                            <span class="pp-label">keydate</span>
+                            <span class="pp-label">受注日(keydate)</span>
                             <div class="pp-dates-inline">
                                 <input type="date" id="pp-filter-order-start" class="pp-input-eq pp-date">
                                 <span>～</span>
