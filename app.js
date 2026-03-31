@@ -9775,8 +9775,52 @@ async function loadDeliveryDetailData(dateStr, category) {
 }
 window.closeDeliveryDetailModal = closeDeliveryDetailModal;
 window.openDeliveryDetailModal = openDeliveryDetailModal;
-window.printDeliveryDetailPreview = function() { window.print(); };
-window.printDeliveryDetail = function() { window.print(); };
+function buildDeliveryPrintWindow(autoprint) {
+    const dateEl = document.getElementById('delivery-detail-date');
+    const dateText = dateEl ? dateEl.textContent.trim() : '';
+    const activeTab = document.querySelector('#delivery-detail-tabs .delivery-detail-tab.active');
+    const categoryText = activeTab ? activeTab.textContent.trim() : '';
+    const thead = document.querySelector('#delivery-detail-modal thead');
+    const tbody = document.getElementById('delivery-detail-tbody');
+    if (!thead || !tbody) return;
+
+    const theadHtml = thead.outerHTML;
+    const tbodyHtml = tbody.outerHTML;
+
+    const html = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>納入予定詳細 ${dateText}</title>
+<style>
+  body { font-family: 'Meiryo', 'メイリオ', sans-serif; font-size: 11px; margin: 12px; color: #1e293b; }
+  h2 { font-size: 14px; margin: 0 0 4px 0; }
+  p { margin: 0 0 8px 0; font-size: 11px; color: #475569; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th { background: #1e293b; color: #fff; padding: 5px 6px; font-size: 10px; text-align: left; border: 1px solid #334155; white-space: nowrap; }
+  td { padding: 4px 6px; border: 1px solid #cbd5e1; vertical-align: top; word-break: break-all; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  tr.selected td { background: #fff !important; }
+  @page { size: A4 landscape; margin: 10mm; }
+  @media print { body { margin: 0; } }
+</style>
+</head>
+<body>
+<h2>納入予定詳細　${dateText}　${categoryText}</h2>
+<p>印刷日時: ${new Date().toLocaleString('ja-JP')}</p>
+<table><${theadHtml}<${tbodyHtml}</table>
+${autoprint ? '<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();}};<\/script>' : ''}
+</body>
+</html>`;
+
+    const win = window.open('', '_blank', 'width=1100,height=700');
+    if (win) {
+        win.document.write(html);
+        win.document.close();
+    }
+}
+window.printDeliveryDetailPreview = function() { buildDeliveryPrintWindow(false); };
+window.printDeliveryDetail = function() { buildDeliveryPrintWindow(true); };
 
 async function loadDeliveryCalendarData(year, month, category, undeliveredOnly) {
     const countByDate = {};
