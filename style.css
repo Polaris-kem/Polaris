@@ -1467,11 +1467,11 @@ a.quick-action-btn:hover { color: white; }
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 #dashboard-page .dashboard-top-row {
-    gap: 24px;
-    grid-template-columns: minmax(0, 480px) 1fr;
+    gap: 14px;
+    grid-template-columns: 1fr minmax(0, 360px) 1fr;
 }
 #dashboard-page .dashboard-top-row .dashboard-card.calendar-card {
-    max-width: 480px;
+    max-width: 360px;
 }
 #dashboard-page .dashboard-top-row .dashboard-card {
     animation: dashboardCardFade 0.5s ease-out both;
