@@ -714,6 +714,7 @@ function renderQuickActions() {
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'quick-action-btn';
+        btn.dataset.id = def.id;
         btn.innerHTML = '<i class="fas ' + def.icon + '"></i><span>' + def.label + '</span>';
         btn.onclick = (function(p) { return function() { showPage(p); }; })(def.page);
         grid.appendChild(btn);
