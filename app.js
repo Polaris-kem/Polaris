@@ -6827,18 +6827,18 @@ function generateWorkTicketFormPage(container) {
                         <i class="fas fa-clipboard-list" style="margin-right: 8px; color: rgba(255,255,255,0.85);"></i>作業票登録
                     </h2>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <button type="button" class="btn-secondary" onclick="changeWorkTicketDate(-1)" style="padding: 6px 12px; font-size: 12px;">
+                        <button type="button" class="btn-secondary" onclick="changeWorkTicketDate(-1)" style="padding: 6px 12px; font-size: 12px; background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); color: #fff;">
                             <i class="fas fa-chevron-left"></i>
                         </button>
                         <input type="date" id="work-ticket-date" value="${today}" class="form-input" style="font-size: 13px; padding: 6px 10px; font-weight: 600; min-width: 140px;">
-                        <button type="button" class="btn-secondary" onclick="changeWorkTicketDate(0)" style="padding: 6px 12px; font-size: 12px;">本日</button>
-                        <button type="button" class="btn-secondary" onclick="changeWorkTicketDate(1)" style="padding: 6px 12px; font-size: 12px;">
+                        <button type="button" class="btn-secondary" onclick="changeWorkTicketDate(0)" style="padding: 6px 12px; font-size: 12px; background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); color: #fff;">本日</button>
+                        <button type="button" class="btn-secondary" onclick="changeWorkTicketDate(1)" style="padding: 6px 12px; font-size: 12px; background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); color: #fff;">
                             <i class="fas fa-chevron-right"></i>
                         </button>
                 </div>
             </div>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    <button type="button" class="btn-secondary" onclick="showPage('register')" style="padding: 8px 16px; font-size: 13px;">
+                    <button type="button" class="btn-secondary" onclick="showPage('register')" style="padding: 8px 16px; font-size: 13px; background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); color: #fff;">
                         <i class="fas fa-arrow-left"></i> 戻る
                     </button>
                     <button type="button" class="btn-primary" onclick="saveWorkTicket()" style="padding: 8px 20px; font-size: 14px; font-weight: 700; background: linear-gradient(135deg, #4CAF50 0%, #388e3c 100%);">
