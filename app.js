@@ -6959,20 +6959,18 @@ function generateWorkTicketFormPage(container) {
                                         <!-- 行2：機械＋ユニット -->
                                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px;">
                                             <div>
-                                                <select name="machine_type" id="work-ticket-machine-type" class="form-input" style="width: 100%; font-size: 12px; padding: 5px 4px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                                                <select name="machine_type" id="work-ticket-machine-type" class="form-input" style="width: 100%; font-size: 12px; padding: 6px 8px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-family: inherit; color: #334155;">
                                                     <option value="">機械</option>
                                                 </select>
-                                                <div id="wt-machine-name-display" style="font-size: 9px; color: rgba(255,255,255,0.9); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                                                <div id="wt-machine-name-display" style="font-size: 10px; color: rgba(255,255,255,0.9); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
                                             </div>
                                             <div>
-                                                <select name="unit" id="work-ticket-unit-select" class="form-input" style="width: 100%; font-size: 12px; padding: 5px 4px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                                                <select name="unit" id="work-ticket-unit-select" class="form-input" style="width: 100%; font-size: 12px; padding: 6px 8px; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-family: inherit; color: #334155;">
                                                     <option value="">ユニット</option>
                                                 </select>
-                                                <div id="wt-unit-name-display" style="font-size: 9px; color: rgba(255,255,255,0.9); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                                                <div id="wt-unit-name-display" style="font-size: 10px; color: rgba(255,255,255,0.9); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
                                             </div>
                                         </div>
-                                        <!-- 特殊機械（現地打合せ等）の表示 -->
-                                        <div id="wt-special-machine-display" style="display:none; margin-top:4px; font-size:10px; color:rgba(255,255,255,0.85); font-style:italic;"></div>
                                     </div>
                                     <!-- 図面番号＋品番 -->
                                     <div style="display: flex; gap: 8px; width: 100%;">
