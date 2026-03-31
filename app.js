@@ -9741,45 +9741,51 @@ async function loadDeliveryCalendarData(year, month, category, undeliveredOnly) 
     const lastDay = new Date(year, month, 0).getDate();
     const monthEnd = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-    try {
-        const toKey = (d) => d ? String(d).slice(0, 10) : '';
-        if (category === 'purchased') {
-            const tbl = await findTableName(['t_purchaseparts', 'T_PurchaseParts', 'purchaseparts']);
-            if (tbl) {
-                let q = supabase.from(tbl).select('delivery_date, nounyu_date').gte('delivery_date', monthStart).lte('delivery_date', monthEnd);
-                if (undeliveredOnly) q = q.is('nounyu_date', null);
-                const { data } = await q;
-                (data || []).forEach(r => {
-                    const d = r.delivery_date ?? r.deliverydate;
-                    const k = toKey(d);
-                    if (k) countByDate[k] = (countByDate[k] || 0) + 1;
-                });
-            }
-        } else if (category === 'outsource' || category === 'material') {
-            const tbl = await findTableName(['t_manufctpurchase', 'T_ManufctPurchase', 't_purchase', 'T_Purchase']);
-            if (tbl) {
-                let q = supabase.from(tbl).select('delivery_date, nounyu_date').gte('delivery_date', monthStart).lte('delivery_date', monthEnd);
-                if (undeliveredOnly) q = q.is('nounyu_date', null);
-                const { data } = await q;
-                (data || []).forEach(r => {
-                    const d = r.delivery_date ?? r.deliverydate;
-                    const k = toKey(d);
-                    if (k) countByDate[k] = (countByDate[k] || 0) + 1;
-                });
-            }
-        } else if (category === 'misc') {
-            const tbl = await findTableName(['t_expense', 't_misc', 'expense']);
-            if (tbl) {
-                let q = supabase.from(tbl).select('delivery_date, nounyu_date').gte('delivery_date', monthStart).lte('delivery_date', monthEnd);
-                if (undeliveredOnly) q = q.is('nounyu_date', null);
-                const { data } = await q;
-                (data || []).forEach(r => {
-                    const d = r.delivery_date ?? r.deliverydate;
-                    const k = toKey(d);
-                    if (k) countByDate[k] = (countByDate[k] || 0) + 1;
-                });
-            }
+    // updatenouki優先で有効納期を返す（なければdeliverydate）
+    const toKey = (d) => d ? String(d).slice(0, 10) : '';
+    const getEffectiveDate = (r) => {
+        const upd = r.updatenouki || r.deliveryupdatedate || r.update_nouki;
+        const del = r.deliverydate || r.delivery_date;
+        return toKey(upd || del);
+    };
+
+    // deliverydate または updatenouki が月内にあるレコードを取得し、有効納期で集計
+    const buildCalQuery = async (tblName, nounyuCol) => {
+        // updatenouki IS NULL → deliverydate が月内、または updatenouki が月内
+        let q = supabase.from(tblName)
+            .select(`deliverydate,updatenouki,${nounyuCol}`)
+            .or(`and(deliverydate.gte.${monthStart},deliverydate.lte.${monthEnd},updatenouki.is.null),and(updatenouki.gte.${monthStart},updatenouki.lte.${monthEnd})`);
+        if (undeliveredOnly) q = q.is(nounyuCol, null);
+        const { data, error } = await q;
+        if (error) {
+            // OR構文が効かない場合のフォールバック（deliverydate範囲のみ）
+            let q2 = supabase.from(tblName).select(`deliverydate,updatenouki,${nounyuCol}`)
+                .gte('deliverydate', monthStart).lte('deliverydate', monthEnd);
+            if (undeliveredOnly) q2 = q2.is(nounyuCol, null);
+            const { data: d2 } = await q2;
+            return d2 || [];
         }
+        return data || [];
+    };
+
+    try {
+        let rows = [];
+        if (category === 'purchased') {
+            const tbl = await findTableName(['t_purchaseparts']);
+            if (tbl) rows = await buildCalQuery(tbl, 'nounyudate');
+        } else if (category === 'outsource' || category === 'material') {
+            const tbl = await findTableName(['t_purchase', 't_manufctpurchase']);
+            if (tbl) rows = await buildCalQuery(tbl, 'nounyudate');
+        } else if (category === 'misc') {
+            const tbl = await findTableName(['t_expense', 't_misc']);
+            if (tbl) rows = await buildCalQuery(tbl, 'nounyudate');
+        }
+        rows.forEach(r => {
+            const k = getEffectiveDate(r);
+            if (k >= monthStart && k <= monthEnd) {
+                countByDate[k] = (countByDate[k] || 0) + 1;
+            }
+        });
     } catch (e) {
         console.warn('loadDeliveryCalendarData error:', e);
     }
