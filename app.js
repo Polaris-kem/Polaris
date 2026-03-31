@@ -6903,7 +6903,7 @@ function generateWorkTicketFormPage(container) {
                     </div>
 
                     <!-- 職種・オプション + 工事図面情報（横並び） -->
-                    <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px;">
+                    <div style="display: grid; grid-template-columns: 1.1fr 1.3fr; gap: 10px;">
                         <!-- 職種・オプション -->
                         <div style="background: linear-gradient(135deg, #6BCB77 0%, #4CAF50 100%); border-radius: 12px; padding: 12px; box-shadow: 0 4px 12px rgba(107, 203, 119, 0.3); position: relative; overflow: hidden;">
                             <div style="position: absolute; top: -15px; right: -15px; width: 60px; height: 60px; background: rgba(255,255,255,0.15); border-radius: 50%;"></div>
