@@ -1528,7 +1528,7 @@ a.quick-action-btn:hover { color: white; }
 }
 #dashboard-page .dashboard-top-row {
     gap: 16px;
-    grid-template-columns: minmax(320px, 1.4fr) minmax(300px, 1fr);
+    grid-template-columns: 1.5fr 1fr;
 }
 #dashboard-page .dashboard-top-row .dashboard-card.calendar-card {
     max-width: none;
@@ -6486,7 +6486,7 @@ textarea {
 
 .dashboard-top-row {
     display: grid;
-    grid-template-columns: minmax(320px, 1.4fr) minmax(300px, 1fr);
+    grid-template-columns: 1.5fr 1fr;
     gap: 16px;
     margin-bottom: 16px;
     margin-top: 10px;
@@ -9452,7 +9452,7 @@ textarea {
 
 .dashboard-top-row {
     display: grid;
-    grid-template-columns: minmax(320px, 1.4fr) minmax(300px, 1fr);
+    grid-template-columns: 1.5fr 1fr;
     gap: 16px;
     margin-bottom: 16px;
     margin-top: 10px;
