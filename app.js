@@ -9148,122 +9148,132 @@ async function selectPPRow(tr, row) {
     await loadPPSubTables(drawingNo, partNo, constructNo, machine, unit);
 }
 
-// サブテーブル（加工作業、材料手配、外注加工）のロード
-async function loadPPSubTables(drawingNo, partNo, constructNo, machine, unit) {
-    const workTbody = document.getElementById('pp-work-table-body');
+// サブテーブル（加工作業、発注データ）のロード
+async function loadPPSubTables(drawingNo, partNo, constructNo, machine, unit, consecutiveNo) {
+    const workTbody     = document.getElementById('pp-work-table-body');
     const materialTbody = document.getElementById('pp-material-table-body');
-    const outsourceTbody = document.getElementById('pp-outsource-table-body');
+    const outsourceTbody= document.getElementById('pp-outsource-table-body');
 
-    workTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 10px;"><i class="fas fa-spinner fa-spin"></i></td></tr>';
-    materialTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 10px;"><i class="fas fa-spinner fa-spin"></i></td></tr>';
-    outsourceTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 10px;"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+    const loadingRow = (cols) => `<tr><td colspan="${cols}" style="text-align:center;padding:10px;"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
+    workTbody.innerHTML      = loadingRow(6);
+    materialTbody.innerHTML  = loadingRow(8);
+    outsourceTbody.innerHTML = loadingRow(9);
 
     try {
         const supabase = getSupabaseClient();
         if (!supabase) return;
 
-        const subRow = (o, ...keys) => { for (const k of keys) { const v = o[k]; if (v !== undefined && v !== null && v !== '') return String(v); } return ''; };
-        const subDate = (o, ...keys) => { const s = subRow(o, ...keys); return s.length >= 10 ? s.slice(0, 10).replace(/-/g, '/') : s; };
+        const sv  = (o, ...ks) => { for (const k of ks) { const v = o[k]; if (v !== undefined && v !== null && v !== '') return String(v); } return ''; };
+        const sd  = (o, ...ks) => { const s = sv(o, ...ks); return s.length >= 10 ? s.slice(0,10).replace(/-/g,'/') : s; };
+        const none = (cols, msg) => `<tr><td colspan="${cols}" style="text-align:center;padding:10px;color:#94a3b8;">${msg||'データなし'}</td></tr>`;
 
-        // 1. 加工作業（t_worktimekako / t_sagyofl / t_worktime）
-        const workTable = await findTableName(['t_worktimekako', 'T_WorkTimeKako', 't_sagyofl', 't_worktime', 'T_WorkTime', 'worktime']);
+        // ── 1. 加工作業履歴（t_worktimekako）
+        const workTable = await findTableName(['t_worktimekako', 'T_WorkTimeKako', 't_sagyofl', 't_worktime']);
         if (workTable) {
-            const { data } = await supabase.from(workTable).select('*').eq('drawingno', drawingNo).eq('partno', partNo);
+            const { data: wData } = await supabase.from(workTable).select('*')
+                .eq('drawingno', drawingNo).eq('partno', partNo).limit(200);
             workTbody.innerHTML = '';
-            if (data && data.length > 0) {
-                data.forEach(w => {
+            if (wData && wData.length > 0) {
+                wData.forEach(w => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${subDate(w, 'WorkDate', 'workdate')}</td>
-                        <td>${subRow(w, 'WorkCode', 'workcode')}</td>
-                        <td>${subRow(w, 'WorkName', 'workname')}</td>
-                        <td>${subRow(w, 'Quantity', 'quantity')}</td>
-                        <td>${subRow(w, 'WorkTime', 'worktime')}</td>
-                        <td>${subRow(w, 'StaffName', 'staffname')}</td>
+                        <td>${sd(w,'WorkDate','workdate','work_date')}</td>
+                        <td>${sv(w,'WorkCode','workcode','work_code')}</td>
+                        <td>${sv(w,'WorkName','workname','work_name')}</td>
+                        <td>${sv(w,'Quantity','quantity')}</td>
+                        <td>${sv(w,'WorkTime','worktime','work_time')}</td>
+                        <td>${sv(w,'StaffName','staffname','staff_name')}</td>
                     `;
                     workTbody.appendChild(tr);
                 });
             } else {
-                workTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 10px; color: #94a3b8;">データなし</td></tr>';
+                workTbody.innerHTML = none(6);
+            }
+        } else {
+            workTbody.innerHTML = none(6, '工数テーブル未作成');
+        }
+
+        // ── 2 & 3. t_purchaseparts から発注データ取得
+        //    consecutiveNo（通番）で該当部品の発注を特定
+        if (!constructNo) {
+            materialTbody.innerHTML  = none(8);
+            outsourceTbody.innerHTML = none(9);
+            return;
+        }
+
+        // 既にグローバルにキャッシュがあれば再利用
+        const cachedMap = window._ppOutsourceMap || {};
+        const cacheKey = constructNo.trim() + '___' + (machine||'').trim() + '___' + (unit||'').trim() + '___' + (consecutiveNo||'').trim();
+        let ppRows = cachedMap[cacheKey] || null;
+
+        if (!ppRows) {
+            // キャッシュにない場合は都度クエリ（検索ではなく行選択時）
+            let q = supabase.from('t_purchaseparts')
+                .select('purchase_no,purchase_no_a,consecutive_no,description,order_div,arrange_div,order_company_code,temp_company_name,order_date,delivery_date,update_nouki,nounyu_date,cancel_flg,qty,each_price')
+                .eq('construction_no', constructNo.trim());
+            if (machine) q = q.ilike('symbol_machine', machine.trim() + '%');
+            if (unit)    q = q.ilike('symbol_unit',    unit.trim()    + '%');
+            if (consecutiveNo) q = q.eq('consecutive_no', consecutiveNo.trim());
+            const { data: pd } = await q.limit(500);
+            ppRows = pd || [];
+            // 会社名マップ
+            const codes = [...new Set(ppRows.map(o => o.order_company_code).filter(Boolean))];
+            if (codes.length > 0) {
+                const { data: cc } = await supabase.from('t_companycode').select('companycode,shortname,companyname').in('companycode', codes);
+                const cm = {}; (cc||[]).forEach(c => { cm[c.companycode] = c.shortname||c.companyname||''; });
+                ppRows.forEach(o => { o._companyName = cm[o.order_company_code] || o.temp_company_name || ''; });
+            } else {
+                ppRows.forEach(o => { o._companyName = o.temp_company_name || ''; });
             }
         }
 
-        // 2. 材料手配 (t_purchaseparts: construction_no + symbol_machine + symbol_unit)
-        if (constructNo) {
-            let matQ = supabase.from('t_purchaseparts').select('*').eq('construction_no', constructNo);
-            if (machine) matQ = matQ.eq('symbol_machine', machine);
-            if (unit)    matQ = matQ.eq('symbol_unit', unit);
-            const { data: matData } = await matQ.limit(200);
-            // 会社名取得
-            let matCompanyMap = {};
-            if (matData && matData.length > 0) {
-                const codes = [...new Set(matData.map(o => o.order_company_code).filter(Boolean))];
-                if (codes.length > 0) {
-                    const { data: cc } = await supabase.from('t_companycode').select('companycode,companyname,shortname').in('companycode', codes);
-                    (cc || []).forEach(c => { matCompanyMap[c.companycode] = c.shortname || c.companyname || ''; });
-                }
-            }
-            materialTbody.innerHTML = '';
-            if (matData && matData.length > 0) {
-                matData.forEach(m => {
-                    const cname = matCompanyMap[m.order_company_code] || m.temp_company_name || m.order_company_code || '';
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${subRow(m, 'consecutive_no')}</td>
-                        <td>${subRow(m, 'description')}</td>
-                        <td>${subRow(m, 'order_div')}</td>
-                        <td>${cname}</td>
-                        <td>${subDate(m, 'order_date')}</td>
-                        <td>${subDate(m, 'delivery_date')}</td>
-                        <td>${subDate(m, 'nounyu_date')}</td>
-                        <td>${subRow(m, 'paper_id')}</td>
-                    `;
-                    materialTbody.appendChild(tr);
-                });
-            } else {
-                materialTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 10px; color: #94a3b8;">データなし</td></tr>';
-            }
+        // 材料テーブル（arrange_div が '材料' 系 or 全件）
+        materialTbody.innerHTML = '';
+        if (ppRows.length > 0) {
+            ppRows.forEach(m => {
+                const effDate = m.update_nouki || m.delivery_date;
+                const isDelivered = !!m.nounyu_date;
+                const tr = document.createElement('tr');
+                tr.style.background = isDelivered ? '#f0fdf4' : (!m.order_date ? '#fef9c3' : '');
+                tr.innerHTML = `
+                    <td>${sv(m,'purchase_no')}</td>
+                    <td>${sv(m,'description')}</td>
+                    <td style="font-size:11px;">${sv(m,'order_div','arrange_div')}</td>
+                    <td>${m._companyName||''}</td>
+                    <td>${sd(m,'order_date')}</td>
+                    <td>${sd(null,'_',effDate)|| (effDate?String(effDate).slice(0,10).replace(/-/g,'/'):'')}</td>
+                    <td>${sd(m,'nounyu_date')}</td>
+                    <td>${sv(m,'consecutive_no')}</td>
+                `;
+                materialTbody.appendChild(tr);
+            });
         } else {
-            materialTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 10px; color: #94a3b8;">データなし</td></tr>';
+            materialTbody.innerHTML = none(8);
         }
 
-        // 3. 外注加工（t_purchaseparts: construction_no + symbol_machine + symbol_unit）
-        if (constructNo) {
-            let osQ = supabase.from('t_purchaseparts').select('*').eq('construction_no', constructNo);
-            if (machine) osQ = osQ.eq('symbol_machine', machine);
-            if (unit)    osQ = osQ.eq('symbol_unit', unit);
-            const { data: osData } = await osQ.limit(200);
-            // 会社名取得
-            let companyMap = {};
-            if (osData && osData.length > 0) {
-                const codes = [...new Set(osData.map(o => o.order_company_code).filter(Boolean))];
-                if (codes.length > 0) {
-                    const { data: cc } = await supabase.from('t_companycode').select('companycode,companyname,shortname').in('companycode', codes);
-                    (cc || []).forEach(c => { companyMap[c.companycode] = c.shortname || c.companyname || ''; });
-                }
-            }
-            outsourceTbody.innerHTML = '';
-            if (osData && osData.length > 0) {
-                osData.forEach(o => {
-                    const cname = companyMap[o.order_company_code] || o.temp_company_name || o.order_company_code || '';
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${subRow(o, 'consecutive_no')}</td>
-                        <td>${subRow(o, 'description', 'order_div')}</td>
-                        <td></td>
-                        <td>${cname}</td>
-                        <td>${subDate(o, 'order_date')}</td>
-                        <td>${subDate(o, 'delivery_date')}</td>
-                        <td>${subDate(o, 'nounyu_date')}</td>
-                        <td></td>
-                    `;
-                    outsourceTbody.appendChild(tr);
-                });
-            } else {
-                outsourceTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 10px; color: #94a3b8;">データなし</td></tr>';
-            }
+        // 外注テーブル（仕様：発注日・納期・更新納期・納入日・返却日・再納入日・検収日）
+        outsourceTbody.innerHTML = '';
+        if (ppRows.length > 0) {
+            ppRows.forEach(o => {
+                const effDate = o.update_nouki || o.delivery_date;
+                const isDelivered = !!o.nounyu_date;
+                const tr = document.createElement('tr');
+                tr.style.background = isDelivered ? '#f0fdf4' : '';
+                tr.innerHTML = `
+                    <td>${sv(o,'purchase_no')}</td>
+                    <td>${sv(o,'description')}</td>
+                    <td style="text-align:right;">${sv(o,'qty')}</td>
+                    <td>${o._companyName||''}</td>
+                    <td>${sd(o,'order_date')}</td>
+                    <td>${sd(o,'delivery_date')}</td>
+                    <td style="${o.update_nouki?'color:#d97706;font-weight:600;':''}">${o.update_nouki?String(o.update_nouki).slice(0,10).replace(/-/g,'/'):'—'}</td>
+                    <td style="${isDelivered?'color:#16a34a;font-weight:600;':''}">${sd(o,'nounyu_date')||'—'}</td>
+                    <td></td>
+                `;
+                outsourceTbody.appendChild(tr);
+            });
         } else {
-            outsourceTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 10px; color: #94a3b8;">データなし</td></tr>';
+            outsourceTbody.innerHTML = none(9);
         }
 
     } catch (e) {
