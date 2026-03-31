@@ -1456,6 +1456,63 @@ a.quick-action-btn:hover { color: white; }
 .register-btn[data-type="parts-delivery"] i { color: #f43f5e; background: #fff1f2; }
 .register-btn:hover i { transform: scale(1.08); }
 
+/* 登録ページ：未定義の data-type 色 */
+.register-btn[data-type="accept-order-search"] { border-left: 4px solid #3b82f6; }
+.register-btn[data-type="accept-order-search"] i { color: #3b82f6; background: #eff6ff; }
+.register-btn[data-type="surplus-register"] { border-left: 4px solid #0ea5e9; }
+.register-btn[data-type="surplus-register"] i { color: #0ea5e9; background: #f0f9ff; }
+.register-btn[data-type="surplus-search"] { border-left: 4px solid #06b6d4; }
+.register-btn[data-type="surplus-search"] i { color: #06b6d4; background: #ecfeff; }
+.register-btn[data-type="project-shipping"] { border-left: 4px solid #8b5cf6; }
+.register-btn[data-type="project-shipping"] i { color: #8b5cf6; background: #f5f3ff; }
+.register-btn[data-type="budget"] { border-left: 4px solid #ec4899; }
+.register-btn[data-type="budget"] i { color: #ec4899; background: #fdf2f8; }
+.register-btn[data-type="construct-number"] { border-left: 4px solid #f59e0b; }
+.register-btn[data-type="construct-number"] i { color: #f59e0b; background: #fffbeb; }
+.register-btn[data-type="drawing-number"] { border-left: 4px solid #f97316; }
+.register-btn[data-type="drawing-number"] i { color: #f97316; background: #fff7ed; }
+
+/* 登録ページ タブナビゲーション */
+.reg-tab-nav {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+.reg-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.reg-tab i { font-size: 14px; }
+.reg-tab:hover { border-color: #94a3b8; color: #334155; background: #f8fafc; }
+.reg-tab[data-group="sales"].active    { background: #6366f1; border-color: #6366f1; color: #fff; }
+.reg-tab[data-group="purchase"].active { background: #f59e0b; border-color: #f59e0b; color: #fff; }
+.reg-tab[data-group="site"].active     { background: #10b981; border-color: #10b981; color: #fff; }
+.reg-tab[data-group="common"].active   { background: #64748b; border-color: #64748b; color: #fff; }
+.reg-group-desc {
+    margin: 0 0 14px 0;
+    font-size: 13px;
+    color: #64748b;
+    padding: 8px 14px;
+    background: #f8fafc;
+    border-left: 3px solid #e2e8f0;
+    border-radius: 0 8px 8px 0;
+}
+.reg-group[data-group="sales"] .reg-group-desc    { border-left-color: #6366f1; }
+.reg-group[data-group="purchase"] .reg-group-desc { border-left-color: #f59e0b; }
+.reg-group[data-group="site"] .reg-group-desc     { border-left-color: #10b981; }
+.reg-group[data-group="common"] .reg-group-desc   { border-left-color: #64748b; }
+
 /* ホーム：掲示板・カレンダー・タスクカード（やる気アクセント） */
 #dashboard-page .dashboard-card.bulletin-card {
     animation: dashboardCardFade 0.5s ease-out 0.15s both;
