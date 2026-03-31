@@ -5624,7 +5624,7 @@ textarea {
     border: 1px solid var(--border-light);
     border-left: 4px solid #1E3A8A;
     border-radius: 16px;
-    padding: 20px 24px;
+    padding: 14px 10px;
     box-shadow: 0 2px 8px rgba(30, 41, 59, 0.08), 0 1px 4px rgba(30, 41, 59, 0.05);
 }
 
@@ -8240,7 +8240,7 @@ textarea {
     border: 1px solid var(--border-light);
     border-left: 4px solid #1E3A8A;
     border-radius: 16px;
-    padding: 20px 24px;
+    padding: 14px 10px;
     box-shadow: 0 2px 8px rgba(30, 41, 59, 0.08), 0 1px 4px rgba(30, 41, 59, 0.05);
     max-width: 100%;
     min-width: 0;
@@ -11206,7 +11206,7 @@ textarea {
     border: 1px solid var(--border-light);
     border-left: 4px solid #1E3A8A;
     border-radius: 16px;
-    padding: 20px 24px;
+    padding: 14px 10px;
     box-shadow: 0 2px 8px rgba(30, 41, 59, 0.08), 0 1px 4px rgba(30, 41, 59, 0.05);
     max-width: 100%;
     min-width: 0;
