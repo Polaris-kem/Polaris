@@ -1302,8 +1302,8 @@ html, body {
 
 /* クイックアクション */
 .dashboard-quick-actions {
-    margin-bottom: 18px;
-    padding: 22px 24px;
+    margin-bottom: 12px;
+    padding: 14px 18px;
     background: var(--bg-primary);
     border-radius: 20px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05);
