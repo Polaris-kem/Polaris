@@ -1214,7 +1214,7 @@ html, body {
 
 #dashboard-page {
     background: var(--bg-secondary);
-    padding: 28px 32px;
+    padding: 16px 22px;
     min-height: calc(100vh - 72px);
     min-width: 0;
     max-width: 100%;
