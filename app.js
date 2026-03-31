@@ -6823,8 +6823,8 @@ function generateWorkTicketFormPage(container) {
         <!-- ヘッダー -->
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); border-radius: 8px; box-shadow: 0 4px 14px rgba(37,99,235,0.22); flex-shrink: 0;">
                 <div style="display: flex; align-items: center; gap: 16px;">
-                    <h2 style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 24px; font-weight: 700; margin: 0;">
-                        <i class="fas fa-clipboard-list" style="margin-right: 8px; color: var(--primary);"></i>作業票登録
+                    <h2 style="color: #fff; font-size: 20px; font-weight: 700; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                        <i class="fas fa-clipboard-list" style="margin-right: 8px; color: rgba(255,255,255,0.85);"></i>作業票登録
                     </h2>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <button type="button" class="btn-secondary" onclick="changeWorkTicketDate(-1)" style="padding: 6px 12px; font-size: 12px;">
