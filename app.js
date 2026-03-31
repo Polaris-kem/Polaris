@@ -6821,7 +6821,7 @@ function generateWorkTicketFormPage(container) {
     container.innerHTML = `
         <div style="height: 100%; display: flex; flex-direction: column; gap: 8px;">
         <!-- ヘッダー -->
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); border-radius: 8px; box-shadow: 0 4px 14px rgba(37,99,235,0.22); flex-shrink: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #2563eb; border-radius: 8px; box-shadow: 0 4px 12px rgba(37,99,235,0.18); flex-shrink: 0;">
                 <div style="display: flex; align-items: center; gap: 16px;">
                     <h2 style="color: #fff; font-size: 20px; font-weight: 700; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                         <i class="fas fa-clipboard-list" style="margin-right: 8px; color: rgba(255,255,255,0.85);"></i>作業票登録
