@@ -1416,6 +1416,43 @@ a.quick-action-btn {
 }
 a.quick-action-btn:hover { color: white; }
 
+/* 登録ボタン 色統一（data-type別） */
+.register-btn i {
+    font-size: 22px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+.register-btn span { font-weight: 600; font-size: 14px; color: #1e293b; }
+.register-btn span small { font-weight: 400; font-size: 12px; color: #64748b; }
+.register-btn[data-type="estimate-request"] { border-left: 4px solid #6366f1; }
+.register-btn[data-type="estimate-request"] i { color: #6366f1; background: #eff0ff; }
+.register-btn[data-type="quotation"] { border-left: 4px solid #10b981; }
+.register-btn[data-type="quotation"] i { color: #10b981; background: #ecfdf5; }
+.register-btn[data-type="accept-order"] { border-left: 4px solid #3b82f6; }
+.register-btn[data-type="accept-order"] i { color: #3b82f6; background: #eff6ff; }
+.register-btn[data-type="work-ticket"] { border-left: 4px solid #f97316; }
+.register-btn[data-type="work-ticket"] i { color: #f97316; background: #fff7ed; }
+.register-btn[data-type="barcode-work-ticket"] { border-left: 4px solid #fb923c; }
+.register-btn[data-type="barcode-work-ticket"] i { color: #fb923c; background: #fff7ed; }
+.register-btn[data-type="misc-purchase"] { border-left: 4px solid #64748b; }
+.register-btn[data-type="misc-purchase"] i { color: #64748b; background: #f1f5f9; }
+.register-btn[data-type="misc-delivery"] { border-left: 4px solid #14b8a6; }
+.register-btn[data-type="misc-delivery"] i { color: #14b8a6; background: #f0fdfa; }
+.register-btn[data-type="shipping"] { border-left: 4px solid #0ea5e9; }
+.register-btn[data-type="shipping"] i { color: #0ea5e9; background: #f0f9ff; }
+.register-btn[data-type="outsource-delivery"] { border-left: 4px solid #f59e0b; }
+.register-btn[data-type="outsource-delivery"] i { color: #f59e0b; background: #fffbeb; }
+.register-btn[data-type="parts-delivery"] { border-left: 4px solid #f43f5e; }
+.register-btn[data-type="parts-delivery"] i { color: #f43f5e; background: #fff1f2; }
+.register-btn:hover i { transform: scale(1.08); }
+
 /* ホーム：掲示板・カレンダー・タスクカード（やる気アクセント） */
 #dashboard-page .dashboard-card.bulletin-card {
     animation: dashboardCardFade 0.5s ease-out 0.15s both;
