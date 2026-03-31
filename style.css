@@ -12269,3 +12269,121 @@ textarea {
     line-height: 1;
     flex-shrink: 0;
 }
+
+/* ================================================================
+   POLARIS 全ページ カラー統一オーバーライド
+   テーマカラー: #1e3a8a → #2563eb (Polaris Deep Blue)
+   ================================================================ */
+
+/* ── 共通変数 ── */
+:root {
+    --polaris-header-bg: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    --polaris-header-shadow: 0 4px 14px rgba(37, 99, 235, 0.22);
+    --polaris-table-head-bg: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+}
+
+/* ── 機械の加工進捗状況 ── */
+.mp-header {
+    background: var(--polaris-header-bg) !important;
+    box-shadow: var(--polaris-header-shadow) !important;
+    border-radius: 12px !important;
+}
+.mp-header * { color: #fff !important; }
+
+/* ── 原価集計 ── */
+.cs-header {
+    background: var(--polaris-header-bg) !important;
+    box-shadow: var(--polaris-header-shadow) !important;
+    border-radius: 12px !important;
+}
+.cs-header * { color: #fff !important; }
+
+/* ── 見積依頼・見積作成（sales-module） ── */
+.sm-header,
+.qt-header {
+    background: var(--polaris-header-bg) !important;
+    box-shadow: var(--polaris-header-shadow) !important;
+    border-radius: 14px !important;
+}
+.sm-header *,
+.qt-header * { color: #fff !important; }
+/* アイコンボタン等は白を維持 */
+.sm-header button,
+.qt-header button {
+    background: rgba(255,255,255,0.18) !important;
+    border-color: rgba(255,255,255,0.35) !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+}
+.sm-header button:hover,
+.qt-header button:hover {
+    background: rgba(255,255,255,0.30) !important;
+}
+
+/* ── 作業票ヘッダー ── */
+.work-ticket-header {
+    background: var(--polaris-header-bg) !important;
+    box-shadow: var(--polaris-header-shadow) !important;
+}
+
+/* ── 図面番号 ページタイトル ── */
+.drawing-number-page-title {
+    background: var(--polaris-header-bg) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--polaris-header-shadow) !important;
+    padding: 14px 20px !important;
+}
+.drawing-number-page-title * { color: #fff !important; }
+
+/* ── 図面番号 一覧テーブル thead ── */
+.drawing-number-list-table th {
+    background: var(--polaris-table-head-bg) !important;
+    color: #fff !important;
+}
+
+/* ── 出荷管理テーブル thead ── */
+.shipping-result-wrap .shipping-result-table thead th {
+    background: var(--polaris-table-head-bg) !important;
+    color: #fff !important;
+}
+
+/* ── 登録モーダルヘッダー ── */
+.register-modal-header {
+    background: var(--polaris-header-bg) !important;
+    border-bottom: none !important;
+}
+.register-modal-header h3,
+.register-modal-header * { color: #fff !important; }
+
+/* ── ログアウト確認ヘッダー ── */
+.logout-confirm-header {
+    background: var(--polaris-header-bg) !important;
+    border-radius: 12px 12px 0 0 !important;
+}
+.logout-confirm-header * { color: #fff !important; }
+
+/* ── レコードバッジ ── */
+.record-badge {
+    background: var(--polaris-header-bg) !important;
+}
+
+/* ── 全ページの data-table thead（統一） ── */
+.data-table thead th,
+.data-table thead tr th {
+    background: var(--polaris-table-head-bg) !important;
+    color: #fff !important;
+}
+
+/* ── PP サブテーブルの汎用ヘッダーもリセット ── */
+.pp-main-table thead th {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
+}
+
+/* ── 選択中ボタン（図面番号タイプ選択など） ── */
+.drawing-number-type-btn.selected,
+.tab-btn.active,
+.filter-btn.active {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #fff !important;
+}
