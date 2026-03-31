@@ -7418,19 +7418,39 @@ async function fetchWorkTicketOrderInfo(constructNo) {
 }
 
 // テーブル名を探すヘルパー関数
+// テーブル名キャッシュ（セッション中は再問い合わせしない）
+const _tableNameCache = {};
+
 async function findTableName(variations) {
     const supabase = getSupabaseClient();
     if (!supabase) return null;
-    
-    for (const name of variations) {
-        try {
-            const { error } = await supabase.from(name).select('*').limit(1);
-            if (!error) return name;
-        } catch (e) {
-            // Ignore
-        }
+
+    // キャッシュキー：候補リストを結合した文字列
+    const cacheKey = variations.join('|');
+    if (_tableNameCache[cacheKey] !== undefined) {
+        return _tableNameCache[cacheKey];
     }
-    return null;
+
+    // 全候補を並列チェック（順序付きで最初に成功したものを使う）
+    const results = await Promise.all(
+        variations.map(async (name) => {
+            try {
+                const { error } = await supabase.from(name).select('id').limit(1);
+                return error ? null : name;
+            } catch (e) {
+                return null;
+            }
+        })
+    );
+
+    // variationsの順で最初に見つかったものを採用
+    let found = null;
+    for (let i = 0; i < variations.length; i++) {
+        if (results[i] !== null) { found = results[i]; break; }
+    }
+
+    _tableNameCache[cacheKey] = found;
+    return found;
 }
 window.findTableName = findTableName;
 
