@@ -1531,7 +1531,7 @@ a.quick-action-btn:hover { color: white; }
     grid-template-columns: minmax(320px, 1.4fr) minmax(300px, 1fr);
 }
 #dashboard-page .dashboard-top-row .dashboard-card.calendar-card {
-    max-width: 500px;
+    max-width: none;
 }
 #dashboard-page .dashboard-top-row .dashboard-card {
     animation: dashboardCardFade 0.5s ease-out both;
