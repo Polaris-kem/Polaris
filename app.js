@@ -810,6 +810,17 @@ function updateSidebarUserDisplay() {
     const footerP = document.getElementById('sidebar-login-user');
     if (footerP) footerP.textContent = 'ログインユーザー: ' + name;
 }
+function updateDashboardWelcome() {
+    const now = new Date();
+    const h = now.getHours();
+    const greeting = h < 12 ? 'おはようございます' : h < 18 ? 'こんにちは' : 'お疲れ様です';
+    const days = ['日','月','火','水','木','金','土'];
+    const dateStr = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日（' + days[now.getDay()] + '）';
+    const gEl = document.getElementById('dashboard-greeting');
+    const dEl = document.getElementById('dashboard-today-date');
+    if (gEl) gEl.textContent = greeting;
+    if (dEl) dEl.textContent = dateStr;
+}
 function applyUserSettingsToDashboard() {
     const s = getUserSettings();
     const qa = document.getElementById('dashboard-quick-actions');
