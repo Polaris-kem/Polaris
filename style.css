@@ -12414,3 +12414,72 @@ textarea {
     border-color: #2563eb !important;
     color: #fff !important;
 }
+
+/* ── 掲示板 かわいくリデザイン ── */
+#dashboard-page .dashboard-card.bulletin-card {
+    background: #fdf4ff !important;
+    border: 1px solid #e9d5ff !important;
+    border-left: none !important;
+    border-radius: 14px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+#dashboard-page .bulletin-card .section-header {
+    background: #f3e8ff !important;
+    border-bottom: 2px solid #e9d5ff !important;
+    padding: 10px 14px !important;
+    margin: 0 !important;
+    border-radius: 14px 14px 0 0 !important;
+}
+#dashboard-page .bulletin-card .section-header h3 {
+    color: #7c3aed !important;
+    font-weight: 800 !important;
+    font-size: 14px !important;
+}
+#dashboard-page .bulletin-card .section-header h3::before {
+    content: '📌 ';
+}
+#dashboard-page .bulletin-card .bulletin-list {
+    padding: 8px 12px !important;
+}
+#dashboard-page .bulletin-item {
+    background: #fff !important;
+    border: 1px solid #ede9fe !important;
+    border-left: 4px solid #a78bfa !important;
+    border-radius: 8px !important;
+    margin-bottom: 6px !important;
+    padding: 8px 12px !important;
+    box-shadow: 0 1px 4px rgba(124,58,237,0.07) !important;
+    transition: transform 0.15s, box-shadow 0.15s !important;
+}
+#dashboard-page .bulletin-item:nth-child(4n+2) { border-left-color: #f472b6 !important; }
+#dashboard-page .bulletin-item:nth-child(4n+3) { border-left-color: #34d399 !important; }
+#dashboard-page .bulletin-item:nth-child(4n+4) { border-left-color: #60a5fa !important; }
+#dashboard-page .bulletin-item:hover {
+    transform: translateX(2px) !important;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.12) !important;
+    background: #faf5ff !important;
+}
+#dashboard-page .bulletin-item .bulletin-date {
+    color: #7c3aed !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    background: #ede9fe;
+    border-radius: 4px;
+    padding: 1px 6px;
+    border: none !important;
+}
+#dashboard-page .bulletin-item .bulletin-dot {
+    color: #c4b5fd !important;
+}
+#dashboard-page .bulletin-item .bulletin-text {
+    font-size: 13px !important;
+    color: #4c1d95 !important;
+}
+#dashboard-page .bulletin-card .btn-primary.btn-small {
+    background: #7c3aed !important;
+    border-color: #7c3aed !important;
+    border-radius: 20px !important;
+    font-size: 11px !important;
+    padding: 4px 12px !important;
+}
