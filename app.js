@@ -6976,7 +6976,7 @@ function generateWorkTicketFormPage(container) {
                                     <div style="display: flex; gap: 8px; width: 100%;">
                                         <div style="flex: 1; min-width: 0;">
                                             <label style="display: block; margin-bottom: 4px; font-weight: 600; color: white; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">図面番号</label>
-                                            <input type="text" name="drawing_no" id="work-ticket-drawing-no" class="form-input" placeholder="図面番号" style="width: 100%; box-sizing: border-box; font-size: 12px; padding: 6px 8px; font-family: monospace; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                                            <input type="text" name="drawing_no" id="work-ticket-drawing-no" class="form-input" placeholder="図面番号" style="width: 100%; box-sizing: border-box; font-size: 12px; padding: 6px 8px; font-family: inherit; color: #334155; border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
                                         </div>
                                         <div style="width: 60px; flex-shrink: 0;">
                                             <label style="display: block; margin-bottom: 4px; font-weight: 600; color: white; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">品番</label>
