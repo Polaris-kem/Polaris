@@ -9683,16 +9683,16 @@ function renderDeliveryDetailTable() {
             }
             return '';
         };
-        // 有効納期（updatenouki優先）
+        // 有効納期（update_nouki優先）
         const getEffDate = (r) => {
-            const upd = get(r, 'updatenouki', 'deliveryupdatedate');
-            return upd || get(r, 'deliverydate', 'delivery_date');
+            const upd = get(r, 'update_nouki', 'updatenouki', 'deliveryupdatedate');
+            return upd || get(r, 'delivery_date', 'deliverydate');
         };
         rows.forEach((r, i) => {
             const tr = document.createElement('tr');
             if (i === 0) tr.classList.add('selected');
-            const updatenouki = get(r, 'updatenouki', 'deliveryupdatedate');
-            const deliverydate = get(r, 'deliverydate', 'delivery_date');
+            const updatenouki = get(r, 'update_nouki', 'updatenouki', 'deliveryupdatedate');
+            const deliverydate = get(r, 'delivery_date', 'deliverydate');
             // 更新納期セル（更新があれば強調）
             const updCell = updatenouki
                 ? `<td style="color:#d97706;font-weight:600;">${escapeHtml(updatenouki)}</td>`
