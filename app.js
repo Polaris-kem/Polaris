@@ -9098,16 +9098,34 @@ async function searchProcessingProgress() {
             // plancode 表示：社内加工は空、外注は plancode 値をそのまま
             const planDisp = planCode || (processSt.includes('外注') ? '外注' : '社内');
 
+            // processstatus バッジクラス
+            const stLabel = processSt || (hasKanryo ? '加工完了' : '');
+            let stBadgeClass = 'default';
+            if (stLabel.includes('完了')) stBadgeClass = 'done';
+            else if (stLabel.includes('加工中')) stBadgeClass = 'working';
+            else if (stLabel.includes('未') || stLabel.includes('外注')) stBadgeClass = 'waiting';
+            const stBadge = stLabel
+                ? `<span class="pp-status-badge ${stBadgeClass}">${stLabel}</span>`
+                : '';
+
+            const shikyuBadge = row.shikyuflg
+                ? `<span style="font-size:11px;font-weight:700;color:#b45309;background:#fef3c7;padding:2px 5px;border-radius:4px;">支給</span>`
+                : '';
+
+            const planBadge = planDisp
+                ? `<span style="font-size:11px;font-weight:600;color:${planCode && planCode !== '社内' ? '#1d4ed8' : '#475569'};background:${planCode && planCode !== '社内' ? '#dbeafe' : '#f1f5f9'};padding:2px 6px;border-radius:4px;">${planDisp}</span>`
+                : '';
+
             tr.innerHTML = `
                 <td style="text-align: center;"><input type="checkbox" value="${index}"></td>
-                <td>${(ppVal(row, 'constructionno', 'constructno') || '').trim()}</td>
+                <td style="font-weight:600;">${(ppVal(row, 'constructionno', 'constructno') || '').trim()}</td>
                 <td>${(ppVal(row, 'symbolmachine') || '').trim()}</td>
                 <td>${(ppVal(row, 'symbolunit') || '').trim()}</td>
-                <td style="text-align:center;font-size:11px;">${planDisp}</td>
-                <td style="text-align:center;">${row.shikyuflg ? '有' : ''}</td>
-                <td>${(ppVal(row, 'drawingno') || '').trim()}</td>
+                <td style="text-align:center;">${planBadge}</td>
+                <td style="text-align:center;">${shikyuBadge}</td>
+                <td style="font-family:monospace;font-size:12px;">${(ppVal(row, 'drawingno') || '').trim()}</td>
                 <td style="text-align:center;">${(ppVal(row, 'partno') || '').trim()}</td>
-                <td>${ppVal(row, 'description')}</td>
+                <td style="font-weight:500;">${ppVal(row, 'description')}</td>
                 <td>${ppVal(row, 'materialcode')}</td>
                 <td style="text-align:right;">${ppVal(row, 'qty')}</td>
                 <td>${ppVal(row, 'qtyunit')}</td>
@@ -9119,7 +9137,7 @@ async function searchProcessingProgress() {
                 <td>${osCell}</td>
                 <td></td>
                 <td>${fmtDate(ppVal(row, 'kanryodate'))}</td>
-                <td style="font-size:11px;">${processSt || (hasKanryo ? '加工完了' : '')}</td>
+                <td>${stBadge}</td>
             `;
             tbody.appendChild(tr);
         });
