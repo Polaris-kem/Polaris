@@ -1256,10 +1256,10 @@ html, body {
 /* ホーム：クイックアクション（＋イラストを同列に） */
 /* ウェルカムバナー */
 .dashboard-welcome {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 60%, #f0fdf4 100%);
+    background: #e0f2fe;
     border-radius: 14px;
     padding: 8px 18px;
     margin-bottom: 12px;
