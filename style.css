@@ -12277,9 +12277,9 @@ textarea {
 
 /* ── 共通変数 ── */
 :root {
-    --polaris-header-bg: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-    --polaris-header-shadow: 0 4px 14px rgba(37, 99, 235, 0.22);
-    --polaris-table-head-bg: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    --polaris-header-bg: #2563eb;
+    --polaris-header-shadow: 0 4px 12px rgba(37, 99, 235, 0.18);
+    --polaris-table-head-bg: #1e40af;
 }
 
 /* ── 機械の加工進捗状況 ── */
