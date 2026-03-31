@@ -1198,7 +1198,7 @@ html, body {
     flex: 1;
     overflow-y: auto;
     overflow-x: auto;
-    padding: 24px 28px;
+    padding: 12px 20px;
     background: transparent;
     display: flex;
     flex-direction: column;
