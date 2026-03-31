@@ -9696,35 +9696,51 @@ async function loadDeliveryDetailData(dateStr, category) {
     const supabase = getSupabaseClient();
     if (!supabase) return [];
     try {
-        var data = [];
+        let tbl = null;
         if (category === 'purchased') {
-            const tbl = await findTableName(['t_purchaseparts', 'T_PurchaseParts', 'purchaseparts']);
-            if (tbl) {
-                const { data: d } = await supabase.from(tbl).select('*').eq('delivery_date', dateStr);
-                if (d && d.length) data = d;
-                else { const { data: d2 } = await supabase.from(tbl).select('*').eq('deliverydate', dateStr); data = d2 || []; }
-            }
-            return data;
+            tbl = await findTableName(['t_purchaseparts']);
+        } else if (category === 'outsource' || category === 'material') {
+            tbl = await findTableName(['t_purchase', 't_manufctpurchase']);
+        } else if (category === 'misc') {
+            tbl = await findTableName(['t_expense', 't_misc']);
         }
-        if (category === 'outsource' || category === 'material') {
-            const tbl = await findTableName(['t_manufctpurchase', 'T_ManufctPurchase', 't_purchase', 'T_Purchase']);
-            if (tbl) {
-                const { data: d } = await supabase.from(tbl).select('*').eq('delivery_date', dateStr);
-                if (d && d.length) data = d;
-                else { const { data: d2 } = await supabase.from(tbl).select('*').eq('deliverydate', dateStr); data = d2 || []; }
-            }
-            return data;
+        if (!tbl) return [];
+
+        // updatenouki優先：有効納期 = dateStr のレコードを取得
+        // (deliverydate=dateStr AND updatenouki IS NULL) OR updatenouki=dateStr
+        let { data, error } = await supabase.from(tbl).select('*')
+            .or(`and(deliverydate.eq.${dateStr},updatenouki.is.null),updatenouki.eq.${dateStr}`);
+        if (error || !data || data.length === 0) {
+            // フォールバック: deliverydate で単純一致
+            const { data: d2 } = await supabase.from(tbl).select('*').eq('deliverydate', dateStr);
+            data = d2 || [];
         }
-        if (category === 'misc') {
-            const tbl = await findTableName(['t_expense', 't_misc', 'expense']);
-            if (tbl) {
-                const { data: d } = await supabase.from(tbl).select('*').eq('delivery_date', dateStr);
-                if (d && d.length) data = d;
-                else { const { data: d2 } = await supabase.from(tbl).select('*').eq('deliverydate', dateStr); data = d2 || []; }
+        if (!data || data.length === 0) return [];
+
+        // 発注先名を t_companycode から取得
+        const companyCodes = [...new Set(data.map(r =>
+            r.suppliercode || r.companycode || r.supplier_code || r.vendercode || r.vendorcode
+        ).filter(Boolean))];
+        let companyMap = {};
+        if (companyCodes.length > 0) {
+            const compTbl = await findTableName(['t_companycode']);
+            if (compTbl) {
+                const { data: companies } = await supabase.from(compTbl)
+                    .select('companycode,shortname')
+                    .in('companycode', companyCodes);
+                (companies || []).forEach(c => {
+                    companyMap[c.companycode] = c.shortname || '';
+                });
             }
-            return data;
         }
-    } catch (e) { console.warn('loadDeliveryDetailData error:', e); }
+        // 各行に発注先名を付与
+        return data.map(r => ({
+            ...r,
+            _supplierName: companyMap[r.suppliercode || r.companycode || r.supplier_code || r.vendercode || r.vendorcode] || ''
+        }));
+    } catch (e) {
+        console.warn('loadDeliveryDetailData error:', e);
+    }
     return [];
 }
 window.closeDeliveryDetailModal = closeDeliveryDetailModal;
