@@ -9664,28 +9664,58 @@ function closeDeliveryDetailModal() {
 function renderDeliveryDetailTable() {
     const tbody = document.getElementById('delivery-detail-tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;padding:24px;color:#64748b;">読み込み中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;padding:24px;color:#64748b;">読み込み中...</td></tr>';
     loadDeliveryDetailData(deliveryDetailCurrentDate, deliveryDetailCurrentCategory).then(rows => {
         tbody.innerHTML = '';
         if (!rows || rows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;padding:24px;color:#64748b;">該当データはありません</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;padding:24px;color:#64748b;">該当データはありません</td></tr>';
             return;
         }
+        // 小文字・キャメルケース両対応のゲッター
         const get = (r, ...keys) => {
             for (const k of keys) {
                 let v = r[k];
                 if (v === undefined && typeof k === 'string') {
                     const low = k.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
-                    v = r[low] ?? r[k.replace(/_/g, '')];
+                    v = r[low] ?? r[k.replace(/_/g, '')] ?? r[k.toLowerCase()];
                 }
-                if (v !== undefined && v !== null) return String(v);
+                if (v !== undefined && v !== null && v !== '') return String(v);
             }
             return '';
+        };
+        // 有効納期（updatenouki優先）
+        const getEffDate = (r) => {
+            const upd = get(r, 'updatenouki', 'deliveryupdatedate');
+            return upd || get(r, 'deliverydate', 'delivery_date');
         };
         rows.forEach((r, i) => {
             const tr = document.createElement('tr');
             if (i === 0) tr.classList.add('selected');
-            tr.innerHTML = '<td>' + escapeHtml(get(r, 'order_no', 'OrderNo', 'orderno')) + '</td><td>' + escapeHtml(get(r, 'batch_order_no', 'BatchOrderNo', '一括注文番号')) + '</td><td>' + escapeHtml(get(r, 'construct_no', 'ConstructNo', 'constructno', '工事番号')) + '</td><td>' + escapeHtml(get(r, 'machine', 'Machine', '機械')) + '</td><td>' + escapeHtml(get(r, 'unit', 'Unit', 'ユニット')) + '</td><td>' + escapeHtml(get(r, 'tsuuban', 'serial_no', 'Tsuuban', '通番')) + '</td><td>' + escapeHtml(get(r, 'product_name', 'ProductName', '品名', 'part_name')) + '</td><td>' + escapeHtml(get(r, 'dimension', 'Dimension', '寸法', 'spec', '型式')) + '</td><td>' + escapeHtml(get(r, 'quantity', 'Quantity', 'qty', '個数')) + '</td><td>' + escapeHtml(get(r, 'unit_name', 'UnitName', '単位')) + '</td><td>' + escapeHtml(get(r, 'delivery_date', 'DeliveryDate', '納期', 'due_date')) + '</td><td>' + escapeHtml(get(r, 'orderer', 'Orderer', '発注者')) + '</td><td>' + escapeHtml(get(r, 'supplier', 'Supplier', 'order_to', '発注先')) + '</td><td>' + escapeHtml(get(r, 'comment', 'Comment', 'コメント')) + '</td>';
+            const updatenouki = get(r, 'updatenouki', 'deliveryupdatedate');
+            const deliverydate = get(r, 'deliverydate', 'delivery_date');
+            // 更新納期セル（更新があれば強調）
+            const updCell = updatenouki
+                ? `<td style="color:#d97706;font-weight:600;">${escapeHtml(updatenouki)}</td>`
+                : `<td style="color:#94a3b8;">—</td>`;
+            // 発注先名（t_companycode から取得済み）
+            const supplierName = r._supplierName ||
+                get(r, 'supplier', 'Supplier', 'suppliername', 'companyname', 'order_to');
+            tr.innerHTML =
+                '<td>' + escapeHtml(get(r, 'orderno', 'order_no', 'OrderNo')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'batchorderno', 'batch_order_no', 'BatchOrderNo')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'constructionno', 'constructno', 'construct_no', 'ConstructNo')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'symbolmachine', 'machine', 'Machine')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'symbolunit', 'unit', 'Unit')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'consecutiveno', 'tsuuban', 'serial_no')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'partname', 'product_name', 'ProductName', 'itemname')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'dimension', 'spec', 'model', 'Dimension')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'quantity', 'qty', 'Quantity')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'unitname', 'unit_name', 'UnitName')) + '</td>' +
+                '<td>' + escapeHtml(deliverydate) + '</td>' +
+                updCell +
+                '<td>' + escapeHtml(get(r, 'orderer', 'Orderer', 'staffcode')) + '</td>' +
+                '<td>' + escapeHtml(supplierName) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'comment', 'Comment', 'remarks', '備考')) + '</td>';
             tr.addEventListener('click', () => { tbody.querySelectorAll('tr').forEach(x => x.classList.remove('selected')); tr.classList.add('selected'); });
             tbody.appendChild(tr);
         });
