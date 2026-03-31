@@ -6850,7 +6850,7 @@ function generateWorkTicketFormPage(container) {
             <!-- メインフォーム -->
             <div style="display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0;">
                 <!-- 上段：基本情報（横並び） -->
-                <div style="display: grid; grid-template-columns: 240px 2.2fr 1fr; gap: 10px; flex-shrink: 0;">
+                <div style="display: grid; grid-template-columns: 240px 1.6fr 1.8fr; gap: 10px; flex-shrink: 0;">
                     <!-- 作業者情報 -->
                     <div style="background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%); border-radius: 12px; padding: 14px; box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3); position: relative; overflow: hidden;">
                         <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
