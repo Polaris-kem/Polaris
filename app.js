@@ -8927,7 +8927,7 @@ async function searchProcessingProgress() {
     const tbody = document.getElementById('pp-main-table-body');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin"></i> 検索中...</td></tr>';
+    tbody.innerHTML = (typeof bearLoadingRow === 'function') ? bearLoadingRow(21, '検索中...') : '<tr><td colspan="21" style="text-align:center;padding:40px;">🐻‍❄️ 検索中...</td></tr>';
 
     try {
         const supabase = getSupabaseClient();
