@@ -410,75 +410,120 @@
 
             <!-- 登録ページ -->
             <div id="register-page" class="page">
-                <div class="page-title" style="margin-bottom: 8px;">
+                <div class="page-title" style="margin-bottom: 14px;">
                     <h2 style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 28px; font-weight: 700; letter-spacing: 0.5px;">登録・編集</h2>
                 </div>
 
-                <div class="register-buttons">
-                    <button class="register-btn" data-type="estimate-request" onclick="showPage('estimate-request')">
-                        <i class="fas fa-envelope-open-text"></i>
-                        <span>見積依頼<br><small>K番号採番・メール送信</small></span>
+                <!-- タブナビゲーション -->
+                <div class="reg-tab-nav">
+                    <button class="reg-tab active" data-group="sales" onclick="switchRegTab(this)">
+                        <i class="fas fa-chart-line"></i><span>営業・受注管理</span>
                     </button>
-                    <button class="register-btn" data-type="quotation" onclick="showPage('quotation')">
-                        <i class="fas fa-file-invoice"></i>
-                        <span>見積書作成<br><small>金額入力・PDF出力</small></span>
+                    <button class="reg-tab" data-group="purchase" onclick="switchRegTab(this)">
+                        <i class="fas fa-industry"></i><span>発注・製造管理</span>
                     </button>
-                    <button class="register-btn" data-type="accept-order" onclick="showPage('order-registration')">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <span>受注登録 (営業)</span>
+                    <button class="reg-tab" data-group="site" onclick="switchRegTab(this)">
+                        <i class="fas fa-hard-hat"></i><span>現場・製造実績</span>
                     </button>
-                    <button class="register-btn" data-type="work-ticket" onclick="showPage('work-ticket')">
-                        <i class="fas fa-clipboard-list"></i>
-                        <span>作業票の登録</span>
+                    <button class="reg-tab" data-group="common" onclick="switchRegTab(this)">
+                        <i class="fas fa-hashtag"></i><span>採番・共通</span>
                     </button>
-                    <button class="register-btn" data-type="barcode-work-ticket" onclick="showPage('barcode-work-ticket')">
-                        <i class="fas fa-barcode"></i>
-                        <span>バーコードリーダー版<br>作業票の登録</span>
-                    </button>
-                    <button class="register-btn" data-type="misc-purchase" onclick="showPage('misc-purchase')">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span>諸掛購入登録</span>
-                    </button>
-                    <button class="register-btn" data-type="misc-delivery" onclick="showPage('misc-delivery')">
-                        <i class="fas fa-truck"></i>
-                        <span>諸掛納入処理</span>
-                    </button>
-                    <button class="register-btn" data-type="shipping" onclick="showPage('shipping')">
-                        <i class="fas fa-shipping-fast"></i>
-                        <span>出荷管理</span>
-                    </button>
-                    <button class="register-btn" data-type="outsource-delivery" onclick="showPage('outsource-delivery')">
-                        <i class="fas fa-handshake"></i>
-                        <span>外注・材料<br>納入処理</span>
-                    </button>
-                    <button class="register-btn" data-type="parts-delivery" onclick="showPage('parts-delivery')">
-                        <i class="fas fa-cogs" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
-                        <span>購入部品<br>納入処理</span>
-                    </button>
-                    <button class="register-btn" data-type="surplus-register" onclick="showPage('surplus-register')">
-                        <i class="fas fa-box" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
-                        <span>余り品登録</span>
-                    </button>
-                    <button class="register-btn" data-type="surplus-search" onclick="showPage('surplus-search')">
-                        <i class="fas fa-search" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
-                        <span>余り品検索</span>
-                    </button>
-                    <button class="register-btn" data-type="project-shipping" onclick="showPage('project-shipping')">
-                        <i class="fas fa-file-export" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
-                        <span>工事番号出荷登録</span>
-                    </button>
-                    <button class="register-btn" data-type="budget">
-                        <i class="fas fa-yen-sign" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
-                        <span>部品単位予算登録</span>
-                    </button>
-                    <button class="register-btn" data-type="construct-number" onclick="showPage('construct-number');">
-                        <i class="fas fa-hashtag" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
-                        <span>工事番号採番</span>
-                    </button>
-                    <button class="register-btn" data-type="drawing-number" onclick="showPage('drawing-number');">
-                        <i class="fas fa-drafting-compass" style="font-size: 24px; margin-right: 12px; color: var(--primary); flex-shrink: 0;"></i>
-                        <span>図面番号採番</span>
-                    </button>
+                </div>
+
+                <!-- 営業・受注管理 -->
+                <div class="reg-group" data-group="sales">
+                    <p class="reg-group-desc">受注から売上確定までを行う画面群です（経理／営業）。</p>
+                    <div class="register-buttons">
+                        <button class="register-btn" data-type="estimate-request" onclick="showPage('estimate-request')">
+                            <i class="fas fa-envelope-open-text"></i>
+                            <span>見積依頼<br><small>製造部への原価見積依頼・K番号採番</small></span>
+                        </button>
+                        <button class="register-btn" data-type="quotation" onclick="showPage('quotation')">
+                            <i class="fas fa-file-invoice"></i>
+                            <span>見積書作成<br><small>原価に利益を乗せて顧客向け見積書を作成</small></span>
+                        </button>
+                        <button class="register-btn" data-type="accept-order" onclick="showPage('order-registration')">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <span>受注登録・製造指図書発行<br><small>工事番号・納期・金額を確定し指図書を発行</small></span>
+                        </button>
+                        <button class="register-btn" data-type="accept-order-search" onclick="showPage('accept-order-list')">
+                            <i class="fas fa-search-dollar"></i>
+                            <span>受注検索・更新<br><small>登録済み受注の参照・納期修正</small></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 発注・製造管理 -->
+                <div class="reg-group" data-group="purchase" style="display:none">
+                    <p class="reg-group-desc">発注データの選択から納品チェック・検収までを行う画面群です（発注部門）。</p>
+                    <div class="register-buttons">
+                        <button class="register-btn" data-type="misc-purchase" onclick="showPage('misc-purchase')">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>諸経費発注登録<br><small>消耗品など工事に紐付かない諸経費の発注</small></span>
+                        </button>
+                        <button class="register-btn" data-type="misc-delivery" onclick="showPage('misc-delivery')">
+                            <i class="fas fa-truck"></i>
+                            <span>諸掛 納入処理<br><small>諸経費の納品チェック・納入日登録</small></span>
+                        </button>
+                        <button class="register-btn" data-type="outsource-delivery" onclick="showPage('outsource-delivery')">
+                            <i class="fas fa-handshake"></i>
+                            <span>外注・材料 納入処理<br><small>外注品・材料の納品チェック・納入日登録</small></span>
+                        </button>
+                        <button class="register-btn" data-type="parts-delivery" onclick="showPage('parts-delivery')">
+                            <i class="fas fa-boxes"></i>
+                            <span>購入部品 納入処理<br><small>購入品の納品チェック・納入日登録</small></span>
+                        </button>
+                        <button class="register-btn" data-type="shipping" onclick="showPage('shipping')">
+                            <i class="fas fa-shipping-fast"></i>
+                            <span>出荷管理<br><small>出荷情報の登録・確認</small></span>
+                        </button>
+                        <button class="register-btn" data-type="surplus-register" onclick="showPage('surplus-register')">
+                            <i class="fas fa-box-open"></i>
+                            <span>余り品登録<br><small>余剰在庫の登録</small></span>
+                        </button>
+                        <button class="register-btn" data-type="surplus-search" onclick="showPage('surplus-search')">
+                            <i class="fas fa-search"></i>
+                            <span>余り品検索<br><small>余剰在庫の検索・参照</small></span>
+                        </button>
+                        <button class="register-btn" data-type="budget">
+                            <i class="fas fa-yen-sign"></i>
+                            <span>部品単位予算登録<br><small>部品ごとの予算入力</small></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 現場・製造実績 -->
+                <div class="reg-group" data-group="site" style="display:none">
+                    <p class="reg-group-desc">現場作業の進捗・工数を登録する画面群です（原価・進捗／明石製造部）。</p>
+                    <div class="register-buttons">
+                        <button class="register-btn" data-type="work-ticket" onclick="showPage('work-ticket')">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>作業票の登録<br><small>1日の作業時間を図面・機械単位で入力</small></span>
+                        </button>
+                        <button class="register-btn" data-type="barcode-work-ticket" onclick="showPage('barcode-work-ticket')">
+                            <i class="fas fa-barcode"></i>
+                            <span>バーコードリーダー版 作業票<br><small>バーコードスキャンによる工数入力</small></span>
+                        </button>
+                        <button class="register-btn" data-type="project-shipping" onclick="showPage('project-shipping')">
+                            <i class="fas fa-file-export"></i>
+                            <span>工事番号出荷登録<br><small>工事完了後の最終出荷日を記録</small></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 採番・共通 -->
+                <div class="reg-group" data-group="common" style="display:none">
+                    <p class="reg-group-desc">採番など共通機能の画面群です。</p>
+                    <div class="register-buttons">
+                        <button class="register-btn" data-type="construct-number" onclick="showPage('construct-number');">
+                            <i class="fas fa-hashtag"></i>
+                            <span>工事番号採番<br><small>新規工事番号の発番</small></span>
+                        </button>
+                        <button class="register-btn" data-type="drawing-number" onclick="showPage('drawing-number');">
+                            <i class="fas fa-drafting-compass"></i>
+                            <span>図面番号採番<br><small>新規図面番号の発番</small></span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
