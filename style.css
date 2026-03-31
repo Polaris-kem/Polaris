@@ -12150,3 +12150,122 @@ textarea {
 @media (max-width: 480px) {
     #barcode-work-ticket-content h2 { font-size: 16px !important; }
 }
+
+/* ========== Polaris カレンダーボタン リデザイン ========== */
+.calendar-actions {
+    display: flex !important;
+    gap: 3px !important;
+    margin-bottom: 10px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+}
+.calendar-today-btn,
+.calendar-company-btn {
+    padding: 0 12px !important;
+    border: 2px solid #3b82f6 !important;
+    background: #3b82f6 !important;
+    color: #fff !important;
+    border-radius: 20px !important;
+    cursor: pointer !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    height: 26px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    box-shadow: 0 2px 6px rgba(59,130,246,0.3) !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+}
+.calendar-today-btn:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    transform: scale(1.05) !important;
+}
+.calendar-jump-btn {
+    padding: 0 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    color: #64748b !important;
+    border-radius: 20px !important;
+    cursor: pointer !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+    box-shadow: none !important;
+}
+.calendar-jump-btn.cal-past {
+    background: #f0f9ff !important;
+    border-color: #bae6fd !important;
+    color: #0369a1 !important;
+}
+.calendar-jump-btn.cal-future {
+    background: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
+    color: #15803d !important;
+}
+.calendar-jump-btn:hover {
+    background: #1e293b !important;
+    border-color: #1e293b !important;
+    color: #fff !important;
+    transform: scale(1.06) !important;
+}
+
+/* ========== 加工進捗ヘッダー 落ち着き修正 ========== */
+.pp-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.2) !important;
+}
+
+/* ========== カレンダー幅縮小 ========== */
+.dashboard-top-row {
+    grid-template-columns: 0.8fr 1fr !important;
+}
+
+/* ========== ホッキョクグマ通知トースト ========== */
+.polaris-bear-toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 10px 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.14);
+    border-left: 4px solid #3b82f6;
+    min-width: 220px;
+    max-width: 320px;
+    opacity: 1;
+    transition: opacity 0.3s;
+    animation: bearToastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.polaris-bear-toast--success { border-left-color: #22c55e; }
+.polaris-bear-toast--error   { border-left-color: #ef4444; }
+.polaris-bear-toast--warning { border-left-color: #f59e0b; }
+.polaris-bear-toast--loading { border-left-color: #3b82f6; }
+@keyframes bearToastIn {
+    from { transform: translateX(60px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+.pbt-emoji {
+    font-size: 26px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+.pbt-body { flex: 1; min-width: 0; }
+.pbt-sub  { font-size: 10px; font-weight: 700; color: #94a3b8; margin-bottom: 2px; }
+.pbt-msg  { font-size: 13px; font-weight: 600; color: #1e293b; line-height: 1.4; }
+.pbt-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 2px;
+    line-height: 1;
+    flex-shrink: 0;
+}
