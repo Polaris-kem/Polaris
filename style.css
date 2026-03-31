@@ -6486,7 +6486,7 @@ textarea {
 
 .dashboard-top-row {
     display: grid;
-    grid-template-columns: minmax(0, 480px) 1fr;
+    grid-template-columns: minmax(0, 500px) minmax(0, 340px);
     gap: 16px;
     margin-bottom: 16px;
     margin-top: 10px;
@@ -9452,7 +9452,7 @@ textarea {
 
 .dashboard-top-row {
     display: grid;
-    grid-template-columns: minmax(0, 480px) 1fr;
+    grid-template-columns: minmax(0, 500px) minmax(0, 340px);
     gap: 16px;
     margin-bottom: 16px;
     margin-top: 10px;
