@@ -1856,8 +1856,8 @@ a.quick-action-btn:hover { color: white; }
 /* ========== 加工進捗ページ（見やすさ優先） ========== */
 .pp-page {
     padding: 16px;
-    gap: 16px;
-    background: #e5e7eb;
+    gap: 14px;
+    background: linear-gradient(145deg, #eef2ff 0%, #f0f9ff 50%, #ecfdf5 100%);
 }
 .pp-page.page.active {
     display: flex;
@@ -1868,45 +1868,73 @@ a.quick-action-btn:hover { color: white; }
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
-    background: #fff;
-    padding: 16px 20px;
-    border-radius: 10px;
-    border: 1px solid #d1d5db;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 60%, #2dd4bf 100%);
+    padding: 16px 24px;
+    border-radius: 14px;
+    border: none;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
 }
 .pp-title {
-    margin: 0 0 6px 0;
+    margin: 0 0 5px 0;
     font-size: 20px;
-    font-weight: 700;
-    color: #111827;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.3px;
 }
-.pp-title i { color: var(--primary); margin-right: 6px; }
+.pp-title i { color: rgba(255,255,255,0.85); margin-right: 8px; }
 .pp-desc {
     margin: 0;
     font-size: 13px;
-    color: #4b5563;
+    color: rgba(255,255,255,0.75);
 }
-.pp-header-actions { display: flex; align-items: center; gap: 12px; }
+.pp-header-actions { display: flex; align-items: center; gap: 10px; }
 .pp-result-count {
     font-size: 15px;
-    font-weight: 700;
-    color: #374151;
+    font-weight: 800;
+    color: #fff;
+    background: rgba(255,255,255,0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.3);
 }
-.btn-pp { padding: 8px 14px; font-size: 13px; }
+.btn-pp {
+    padding: 7px 14px;
+    font-size: 13px;
+    background: rgba(255,255,255,0.18) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.35) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(4px);
+}
+.btn-pp:hover {
+    background: rgba(255,255,255,0.28) !important;
+}
 
 .pp-filter-card {
-    padding: 18px 20px;
+    padding: 16px 20px;
     flex-shrink: 0;
     background: #fff;
-    border-radius: 10px;
-    border: 1px solid #d1d5db;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    border-radius: 12px;
+    border: 1px solid #dbeafe;
+    border-left: 4px solid #3b82f6;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
 }
 .pp-filter-title {
-    margin: 0 0 14px 0;
-    font-size: 15px;
+    margin: 0 0 12px 0;
+    font-size: 14px;
     font-weight: 700;
-    color: #111827;
+    color: #1e40af;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.pp-filter-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 16px;
+    background: #3b82f6;
+    border-radius: 2px;
 }
 /* 検索：横1行・全要素同じ高さ（40px） */
 .pp-filter-row {
