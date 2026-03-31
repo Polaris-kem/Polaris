@@ -2135,6 +2135,11 @@ select.pp-input-eq {
     display: grid;
     grid-template-columns: 1fr 2fr;
     gap: 14px;
+    min-width: 0;
+}
+.pp-detail-section > * {
+    min-width: 0;
+    overflow: hidden;
 }
 /* 加工作業カード（紫テーマ） */
 .pp-detail-section > .pp-sub-card {
