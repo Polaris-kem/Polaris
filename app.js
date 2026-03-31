@@ -7136,31 +7136,15 @@ async function loadMachinesFromManufctParts(constructNo) {
     });
     machines.sort((a, b) => a.code.localeCompare(b.code));
 
-    // 特殊機械（打合せ・業務系）を分離
-    const SPECIAL_KEYWORDS = ['打合せ', '打ち合わせ', '業務'];
-    const normalMachines = machines.filter(m => !SPECIAL_KEYWORDS.some(k => m.name.includes(k)));
-    const specialMachines = machines.filter(m => SPECIAL_KEYWORDS.some(k => m.name.includes(k)));
-
     const sel = document.getElementById('work-ticket-machine-type');
     if (!sel) return;
     sel.innerHTML = '<option value="">機械</option>';
-    normalMachines.forEach(m => {
+    machines.forEach(m => {
         const opt = document.createElement('option');
         opt.value = m.code;
-        opt.textContent = m.code;  // コードのみ表示
+        opt.textContent = m.code;
         sel.appendChild(opt);
     });
-
-    // 特殊機械を小さく表示
-    const specialDiv = document.getElementById('wt-special-machine-display');
-    if (specialDiv) {
-        if (specialMachines.length > 0) {
-            specialDiv.style.display = 'block';
-            specialDiv.innerHTML = specialMachines.map(m => `<span style="margin-right:8px;">▸ ${m.code}:${m.name}</span>`).join('');
-        } else {
-            specialDiv.style.display = 'none';
-        }
-    }
 
     // 機械選択時: ユニット絞り込み＋名前表示
     const machNameDiv = document.getElementById('wt-machine-name-display');
@@ -7171,10 +7155,10 @@ async function loadMachinesFromManufctParts(constructNo) {
     };
 
     // 機械が1件だけなら自動選択
-    if (normalMachines.length === 1) {
-        sel.value = normalMachines[0].code;
-        if (machNameDiv) machNameDiv.textContent = normalMachines[0].name;
-        await loadUnitsFromManufctParts(constructNo, normalMachines[0].code);
+    if (machines.length === 1) {
+        sel.value = machines[0].code;
+        if (machNameDiv) machNameDiv.textContent = machines[0].name;
+        await loadUnitsFromManufctParts(constructNo, machines[0].code);
     }
 }
 
