@@ -9016,13 +9016,15 @@ async function searchProcessingProgress() {
             return;
         }
 
-        // 外注データを一括取得（t_purchaseparts: construction_no + symbol_machine + symbol_unit でジョイン）
+        // t_purchaseparts を一括取得し consecutive_no + construction_no + machine + unit でマップ化
         let _osMap = {};
         try {
             if (data.length > 0) {
                 const constructNos = [...new Set(data.map(r => (ppVal(r, 'constructionno', 'constructno') || '').trim()).filter(Boolean))];
                 if (constructNos.length > 0) {
-                    const { data: osRows } = await supabase.from('t_purchaseparts').select('*').in('construction_no', constructNos).limit(3000);
+                    const { data: osRows } = await supabase.from('t_purchaseparts')
+                        .select('construction_no,symbol_machine,symbol_unit,consecutive_no,purchase_no,purchase_no_a,description,order_div,arrange_div,order_company_code,temp_company_name,order_date,delivery_date,update_nouki,nounyu_date,cancel_flg,each_price,qty')
+                        .in('construction_no', constructNos).limit(5000);
                     if (osRows && osRows.length > 0) {
                         // 会社名を一括取得
                         const companyCodes = [...new Set(osRows.map(o => o.order_company_code).filter(Boolean))];
@@ -9033,15 +9035,19 @@ async function searchProcessingProgress() {
                         }
                         osRows.forEach(o => {
                             o._companyName = companyMap[o.order_company_code] || o.temp_company_name || '';
-                            const k = (o.construction_no || '').trim() + '___' + (o.symbol_machine || '').trim() + '___' + (o.symbol_unit || '').trim();
+                            // キー：工事番号 + 機械 + ユニット + 通番（t_manufctparts.consecutiveno と対応）
+                            const k = (o.construction_no || '').trim() + '___'
+                                    + (o.symbol_machine || '').trim() + '___'
+                                    + (o.symbol_unit || '').trim() + '___'
+                                    + (o.consecutive_no || '').trim();
                             if (!_osMap[k]) _osMap[k] = [];
                             _osMap[k].push(o);
                         });
                     }
                 }
             }
-        } catch (e) { console.warn('[PP] 外注一括取得失敗:', e); }
-        // グローバルに保存（印刷プレビューで使用）
+        } catch (e) { console.warn('[PP] 発注データ一括取得失敗:', e); }
+        // グローバルに保存（印刷プレビュー・行選択で使用）
         window._ppOutsourceMap = _osMap;
         window._ppLastSearchData = data;
         window._ppLastConstructNo = constructNo;
@@ -9049,54 +9055,70 @@ async function searchProcessingProgress() {
         const countEl = document.getElementById('pp-result-count');
         if (countEl) countEl.textContent = `${data.length}件`;
 
+        const fmtDate = (v) => { const s = String(v || ''); if (s.length >= 10) return s.slice(0, 10).replace(/-/g, '/'); return s; };
+
         tbody.innerHTML = '';
         data.forEach((row, index) => {
             const tr = document.createElement('tr');
             tr.style.cursor = 'pointer';
             tr.onclick = () => selectPPRow(tr, row);
 
-            const hasKanryo = !!ppVal(row, 'kanryodate', 'completion_date', 'complete_date');
-            const statusText = ppVal(row, 'processstatus', 'status_text', 'jotai');
+            const hasKanryo = !!ppVal(row, 'kanryodate');
+            const processSt = (ppVal(row, 'processstatus') || '').trim();
+            const planCode  = (ppVal(row, 'plancode') || '').trim();
+            const isCanceled = !!(row.cancelflg || processSt.includes('取消'));
+
+            // 行背景色：DBのprocessstatusとplancodeを優先
             let bgColor = '';
-            if (statusText && (statusText.includes('取消') || statusText === '取消')) bgColor = '#e2e8f0';
-            else if (hasKanryo) bgColor = '#e0f2fe';
-            else if (statusText && (statusText.includes('加工中') || statusText === '加工中')) bgColor = '#cffafe';
-            else if (statusText && (statusText.includes('外注') && statusText.includes('未'))) bgColor = '#fef9c3';
-            else if (statusText && (statusText.includes('材料') && statusText.includes('未'))) bgColor = '#fee2e2';
-            else if (statusText && (statusText.includes('材料'))) bgColor = '#ffedd5';
+            if (isCanceled)                                bgColor = '#e2e8f0'; // 取消
+            else if (processSt === '加工完了' || hasKanryo) bgColor = '#e0f2fe'; // 加工完了
+            else if (processSt === '加工中')                bgColor = '#cffafe'; // 加工中
+            else if (processSt.includes('外注'))            bgColor = '#fef9c3'; // 外注関連
+            else if (processSt.includes('材料') && processSt.includes('未')) bgColor = '#fee2e2'; // 材料未納
+            else if (processSt.includes('材料'))            bgColor = '#ffedd5'; // 材料手配済
             tr.style.background = bgColor;
 
-            const fmtDate = (v) => { const s = String(v || ''); if (s.length >= 10) return s.slice(0, 10).replace(/-/g, '/'); return s; };
+            // 外注・購入発注の件数（consecutive_no でリンク）
+            const osKey = (ppVal(row, 'constructionno', 'constructno') || '').trim() + '___'
+                        + (ppVal(row, 'symbolmachine') || '').trim() + '___'
+                        + (ppVal(row, 'symbolunit') || '').trim() + '___'
+                        + (ppVal(row, 'consecutiveno') || '').trim();
+            const osItems = _osMap[osKey] || [];
+            const osUndelivered = osItems.filter(o => !o.nounyu_date).length;
+            const osDelivered   = osItems.filter(o =>  o.nounyu_date).length;
+            let osCell = '';
+            if (osItems.length > 0) {
+                if (osUndelivered > 0)
+                    osCell = `<span style="color:#d97706;font-weight:700;">${osUndelivered}件未</span>`;
+                else
+                    osCell = `<span style="color:#16a34a;font-weight:700;">${osDelivered}件納</span>`;
+            }
 
-            // 外注件数表示（construction_no + machine + unit キー）
-            const osKey = (ppVal(row, 'constructionno', 'constructno') || '').trim() + '___' + (ppVal(row, 'symbolmachine') || '').trim() + '___' + (ppVal(row, 'symbolunit') || '').trim();
-            const osCount = (_osMap[osKey] || []).length;
-            const osCountCell = osCount > 0
-                ? `<span style="color:#1d4ed8;font-weight:700;">${osCount}件</span>`
-                : ppVal(row, 'outsource_info');
+            // plancode 表示：社内加工は空、外注は plancode 値をそのまま
+            const planDisp = planCode || (processSt.includes('外注') ? '外注' : '社内');
 
             tr.innerHTML = `
                 <td style="text-align: center;"><input type="checkbox" value="${index}"></td>
-                <td>${ppVal(row, 'constructionno', 'constructno')}</td>
-                <td>${ppVal(row, 'symbolmachine')}</td>
-                <td>${ppVal(row, 'symbolunit')}</td>
-                <td>${ppVal(row, 'plan')}</td>
-                <td>${row.supplyflag || row.is_supplied ? '有' : ''}</td>
-                <td>${ppVal(row, 'drawingno')}</td>
-                <td style="text-align:center;">${ppVal(row, 'partno')}</td>
-                <td>${ppVal(row, 'description', 'partname')}</td>
-                <td>${ppVal(row, 'materialcode', 'material')}</td>
-                <td>${ppVal(row, 'qty', 'quantity')}</td>
-                <td>${ppVal(row, 'qtyunit', 'unit')}</td>
-                <td>${ppVal(row, 'weightmaterial')}</td>
-                <td>${ppVal(row, 'weightfinished')}</td>
-                <td>${fmtDate(ppVal(row, 'printdate', 'drawing_date'))}</td>
-                <td>${ppVal(row, 'material_info')}</td>
-                <td>${ppVal(row, 'internal_info')}</td>
-                <td>${osCountCell}</td>
-                <td>${ppVal(row, 'work_time')}</td>
-                <td>${fmtDate(ppVal(row, 'kanryodate', 'completion_date', 'complete_date'))}</td>
-                <td>${statusText || (hasKanryo ? '加工完了' : '')}</td>
+                <td>${(ppVal(row, 'constructionno', 'constructno') || '').trim()}</td>
+                <td>${(ppVal(row, 'symbolmachine') || '').trim()}</td>
+                <td>${(ppVal(row, 'symbolunit') || '').trim()}</td>
+                <td style="text-align:center;font-size:11px;">${planDisp}</td>
+                <td style="text-align:center;">${row.shikyuflg ? '有' : ''}</td>
+                <td>${(ppVal(row, 'drawingno') || '').trim()}</td>
+                <td style="text-align:center;">${(ppVal(row, 'partno') || '').trim()}</td>
+                <td>${ppVal(row, 'description')}</td>
+                <td>${ppVal(row, 'materialcode')}</td>
+                <td style="text-align:right;">${ppVal(row, 'qty')}</td>
+                <td>${ppVal(row, 'qtyunit')}</td>
+                <td style="text-align:right;">${ppVal(row, 'weightmaterial')}</td>
+                <td style="text-align:right;">${ppVal(row, 'weightfinished')}</td>
+                <td>${fmtDate(ppVal(row, 'printdate'))}</td>
+                <td></td>
+                <td></td>
+                <td>${osCell}</td>
+                <td></td>
+                <td>${fmtDate(ppVal(row, 'kanryodate'))}</td>
+                <td style="font-size:11px;">${processSt || (hasKanryo ? '加工完了' : '')}</td>
             `;
             tbody.appendChild(tr);
         });
