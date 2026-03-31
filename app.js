@@ -9174,7 +9174,7 @@ async function loadPPSubTables(drawingNo, partNo, constructNo, machine, unit, co
     const materialTbody = document.getElementById('pp-material-table-body');
     const outsourceTbody= document.getElementById('pp-outsource-table-body');
 
-    const loadingRow = (cols) => `<tr><td colspan="${cols}" style="text-align:center;padding:10px;"><i class="fas fa-spinner fa-spin"></i></td></tr>`;
+    const loadingRow = (cols) => `<tr><td colspan="${cols}" style="text-align:center;padding:14px;font-size:20px;">🐻‍❄️</td></tr>`;
     workTbody.innerHTML      = loadingRow(6);
     materialTbody.innerHTML  = loadingRow(8);
     outsourceTbody.innerHTML = loadingRow(9);
