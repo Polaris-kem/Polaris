@@ -12379,6 +12379,31 @@ textarea {
     background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important;
 }
 
+/* ── 出荷・その他 ページヘッダーバー ── */
+.order-reg-header-bar {
+    background: var(--polaris-header-bg) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: var(--polaris-header-shadow) !important;
+}
+.order-reg-page-title {
+    color: #fff !important;
+}
+.order-reg-page-title i {
+    color: rgba(255,255,255,0.85) !important;
+}
+.order-reg-header-bar .btn-secondary,
+.order-reg-header-bar .btn-primary {
+    background: rgba(255,255,255,0.18) !important;
+    border-color: rgba(255,255,255,0.35) !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+}
+.order-reg-header-bar .btn-secondary:hover,
+.order-reg-header-bar .btn-primary:hover {
+    background: rgba(255,255,255,0.30) !important;
+}
+
 /* ── 選択中ボタン（図面番号タイプ選択など） ── */
 .drawing-number-type-btn.selected,
 .tab-btn.active,
