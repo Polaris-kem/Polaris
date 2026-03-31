@@ -9701,19 +9701,19 @@ function renderDeliveryDetailTable() {
             const supplierName = r._supplierName ||
                 get(r, 'supplier', 'Supplier', 'suppliername', 'companyname', 'order_to');
             tr.innerHTML =
-                '<td>' + escapeHtml(get(r, 'orderno', 'order_no', 'OrderNo')) + '</td>' +
-                '<td>' + escapeHtml(get(r, 'batchorderno', 'batch_order_no', 'BatchOrderNo')) + '</td>' +
-                '<td>' + escapeHtml(get(r, 'constructionno', 'constructno', 'construct_no', 'ConstructNo')) + '</td>' +
-                '<td>' + escapeHtml(get(r, 'symbolmachine', 'machine', 'Machine')) + '</td>' +
-                '<td>' + escapeHtml(get(r, 'symbolunit', 'unit', 'Unit')) + '</td>' +
-                '<td>' + escapeHtml(get(r, 'consecutiveno', 'tsuuban', 'serial_no')) + '</td>' +
-                '<td>' + escapeHtml(get(r, 'partname', 'product_name', 'ProductName', 'itemname')) + '</td>' +
-                '<td>' + escapeHtml(get(r, 'dimension', 'spec', 'model', 'Dimension')) + '</td>' +
-                '<td>' + escapeHtml(get(r, 'quantity', 'qty', 'Quantity')) + '</td>' +
-                '<td>' + escapeHtml(get(r, 'unitname', 'unit_name', 'UnitName')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'purchase_no', 'orderno', 'order_no')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'purchase_no_a', 'batchorderno', 'batch_order_no')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'construction_no', 'constructno', 'construct_no')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'symbol_machine', 'symbolmachine', 'machine')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'symbol_unit', 'symbolunit', 'unit')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'consecutive_no', 'consecutiveno', 'tsuuban')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'description', 'partname', 'product_name', 'itemname')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'dimension_type', 'dimension', 'spec', 'model')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'qty', 'quantity', 'order_qty')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'qty_unit', 'unitname', 'unit_name')) + '</td>' +
                 '<td>' + escapeHtml(deliverydate) + '</td>' +
                 updCell +
-                '<td>' + escapeHtml(get(r, 'orderer', 'Orderer', 'staffcode')) + '</td>' +
+                '<td>' + escapeHtml(get(r, 'order_person', 'orderer', 'staffcode')) + '</td>' +
                 '<td>' + escapeHtml(supplierName) + '</td>' +
                 '<td>' + escapeHtml(get(r, 'comment', 'Comment', 'remarks', '備考')) + '</td>';
             tr.addEventListener('click', () => { tbody.querySelectorAll('tr').forEach(x => x.classList.remove('selected')); tr.classList.add('selected'); });
