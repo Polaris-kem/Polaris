@@ -479,6 +479,18 @@
         return '<tr id="bc-empty-row"><td colspan="8" style="text-align:center;padding:36px;color:#94a3b8;font-size:13px;"><i class="fas fa-barcode" style="font-size:36px;display:block;margin-bottom:10px;opacity:.25;"></i>バーコードをスキャンすると部品が追加されます</td></tr>';
     }
 
+    // ── 日付移動（作業票と同じ操作感） ───────────────────────────
+    window.bcChangeDate = function (delta) {
+        var el = document.getElementById('bc-date');
+        if (!el) return;
+        if (delta === 0) { el.value = todayStr(); return; }
+        var d = el.value ? new Date(el.value) : new Date();
+        d.setDate(d.getDate() + delta);
+        el.value = d.getFullYear() + '-'
+            + String(d.getMonth() + 1).padStart(2, '0') + '-'
+            + String(d.getDate()).padStart(2, '0');
+    };
+
     // ── HTML生成 ──────────────────────────────────────────────
     function _buildHTML(workers, worktypes) {
         var workerOpts = workers.map(function (w) {
@@ -493,94 +505,118 @@
             return '<option value="' + code + '">' + code + '　' + name + '</option>';
         }).join('');
 
-        return [
-            '<div style="padding:20px 24px;max-width:1280px;">',
+        var radioStyle = 'display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,0.95);border:2px solid transparent;font-size:11px;font-weight:600;box-shadow:0 2px 4px rgba(0,0,0,0.1);';
 
-            /* ヘッダー */
-            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">',
-            '  <div style="display:flex;align-items:center;gap:12px;">',
-            '    <button onclick="showPage(\'register\')" class="btn-secondary" style="padding:8px 14px;font-size:13px;"><i class="fas fa-arrow-left"></i> 戻る</button>',
-            '    <div>',
-            '      <h2 style="margin:0;font-size:20px;font-weight:700;color:#111827;display:flex;align-items:center;gap:8px;"><i class="fas fa-barcode" style="color:var(--primary);"></i> バーコードリーダー版　作業票登録</h2>',
-            '      <p style="margin:2px 0 0 32px;font-size:12px;color:#6b7280;">バーコードをスキャンして部品を追加し、時間を入力して一括登録します</p>',
+        return [
+            /* 外枠：作業票と同じグラデーション背景 */
+            '<div style="padding:12px;height:100%;overflow:hidden;background:linear-gradient(135deg,#f5f7fa 0%,#e8ecf1 100%);">',
+            '<div style="height:100%;display:flex;flex-direction:column;gap:8px;">',
+
+            /* ── ヘッダー（白カード） ─ 作業票と同じ構造 */
+            '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:white;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.05);flex-shrink:0;">',
+            '  <div style="display:flex;align-items:center;gap:16px;">',
+            '    <h2 style="background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:22px;font-weight:700;margin:0;">',
+            '      <i class="fas fa-barcode" style="-webkit-text-fill-color:initial;color:var(--primary);margin-right:8px;"></i>バーコードリーダー版　作業票登録',
+            '    </h2>',
+            '    <div style="display:flex;align-items:center;gap:8px;">',
+            '      <button type="button" class="btn-secondary" onclick="bcChangeDate(-1)" style="padding:6px 12px;font-size:12px;"><i class="fas fa-chevron-left"></i></button>',
+            '      <input type="date" id="bc-date" class="form-input" style="font-size:13px;padding:6px 10px;font-weight:600;min-width:140px;">',
+            '      <button type="button" class="btn-secondary" onclick="bcChangeDate(0)" style="padding:6px 12px;font-size:12px;">本日</button>',
+            '      <button type="button" class="btn-secondary" onclick="bcChangeDate(1)" style="padding:6px 12px;font-size:12px;"><i class="fas fa-chevron-right"></i></button>',
             '    </div>',
+            '  </div>',
+            '  <div style="display:flex;gap:8px;align-items:center;">',
+            '    <button type="button" class="btn-secondary" onclick="showPage(\'register\')" style="padding:8px 16px;font-size:13px;"><i class="fas fa-arrow-left"></i> 戻る</button>',
+            '    <button id="bc-save-btn" type="button" onclick="bcSave()" style="padding:8px 20px;font-size:14px;font-weight:700;background:linear-gradient(135deg,#4CAF50 0%,#388e3c 100%);color:white;border:none;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;"><i class="fas fa-save"></i> 登録</button>',
             '  </div>',
             '</div>',
 
             /* メッセージ */
-            '<div id="bc-msg" style="display:none;"></div>',
+            '<div id="bc-msg" style="display:none;flex-shrink:0;"></div>',
 
-            /* 基本情報 */
-            '<div style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;margin-bottom:14px;">',
-            '  <div style="font-size:12px;font-weight:700;color:#6b7280;letter-spacing:.06em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f3f4f6;text-transform:uppercase;">',
-            '    <i class="fas fa-user-clock" style="color:var(--primary);margin-right:5px;"></i> 基本情報（スキャン前に設定）',
-            '  </div>',
-            '  <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:16px;align-items:end;">',
-            '    <div>',
-            '      <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.06em;">作業日 <span style="color:#f43f5e;">*</span></label>',
-            '      <input type="date" id="bc-date" style="width:100%;padding:8px 10px;border:1.5px solid #d1d5db;border-radius:7px;font-size:14px;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor=\'var(--primary)\'" onblur="this.style.borderColor=\'#d1d5db\'">',
-            '    </div>',
-            '    <div>',
-            '      <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.06em;">作業者 <span style="color:#f43f5e;">*</span></label>',
-            '      <select id="bc-worker" style="width:100%;padding:8px 10px;border:1.5px solid #d1d5db;border-radius:7px;font-size:13px;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor=\'var(--primary)\'" onblur="this.style.borderColor=\'#d1d5db\'">',
-            '        <option value="">選択してください</option>',
+            /* ── 上段カード3列（作業票と同じグリッド構造） */
+            '<div style="display:grid;grid-template-columns:240px 1fr 1fr;gap:10px;flex-shrink:0;">',
+
+            /* 青カード：作業者情報 */
+            '  <div style="background:linear-gradient(135deg,#4A90E2 0%,#357ABD 100%);border-radius:12px;padding:14px;box-shadow:0 4px 12px rgba(74,144,226,0.3);position:relative;overflow:hidden;">',
+            '    <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>',
+            '    <div style="position:relative;z-index:1;">',
+            '      <h3 style="margin:0 0 12px 0;font-size:14px;font-weight:700;color:white;display:flex;align-items:center;gap:8px;text-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-user-circle" style="font-size:16px;"></i> 作業者情報</h3>',
+            '      <div style="display:flex;flex-direction:column;gap:10px;">',
+            '        <div>',
+            '          <label style="display:block;margin-bottom:6px;font-weight:600;color:white;font-size:11px;text-shadow:0 1px 2px rgba(0,0,0,0.2);">作業者 <span style="color:#FFD700;">*</span></label>',
+            '          <select id="bc-worker" style="width:100%;padding:8px 10px;border:none;border-radius:7px;font-size:13px;box-sizing:border-box;box-shadow:0 2px 6px rgba(0,0,0,0.15);">',
+            '            <option value="">選択してください</option>',
             workerOpts,
-            '      </select>',
-            '    </div>',
-            '    <div>',
-            '      <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;letter-spacing:.06em;">作業コード</label>',
-            '      <select id="bc-jobtype" style="width:100%;padding:8px 10px;border:1.5px solid #d1d5db;border-radius:7px;font-size:13px;box-sizing:border-box;outline:none;" onfocus="this.style.borderColor=\'var(--primary)\'" onblur="this.style.borderColor=\'#d1d5db\'">',
-            '        <option value="">（任意）</option>',
-            worktypeOpts,
-            '      </select>',
-            '    </div>',
-            '    <div>',
-            '      <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:5px;letter-spacing:.06em;">部門</label>',
-            '      <div style="display:flex;gap:12px;padding:9px 0;">',
-            '        <label style="font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;"><input type="radio" name="bc-dept" value="明石" style="margin-right:4px;"> 明石</label>',
-            '        <label style="font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;"><input type="radio" name="bc-dept" value="組立" style="margin-right:4px;"> 組立</label>',
-            '        <label style="font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;"><input type="radio" name="bc-dept" value="操業" style="margin-right:4px;"> 操業</label>',
+            '          </select>',
+            '        </div>',
+            '        <div>',
+            '          <label style="display:block;margin-bottom:5px;font-weight:600;color:white;font-size:11px;text-shadow:0 1px 2px rgba(0,0,0,0.2);">部門 <span style="color:#FFD700;">*</span></label>',
+            '          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">',
+            '            <label style="' + radioStyle + '"><input type="radio" name="bc-dept" value="明石" style="margin:0;accent-color:var(--primary);"> <span>明石</span></label>',
+            '            <label style="' + radioStyle + '"><input type="radio" name="bc-dept" value="組立" style="margin:0;accent-color:var(--primary);"> <span>組立</span></label>',
+            '            <label style="' + radioStyle + '"><input type="radio" name="bc-dept" value="操業" style="margin:0;accent-color:var(--primary);"> <span>操業</span></label>',
+            '            <label style="' + radioStyle + '"><input type="radio" name="bc-dept" value="電気技術" style="margin:0;accent-color:var(--primary);"> <span>電気技術</span></label>',
+            '          </div>',
+            '        </div>',
             '      </div>',
             '    </div>',
             '  </div>',
-            '</div>',
 
-            /* スキャン入力 */
-            '<div style="background:white;border:2px solid var(--primary);border-radius:10px;padding:16px 20px;margin-bottom:14px;">',
-            '  <div style="font-size:12px;font-weight:700;color:#6b7280;letter-spacing:.06em;margin-bottom:10px;text-transform:uppercase;">',
-            '    <i class="fas fa-barcode" style="color:var(--primary);margin-right:5px;"></i> バーコードスキャン',
+            /* 緑カード：作業コード */
+            '  <div style="background:linear-gradient(135deg,#6BCB77 0%,#4CAF50 100%);border-radius:12px;padding:14px;box-shadow:0 4px 12px rgba(107,203,119,0.3);position:relative;overflow:hidden;">',
+            '    <div style="position:absolute;top:-15px;right:-15px;width:60px;height:60px;background:rgba(255,255,255,0.15);border-radius:50%;"></div>',
+            '    <div style="position:relative;z-index:1;">',
+            '      <h3 style="margin:0 0 12px 0;font-size:14px;font-weight:700;color:white;display:flex;align-items:center;gap:6px;text-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-tools" style="font-size:14px;"></i> 作業コード</h3>',
+            '      <div>',
+            '        <label style="display:block;margin-bottom:6px;font-weight:600;color:white;font-size:11px;text-shadow:0 1px 2px rgba(0,0,0,0.2);">作業コード <span style="color:rgba(255,255,255,0.7);">（任意）</span></label>',
+            '        <select id="bc-jobtype" style="width:100%;padding:8px 10px;border:none;border-radius:7px;font-size:13px;box-sizing:border-box;box-shadow:0 2px 6px rgba(0,0,0,0.15);">',
+            '          <option value="">（任意）</option>',
+            worktypeOpts,
+            '        </select>',
+            '        <p style="margin:10px 0 0;font-size:11px;color:rgba(255,255,255,0.85);line-height:1.6;">全行に同じ作業コードが適用されます。</p>',
+            '      </div>',
+            '    </div>',
             '  </div>',
-            '  <div style="display:flex;gap:10px;align-items:center;">',
-            '    <input type="text" id="bc-scan-input"',
-            '      placeholder="バーコードリーダーでスキャン（またはキーボード入力してEnter）"',
-            '      style="flex:1;padding:13px 16px;border:2px solid #d1d5db;border-radius:8px;font-size:16px;font-family:monospace;letter-spacing:.05em;outline:none;transition:border .15s;"',
-            '      onfocus="this.style.borderColor=\'var(--primary)\'" onblur="this.style.borderColor=\'#d1d5db\'"',
-            '      onkeydown="if(event.key===\'Enter\'){event.preventDefault();processBarcodeInput();}">',
-            '    <button onclick="processBarcodeInput()" style="padding:13px 22px;background:var(--primary);color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;">',
-            '      <i class="fas fa-search"></i> 検索・追加',
-            '    </button>',
-            '    <button onclick="bcStartCamera()" title="スマホ・タブレットのカメラでスキャン" style="padding:13px 18px;background:#16a34a;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;">',
-            '      <i class="fas fa-camera"></i> カメラ',
-            '    </button>',
-            '  </div>',
-            '  <div style="margin-top:8px;font-size:12px;color:#9ca3af;"><i class="fas fa-mobile-alt" style="margin-right:4px;"></i>スマホ・タブレットの場合は「カメラ」ボタンでカメラを使ってスキャンできます</div>',
-            '  <div id="bc-status" style="margin-top:4px;font-size:13px;color:#64748b;min-height:18px;"></div>',
-            '</div>',
 
-            /* スキャン済みリスト */
-            '<div style="background:white;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-bottom:14px;">',
-            '  <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 16px;background:#f9fafb;border-bottom:1px solid #f3f4f6;">',
-            '    <span style="font-size:13px;font-weight:700;color:#374151;"><i class="fas fa-list" style="color:var(--primary);margin-right:6px;"></i> スキャン済み部品一覧</span>',
-            '    <button onclick="bcClearItems()" style="padding:5px 12px;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-trash-alt"></i> リストをクリア</button>',
+            /* オレンジカード：バーコードスキャン */
+            '  <div style="background:linear-gradient(135deg,#FF8C42 0%,#FF6B35 100%);border-radius:12px;padding:14px;box-shadow:0 4px 12px rgba(255,140,66,0.3);position:relative;overflow:hidden;">',
+            '    <div style="position:absolute;bottom:-20px;left:-20px;width:70px;height:70px;background:rgba(255,255,255,0.12);border-radius:50%;"></div>',
+            '    <div style="position:relative;z-index:1;">',
+            '      <h3 style="margin:0 0 10px 0;font-size:14px;font-weight:700;color:white;display:flex;align-items:center;gap:6px;text-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-barcode" style="font-size:14px;"></i> バーコードスキャン</h3>',
+            '      <div style="display:flex;flex-direction:column;gap:8px;">',
+            '        <input type="text" id="bc-scan-input"',
+            '          placeholder="スキャンまたはキーボード入力 → Enter"',
+            '          style="width:100%;padding:10px 12px;border:none;border-radius:7px;font-size:14px;font-family:monospace;box-sizing:border-box;box-shadow:0 2px 6px rgba(0,0,0,0.15);"',
+            '          onkeydown="if(event.key===\'Enter\'){event.preventDefault();processBarcodeInput();}">',
+            '        <div style="display:flex;gap:8px;">',
+            '          <button onclick="processBarcodeInput()" style="flex:1;padding:9px;background:rgba(255,255,255,0.92);color:#e85d04;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 4px rgba(0,0,0,0.1);"><i class="fas fa-search"></i> 検索・追加</button>',
+            '          <button onclick="bcStartCamera()" title="カメラでスキャン" style="padding:9px 14px;background:rgba(255,255,255,0.92);color:#16a34a;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 4px rgba(0,0,0,0.1);"><i class="fas fa-camera"></i> カメラ</button>',
+            '        </div>',
+            '        <div id="bc-status" style="font-size:12px;color:rgba(255,255,255,0.95);min-height:16px;"></div>',
+            '      </div>',
+            '    </div>',
             '  </div>',
-            '  <div style="overflow-x:auto;">',
+
+            '</div>', /* end 上段グリッド */
+
+            /* ── スキャン済みリスト（白カード・可変高さ） */
+            '<div style="background:white;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;flex:1;min-height:0;display:flex;flex-direction:column;">',
+            '  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:#f9fafb;border-bottom:1px solid #f3f4f6;flex-shrink:0;">',
+            '    <span style="font-size:13px;font-weight:700;color:#1e293b;"><i class="fas fa-list" style="color:var(--primary);margin-right:6px;"></i> スキャン済み部品一覧</span>',
+            '    <div style="display:flex;align-items:center;gap:14px;">',
+            '      <span style="font-size:13px;font-weight:600;color:#374151;">合計：<span id="bc-total-hours" style="font-size:20px;font-weight:900;font-family:monospace;color:#1d4ed8;">0.00h</span> <span style="font-size:11px;color:#9ca3af;">／ 定時7.75h</span></span>',
+            '      <button onclick="bcClearItems()" style="padding:5px 12px;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;"><i class="fas fa-trash-alt"></i> クリア</button>',
+            '    </div>',
+            '  </div>',
+            '  <div style="overflow:auto;flex:1;">',
             '    <table style="width:100%;border-collapse:collapse;font-size:13px;">',
-            '      <thead><tr style="background:#1f2937;color:white;">',
+            '      <thead><tr style="background:#1e293b;color:white;position:sticky;top:0;z-index:1;">',
             '        <th style="padding:9px 8px;width:36px;"></th>',
-            '        <th style="padding:9px 8px;text-align:left;min-width:64px;">工事番号</th>',
-            '        <th style="padding:9px 8px;text-align:left;min-width:100px;">図面番号</th>',
-            '        <th style="padding:9px 8px;text-align:center;width:36px;">品番</th>',
-            '        <th style="padding:9px 8px;text-align:left;min-width:130px;">品名</th>',
+            '        <th style="padding:9px 8px;text-align:left;min-width:70px;">工事番号</th>',
+            '        <th style="padding:9px 8px;text-align:left;min-width:110px;">図面番号</th>',
+            '        <th style="padding:9px 8px;text-align:center;width:50px;">品番</th>',
+            '        <th style="padding:9px 8px;text-align:left;min-width:140px;">品名</th>',
             '        <th style="padding:9px 8px;text-align:left;min-width:70px;">材質</th>',
             '        <th style="padding:9px 8px;text-align:center;width:90px;">時間(h)</th>',
             '        <th style="padding:9px 8px;text-align:left;min-width:80px;font-weight:400;color:#9ca3af;">スキャン値</th>',
@@ -590,18 +626,8 @@
             '  </div>',
             '</div>',
 
-            /* フッター */
-            '<div style="display:flex;justify-content:space-between;align-items:center;background:white;border:1px solid #e5e7eb;border-radius:10px;padding:14px 20px;">',
-            '  <div style="font-size:14px;font-weight:600;color:#374151;">',
-            '    合計時間：<span id="bc-total-hours" style="font-size:22px;font-weight:900;font-family:monospace;margin-left:6px;color:#1d4ed8;">0.00h</span>',
-            '    <span style="font-size:12px;color:#9ca3af;margin-left:10px;">定時 7.75h</span>',
-            '  </div>',
-            '  <button id="bc-save-btn" onclick="bcSave()" style="padding:12px 36px;background:linear-gradient(135deg,#16a34a,#15803d);color:white;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:700;display:inline-flex;align-items:center;gap:8px;">',
-            '    <i class="fas fa-save"></i> 登録',
-            '  </button>',
-            '</div>',
-
-            '</div>'
+            '</div>', /* inner flex col */
+            '</div>'  /* outer container */
         ].join('\n');
     }
 
