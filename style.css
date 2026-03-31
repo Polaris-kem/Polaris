@@ -1254,56 +1254,64 @@ html, body {
 }
 
 /* ホーム：クイックアクション（＋イラストを同列に） */
-.dashboard-quick-actions {
-    margin-bottom: 24px;
-    padding: 24px 28px;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-left: 4px solid var(--accent);
-    border-radius: 16px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-    animation: dashboardCardFade 0.5s ease-out 0.1s both;
+/* ウェルカムバナー */
+.dashboard-welcome {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 24px;
-    transition: box-shadow 0.35s ease, border-color 0.35s ease;
+    background: linear-gradient(135deg, #1e293b 0%, #2d4a6b 60%, #1e3a5f 100%);
+    border-radius: 20px;
+    padding: 22px 28px;
+    margin-bottom: 18px;
+    color: white;
+    animation: dashboardCardFade 0.4s ease-out both;
+    position: relative;
+    overflow: hidden;
 }
-.dashboard-quick-actions:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-    border-color: var(--border-medium);
+.dashboard-welcome::before {
+    content: '';
+    position: absolute;
+    top: -50px; right: -50px;
+    width: 180px; height: 180px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.dashboard-welcome-greeting {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0 0 5px 0;
+    color: white;
+    letter-spacing: -0.01em;
+}
+.dashboard-welcome-date {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    margin: 0;
+    font-weight: 500;
+}
+.dashboard-welcome-brand {
+    font-size: 22px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 0.05em;
+    user-select: none;
+    position: relative;
+    z-index: 1;
+}
+
+/* クイックアクション */
+.dashboard-quick-actions {
+    margin-bottom: 18px;
+    padding: 22px 24px;
+    background: var(--bg-primary);
+    border-radius: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    animation: dashboardCardFade 0.5s ease-out 0.1s both;
+    border: 1px solid var(--border-light);
 }
 .quick-actions-main {
-    flex: 1;
-    min-width: 0;
-}
-.dashboard-quick-actions .dashboard-visual-illus {
-    flex-shrink: 0;
-    width: 200px;
-    height: 88px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-}
-.dashboard-quick-actions .dashboard-svg-illus {
     width: 100%;
-    height: 100%;
-    object-fit: contain;
-    object-position: right center;
-}
-@media (max-width: 900px) {
-    .dashboard-quick-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .dashboard-quick-actions .dashboard-visual-illus {
-        width: 100%;
-        height: 72px;
-        justify-content: center;
-    }
-    .dashboard-quick-actions .dashboard-svg-illus {
-        object-position: center center;
-    }
 }
 @keyframes dashboardCardFade {
     from { opacity: 0; transform: translateY(12px); }
