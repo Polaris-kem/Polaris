@@ -1303,6 +1303,7 @@ html, body {
     left: 50%;
     transform: translateX(-50%);
     pointer-events: none;
+    z-index: 1;
 }
 .dashboard-welcome-brand {
     font-size: 16px;
