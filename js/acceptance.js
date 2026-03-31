@@ -213,7 +213,7 @@
     // ── HTML生成 ──────────────────────────────────────
     function buildHTML() {
         return [
-            '<div style="display:flex;align-items:center;gap:16px;padding:14px 20px;background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%);border-radius:10px;box-shadow:0 4px 14px rgba(37,99,235,0.22);margin-bottom:20px;">',
+            '<div style="display:flex;align-items:center;gap:16px;padding:14px 20px;background:#2563eb;border-radius:10px;box-shadow:0 4px 12px rgba(37,99,235,0.18);margin-bottom:20px;">',
             '  <button class="btn-secondary" onclick="showPage(\'search\')" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.35);color:#fff;"><i class="fas fa-arrow-left"></i> 戻る</button>',
             '  <h2 style="margin:0;color:#fff;font-weight:700;text-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-check-circle" style="margin-right:8px;opacity:0.85;"></i>検収処理</h2>',
             '</div>',
