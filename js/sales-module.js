@@ -55,11 +55,11 @@
         return `
 <style>
 /* ── 共通ヘッダーバー ── */
-.sm-header{background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 60%,#a78bfa 100%);border-radius:20px;padding:28px 32px;color:white;margin-bottom:22px;box-shadow:0 8px 32px rgba(99,102,241,0.35);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
-.sm-header-left{display:flex;align-items:center;gap:16px;}
-.sm-hicon{width:60px;height:60px;background:rgba(255,255,255,0.22);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 4px 14px rgba(0,0,0,0.18);}
-.sm-header h1{font-size:24px;font-weight:900;margin:0 0 5px;letter-spacing:-0.02em;}
-.sm-header p{font-size:13px;opacity:.85;margin:0;}
+.sm-header{background:linear-gradient(135deg,#1e293b 0%,#334155 100%);border-radius:14px;padding:16px 22px;color:white;margin-bottom:16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.sm-header-left{display:flex;align-items:center;gap:12px;}
+.sm-hicon{width:44px;height:44px;background:rgba(255,255,255,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+.sm-header h1{font-size:18px;font-weight:800;margin:0 0 3px;letter-spacing:-0.01em;}
+.sm-header p{font-size:12px;opacity:.75;margin:0;}
 /* K番号バッジ */
 .sm-knbadge{background:rgba(255,255,255,0.18);border:2.5px solid rgba(255,255,255,0.45);border-radius:14px;padding:12px 20px;text-align:center;min-width:140px;}
 .sm-knbadge .lbl{font-size:11px;opacity:.8;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px;}
