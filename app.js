@@ -827,6 +827,7 @@ function applyUserSettingsToDashboard() {
     if (qa) {
         qa.style.display = s.showQuickActions !== false ? '' : 'none';
         if (typeof renderQuickActions === 'function') renderQuickActions();
+        updateDashboardWelcome();
     }
 }
 
