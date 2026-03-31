@@ -10003,6 +10003,17 @@ async function saveWorkTicket() {
 window.updateWorkTicketValidation = updateWorkTicketValidation;
 window.saveWorkTicket = saveWorkTicket;
 
+// 登録ページ タブ切り替え
+function switchRegTab(btn) {
+    const group = btn.getAttribute('data-group');
+    document.querySelectorAll('.reg-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.reg-group').forEach(g => { g.style.display = 'none'; });
+    btn.classList.add('active');
+    const panel = document.querySelector(`.reg-group[data-group="${group}"]`);
+    if (panel) panel.style.display = 'block';
+}
+window.switchRegTab = switchRegTab;
+
 
 // カスタムフォームフィールドを生成
 function generateCustomFormFields(container, fields, data) {
