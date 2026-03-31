@@ -1528,7 +1528,7 @@ a.quick-action-btn:hover { color: white; }
 }
 #dashboard-page .dashboard-top-row {
     gap: 16px;
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 1fr 1fr;
 }
 #dashboard-page .dashboard-top-row .dashboard-card.calendar-card {
     max-width: none;
@@ -4897,7 +4897,7 @@ textarea {
 
 .work-ticket-main-content {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 24px;
     margin-bottom: 24px;
     min-width: 0;
@@ -6614,7 +6614,7 @@ textarea {
 
 .dashboard-top-row {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-bottom: 16px;
     margin-top: 10px;
@@ -9580,7 +9580,7 @@ textarea {
 
 .dashboard-top-row {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-bottom: 16px;
     margin-top: 10px;
