@@ -3184,5 +3184,38 @@
     <script src="js/acceptance.js"></script>
     <script src="js/sales-module.js"></script>
     <script src="js/barcode-module.js"></script>
+
+    <!-- ホッキョクグマ通知コンテナ -->
+    <div id="polaris-bear-toast-container" style="position:fixed;top:70px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:10px;pointer-events:none;"></div>
+
+    <script>
+    // ========== Polaris ホッキョクグマ通知システム ==========
+    const _bearEmoji = { success:'🐻‍❄️', error:'🐻', loading:'🐻‍❄️', info:'🐻‍❄️', warning:'🐻' };
+    const _bearMsg   = { success:'やったー！', error:'むむっ…', loading:'しょしょ…', info:'', warning:'気をつけて' };
+
+    window.polarToast = function(type, message, duration) {
+        const container = document.getElementById('polaris-bear-toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'polaris-bear-toast polaris-bear-toast--' + type;
+        const emoji = _bearEmoji[type] || '🐻‍❄️';
+        const sub   = _bearMsg[type]  || '';
+        toast.innerHTML =
+            '<span class="pbt-emoji">' + emoji + '</span>' +
+            '<div class="pbt-body"><div class="pbt-sub">' + sub + '</div>' +
+            '<div class="pbt-msg">' + message + '</div></div>' +
+            '<button class="pbt-close" onclick="this.parentElement.remove()">×</button>';
+        toast.style.pointerEvents = 'all';
+        container.appendChild(toast);
+        const ms = (duration !== undefined) ? duration : (type === 'loading' ? 0 : type === 'error' ? 5000 : 3000);
+        if (ms > 0) setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, ms);
+        return toast;
+    };
+
+    // fa-spinnerをホッキョクグマに置き換えるヘルパー（テーブルローディング用）
+    window.bearLoadingRow = function(cols, msg) {
+        return '<tr><td colspan="' + cols + '" style="text-align:center;padding:24px;font-size:22px;">🐻‍❄️ <span style="font-size:13px;color:#64748b;vertical-align:middle;">' + (msg||'読み込み中...') + '</span></td></tr>';
+    };
+    </script>
 </body>
 </html>
