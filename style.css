@@ -1528,10 +1528,10 @@ a.quick-action-btn:hover { color: white; }
 }
 #dashboard-page .dashboard-top-row {
     gap: 16px;
-    grid-template-columns: minmax(0, 400px) 1fr;
+    grid-template-columns: minmax(0, 500px) minmax(0, 340px);
 }
 #dashboard-page .dashboard-top-row .dashboard-card.calendar-card {
-    max-width: 400px;
+    max-width: 500px;
 }
 #dashboard-page .dashboard-top-row .dashboard-card {
     animation: dashboardCardFade 0.5s ease-out both;
