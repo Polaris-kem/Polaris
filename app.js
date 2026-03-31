@@ -7432,10 +7432,11 @@ async function findTableName(variations) {
     }
 
     // 全候補を並列チェック（順序付きで最初に成功したものを使う）
+    // ※ select('id') はidカラムが無いテーブルでエラーになるため、HEADリクエスト(count only)を使用
     const results = await Promise.all(
         variations.map(async (name) => {
             try {
-                const { error } = await supabase.from(name).select('id').limit(1);
+                const { error } = await supabase.from(name).select('*', { count: 'exact', head: true });
                 return error ? null : name;
             } catch (e) {
                 return null;
