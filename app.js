@@ -8986,7 +8986,7 @@ async function searchProcessingProgress() {
 
         if (error) {
             console.error('searchProcessingProgress API error:', error);
-            tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 20px; color: #dc2626;">データ取得エラー: ' + (error.message || String(error)) + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="22" style="text-align: center; padding: 20px; color: #dc2626;">データ取得エラー: ' + (error.message || String(error)) + '</td></tr>';
             const countEl = document.getElementById('pp-result-count');
             if (countEl) countEl.textContent = '—';
             return;
