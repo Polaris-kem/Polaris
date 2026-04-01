@@ -123,16 +123,14 @@
                     </div>
                 </div>
                 <!-- 掲示板（1行プレビュー） -->
-                <div class="dashboard-card bulletin-card" style="cursor: pointer; margin-bottom: 12px;" onclick="showPage('bulletin')" title="クリックして掲示板ページを開く">
+                <div class="dashboard-card bulletin-card" style="cursor: pointer;" onclick="showPage('bulletin')" title="クリックして掲示板ページを開く">
                     <div class="section-header" onclick="event.stopPropagation();">
-                        <h3>掲示板</h3>
+                        <h3><i class="fas fa-bullhorn"></i> 掲示板</h3>
                         <button class="btn-primary btn-small" id="add-bulletin-btn" onclick="event.stopPropagation(); openAddBulletinModal ? openAddBulletinModal() : null;">
                             <i class="fas fa-plus"></i> 追加
                         </button>
                     </div>
-                    <div class="bulletin-list" id="bulletin-list">
-                        <!-- 動的に生成されます -->
-                    </div>
+                    <div class="bulletin-list" id="bulletin-list"></div>
                 </div>
 
                 <!-- カレンダーとタスクリスト -->
