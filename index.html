@@ -1977,16 +1977,16 @@
                                 <label><input type="radio" name="pp-status" value="pending"> 未完</label>
                             </div>
                         </div>
-                        <div class="pp-cell">
+                        <div class="pp-cell pp-cell-keydate-btns">
                             <span class="pp-label">受注登録日</span>
-                            <select id="pp-filter-keydate" class="pp-input-eq">
-                                <option value="">― 工事番号を入力すると選択可 ―</option>
-                            </select>
+                            <div class="pp-keydate-btns-inline">
+                                <select id="pp-filter-keydate" class="pp-input-eq pp-keydate-select">
+                                    <option value="">― 工事番号を入力 ―</option>
+                                </select>
+                                <button type="button" class="btn-primary pp-btn-eq" id="pp-search-btn" onclick="searchProcessingProgress()"><i class="fas fa-search"></i> 検索</button>
+                                <button type="button" class="btn-secondary pp-btn-eq" onclick="clearPPSearch()"><i class="fas fa-eraser"></i> クリア</button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="pp-filter-btns-row">
-                        <button type="button" class="btn-primary pp-btn-eq" id="pp-search-btn" onclick="searchProcessingProgress()"><i class="fas fa-search"></i> 検索</button>
-                        <button type="button" class="btn-secondary pp-btn-eq" onclick="clearPPSearch()"><i class="fas fa-eraser"></i> クリア</button>
                     </div>
                     <div class="pp-legend">
                         <span class="pp-legend-title">進捗の色</span>
