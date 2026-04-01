@@ -3179,67 +3179,41 @@ function renderBulletinsFull() {
 }
 
 // 掲示板を表示
+// 掲示板を表示（ホーム：最新1件のみプレビュー）
 function renderBulletins() {
     const listEl = document.getElementById('bulletin-list');
     if (!listEl) return;
-    
+
     listEl.innerHTML = '';
-    
+
     if (bulletins.length === 0) {
-        listEl.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">掲示板がありません</div>';
+        listEl.innerHTML = '<div class="bulletin-preview-empty"><i class="fas fa-inbox"></i> 投稿がありません</div>';
         return;
     }
-    
-    // 作成時刻とIDでソート（新しい順、同じ時刻の場合はIDの大きい順）
+
+    // 新しい順にソート
     const sortedBulletins = [...bulletins].sort((a, b) => {
-        // まず作成時刻で比較
         const timeA = a.createdAt ? new Date(a.createdAt).getTime() : (a.id || 0);
         const timeB = b.createdAt ? new Date(b.createdAt).getTime() : (b.id || 0);
-        if (timeB !== timeA) {
-            return timeB - timeA; // 新しい順
-        }
-        // 作成時刻が同じ場合はIDで比較
+        if (timeB !== timeA) return timeB - timeA;
         return (b.id || 0) - (a.id || 0);
     });
-    
-    sortedBulletins.forEach((bulletin, index) => {
-        const itemEl = document.createElement('div');
-        itemEl.className = 'bulletin-item';
-        itemEl.onclick = () => showBulletinDetail(bulletin.id);
-        
-        const date = new Date(bulletin.date);
-        const dateStr = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
-        
-        let filesHtml = '';
-        if (bulletin.files && bulletin.files.length > 0) {
-            filesHtml = `<div class="bulletin-files">
-                ${bulletin.files.map((file, fileIndex) => {
-                    const fileIcon = getFileIcon(file.type || file.name);
-                    return `
-                    <a href="#" class="bulletin-file-link" onclick="event.stopPropagation(); viewBulletinFile(${bulletin.id}, ${fileIndex}); return false;" title="表示: ${escapeHtml(file.name)}">
-                        <i class="${fileIcon}"></i> ${escapeHtml(file.name)}
-                    </a>
-                `;
-                }).join('')}
-            </div>`;
-        }
-        
-        itemEl.innerHTML = `
-            <div class="bulletin-item-content">
-                <span class="bulletin-date">${dateStr}</span>
-                <span class="bulletin-dot">●</span>
-                <span class="bulletin-text">${escapeHtml(bulletin.text)}</span>
-            </div>
-            <div class="bulletin-item-right">
-                ${filesHtml}
-                <button class="bulletin-action-btn delete" onclick="event.stopPropagation(); deleteBulletin(${bulletin.id})" title="削除">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        `;
-        
-        listEl.appendChild(itemEl);
-    });
+
+    // 最新1件のみ表示
+    const latest = sortedBulletins[0];
+    const date = new Date(latest.date);
+    const dateStr = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+    const total = bulletins.length;
+    const moreText = total > 1 ? `<span class="bulletin-preview-more">他 ${total - 1} 件</span>` : '';
+
+    listEl.innerHTML = `
+        <div class="bulletin-preview-row">
+            <span class="bulletin-preview-date">${dateStr}</span>
+            <span class="bulletin-preview-text">${escapeHtml(latest.text)}</span>
+            ${moreText}
+            <i class="fas fa-chevron-right bulletin-preview-arrow"></i>
+        </div>
+    `;
 }
 
 // 掲示板モーダルを開く
