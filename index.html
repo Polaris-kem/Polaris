@@ -1895,14 +1895,34 @@
             <!-- 集計ページ -->
             <div id="aggregate-page" class="page">
                 <div class="page-title">
-                    <h2>集計</h2>
+                    <h2><i class="fas fa-chart-bar"></i> 集計</h2>
                 </div>
                 <div class="aggregate-buttons">
-                    <button class="aggregate-btn">工事番号による原価集計</button>
-                    <button class="aggregate-btn">図面番号による原価集計</button>
-                    <button class="aggregate-btn">機械から工事番号検索</button>
-                    <button class="aggregate-btn">工事番号で検索する 部品ごとの原価集計</button>
-                    <button class="aggregate-btn">業者別該当月 納期と納入件数</button>
+                    <button class="aggregate-btn" onclick="showPage('cost-summary')">
+                        <i class="fas fa-chart-pie"></i>
+                        <span class="agg-btn-title">工事番号による原価集計</span>
+                        <span class="agg-btn-desc">リアルタイム集計・ドリルダウン対応</span>
+                    </button>
+                    <button class="aggregate-btn" onclick="showPage('cost-summary')">
+                        <i class="fas fa-drafting-compass"></i>
+                        <span class="agg-btn-title">図面番号による原価集計</span>
+                        <span class="agg-btn-desc">図面単位で原価を確認</span>
+                    </button>
+                    <button class="aggregate-btn" onclick="showPage('machine-progress')">
+                        <i class="fas fa-cogs"></i>
+                        <span class="agg-btn-title">機械から工事番号検索</span>
+                        <span class="agg-btn-desc">機械別の加工進捗状況</span>
+                    </button>
+                    <button class="aggregate-btn" onclick="showPage('cost-summary')">
+                        <i class="fas fa-boxes"></i>
+                        <span class="agg-btn-title">工事番号で検索する 部品ごとの原価集計</span>
+                        <span class="agg-btn-desc">部品単位の詳細原価</span>
+                    </button>
+                    <button class="aggregate-btn">
+                        <i class="fas fa-building"></i>
+                        <span class="agg-btn-title">業者別該当月 納期と納入件数</span>
+                        <span class="agg-btn-desc">月次業者別集計</span>
+                    </button>
                 </div>
             </div>
 
