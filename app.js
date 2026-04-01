@@ -8899,22 +8899,24 @@ async function loadPPFilterOptions(constructNo, machine, unitOnly) {
             const keydateSelect = document.getElementById('pp-filter-keydate');
             if (keydateSelect) {
                 if (!constructNo) {
-                    keydateSelect.innerHTML = '<option value="">― 工事番号を入力すると選択可 ―</option>';
+                    keydateSelect.innerHTML = '<option value="">― 工事番号を入力 ―</option>';
                 } else {
                     const keydates = [...new Set(rows.map(r => (r.keydate || '').trim()).filter(Boolean))]
                         .sort((a, b) => b.localeCompare(a)); // 新しい順
                     const prevKd = keydateSelect.value;
-                    keydateSelect.innerHTML = '<option value="">すべて</option>';
+                    keydateSelect.innerHTML = '';
                     keydates.forEach(kd => {
                         const option = document.createElement('option');
                         option.value = kd;
-                        // YYYY-MM-DD → YYYY/MM/DD 表示
                         option.textContent = kd.replace(/-/g, '/');
                         keydateSelect.appendChild(option);
                     });
-                    if (prevKd && keydates.includes(prevKd)) keydateSelect.value = prevKd;
-                    // 1件しかない場合は自動選択
-                    if (keydates.length === 1) keydateSelect.value = keydates[0];
+                    // 以前の選択値があれば復元、なければ最新（先頭）を自動選択
+                    if (prevKd && keydates.includes(prevKd)) {
+                        keydateSelect.value = prevKd;
+                    } else if (keydates.length > 0) {
+                        keydateSelect.value = keydates[0]; // 最新を自動選択
+                    }
                 }
             }
         }
