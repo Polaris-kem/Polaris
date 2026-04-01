@@ -8831,10 +8831,10 @@ function selectWorkName(option, name, code, kakemochi, mujin) {
 async function initializeProcessingProgressPage() {
     console.log('initializeProcessingProgressPage 開始');
     try {
-        await loadPPFilterOptions('', '');
+        // 初期表示時は全件ロードしない（工事番号入力後に絞り込み）
         // Enterキーで検索
         const runSearch = () => searchProcessingProgress();
-        ['pp-filter-construct-no', 'pp-filter-drawing-no', 'pp-filter-part-no', 'pp-filter-order-start', 'pp-filter-order-end'].forEach(id => {
+        ['pp-filter-construct-no', 'pp-filter-drawing-no', 'pp-filter-part-no', 'pp-filter-keydate'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); runSearch(); } });
         });
