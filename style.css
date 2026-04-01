@@ -12488,3 +12488,189 @@ textarea {
     font-size: 11px !important;
     padding: 4px 12px !important;
 }
+
+/* ════════════════════════════════════════════════
+   Polaris デザイン統一 オーバーライド
+   ════════════════════════════════════════════════ */
+
+/* ── page-title 全ページ共通ヘッダーバー ── */
+.page-title {
+    background: #2563eb !important;
+    padding: 12px 20px !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+    border-bottom: none !important;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.18) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-shrink: 0 !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+.page-title h2,
+.page-title h2 i,
+.page-title h3 {
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+    background: none !important;
+    border-bottom: none !important;
+    font-size: 18px !important;
+    margin: 0 !important;
+    padding-bottom: 0 !important;
+}
+.page-title .btn-secondary,
+.page-title .btn-primary:not(.btn-small),
+.page-title button:not(.btn-primary.btn-small) {
+    background: rgba(255,255,255,0.18) !important;
+    border-color: rgba(255,255,255,0.35) !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+}
+/* 登録ページの page-title は別スタイル（シンプルタイトルのため） */
+#register-page .page-title {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 16px 0 0 !important;
+    border-bottom: 2px solid #2563eb !important;
+}
+#register-page .page-title h2 {
+    color: #1e293b !important;
+    -webkit-text-fill-color: #1e293b !important;
+    font-size: 24px !important;
+    font-weight: 800 !important;
+}
+
+/* ── 検索ページのpage-title内の説明文 ── */
+.page-title p {
+    color: rgba(255,255,255,0.85) !important;
+    margin: 0 !important;
+    font-size: 13px !important;
+}
+
+/* ── 納入予定カレンダーヘッダー ── */
+.delivery-cal-header {
+    background: #2563eb !important;
+    border-bottom: none !important;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.18) !important;
+}
+.delivery-cal-title,
+.delivery-cal-header * {
+    color: #fff !important;
+}
+.delivery-cal-back {
+    background: rgba(255,255,255,0.18) !important;
+    border-color: rgba(255,255,255,0.35) !important;
+    color: #fff !important;
+}
+
+/* ── 受注データページ ヘッダー ── */
+#accept-order-list-page .page-title h2 {
+    font-size: 18px !important;
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+}
+#accept-order-list-page .page-title h2 i {
+    color: rgba(255,255,255,0.85) !important;
+}
+
+/* ── 掲示板カード Polaris Blue スタイル ── */
+#dashboard-page .dashboard-card.bulletin-card {
+    background: #fff !important;
+    border: 1px solid #dbeafe !important;
+    border-left: 4px solid #2563eb !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    max-height: none !important;
+    transition: box-shadow 0.2s, transform 0.2s !important;
+}
+#dashboard-page .dashboard-card.bulletin-card:hover {
+    box-shadow: 0 4px 16px rgba(37,99,235,0.15) !important;
+    transform: translateY(-1px) !important;
+}
+#dashboard-page .bulletin-card .section-header {
+    background: #eff6ff !important;
+    border-bottom: 1px solid #dbeafe !important;
+    padding: 9px 14px !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+}
+#dashboard-page .bulletin-card .section-header h3 {
+    color: #1d4ed8 !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+}
+#dashboard-page .bulletin-card .section-header h3::before {
+    content: '📢 ';
+}
+#dashboard-page .bulletin-card .btn-primary.btn-small {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    border-radius: 20px !important;
+    font-size: 11px !important;
+    padding: 4px 12px !important;
+}
+.bulletin-list {
+    padding: 0 !important;
+}
+.bulletin-preview-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    overflow: hidden;
+}
+.bulletin-preview-date {
+    font-size: 11px;
+    font-weight: 600;
+    color: #2563eb;
+    background: #eff6ff;
+    border-radius: 4px;
+    padding: 2px 7px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.bulletin-preview-text {
+    font-size: 13px;
+    color: #1e293b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+.bulletin-preview-more {
+    font-size: 11px;
+    color: #64748b;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.bulletin-preview-arrow {
+    color: #93c5fd;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+.bulletin-preview-empty {
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #94a3b8;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* ── 全ページのカード統一 ── */
+.dashboard-card {
+    border-radius: 12px !important;
+}
+
+/* ── ヘッダーバーのボタン共通（白系） ── */
+.mp-header .mp-back,
+.cs-header .cs-back {
+    background: rgba(255,255,255,0.18) !important;
+    border-color: rgba(255,255,255,0.35) !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+}
