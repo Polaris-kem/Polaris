@@ -12674,3 +12674,39 @@ textarea {
     color: #fff !important;
     border-radius: 8px !important;
 }
+
+/* ── 原価集計テーブル：常に表示されるよう最小高さ確保 ── */
+.cs-table-wrap {
+    min-height: 300px !important;
+    overflow: auto !important;
+}
+.cs-card {
+    overflow: visible !important;
+    min-height: 0 !important;
+}
+/* ツールバーをコンパクトに（タブの文字サイズ縮小） */
+.cs-toolbar {
+    padding: 12px 16px 0 !important;
+    gap: 8px !important;
+}
+.cs-search {
+    padding: 10px 12px !important;
+}
+.cs-tabs {
+    gap: 4px !important;
+    flex-wrap: wrap;
+}
+.cs-tab {
+    padding: 7px 10px !important;
+    font-size: 12px !important;
+}
+.cs-card-header {
+    padding: 10px 14px !important;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.cs-card-sub {
+    white-space: normal !important;
+    font-size: 11px !important;
+    max-width: 100% !important;
+}
