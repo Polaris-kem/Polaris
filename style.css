@@ -13093,9 +13093,35 @@ textarea {
     line-height: 32px !important;
     padding: 0 12px !important;
 }
-.pp-filter-btns-row {
-    margin-top: 8px !important;
-    padding-top: 8px !important;
+/* pp-filter-btns-row は不要になったため非表示 */
+.pp-filter-btns-row { display: none !important; }
+
+/* 受注登録日 + 検索/クリアボタン 横並び */
+.pp-cell-keydate-btns {
+    flex: 1 1 auto !important;
+    min-width: 280px !important;
+}
+.pp-keydate-btns-inline {
+    display: flex !important;
+    gap: 6px !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+}
+.pp-keydate-select {
+    flex: 1 1 auto !important;
+    min-width: 120px !important;
+}
+
+/* テーブルセル：折り返し禁止 */
+.pp-main-table tbody td {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    max-width: 200px !important;
+    text-overflow: ellipsis !important;
+}
+/* 名称列は少し広めに */
+.pp-main-table tbody td:nth-child(9) {
+    max-width: 160px !important;
 }
 
 /* 集計ページ：ボタン内テキスト折り返し対応 */
