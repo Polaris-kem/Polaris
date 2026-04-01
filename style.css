@@ -12770,11 +12770,13 @@ textarea {
     width: auto !important;
 }
 .dashboard-welcome-brand {
-    font-size: 15px !important;
+    font-size: 13px !important;
     font-weight: 800 !important;
-    color: rgba(255,255,255,0.5) !important;
-    letter-spacing: 0.1em !important;
+    color: rgba(255,255,255,0.45) !important;
+    letter-spacing: 0.05em !important;
     flex-shrink: 0;
+    white-space: nowrap;
+    padding-left: 8px;
 }
 /* 旧 top ラッパーは非表示（新構造に置き換え済み） */
 .dashboard-welcome-top { display: none !important; }
