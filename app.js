@@ -8904,7 +8904,7 @@ async function loadPPFilterOptions(constructNo, machine, unitOnly) {
                     const keydates = [...new Set(rows.map(r => (r.keydate || '').trim()).filter(Boolean))]
                         .sort((a, b) => b.localeCompare(a)); // 新しい順
                     const prevKd = keydateSelect.value;
-                    keydateSelect.innerHTML = '<option value="">すべて（全巡）</option>';
+                    keydateSelect.innerHTML = '<option value="">すべて</option>';
                     keydates.forEach(kd => {
                         const option = document.createElement('option');
                         option.value = kd;
