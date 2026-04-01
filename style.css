@@ -12553,16 +12553,47 @@ textarea {
     background: #2563eb !important;
     border-bottom: none !important;
     box-shadow: 0 4px 12px rgba(37,99,235,0.18) !important;
+    border-radius: 12px !important;
+    flex-wrap: wrap !important;
+    gap: 8px 16px !important;
 }
-.delivery-cal-title,
-.delivery-cal-header * {
-    color: #fff !important;
-}
+/* タイトルと戻るボタンは白 */
+.delivery-cal-title { color: #fff !important; }
 .delivery-cal-back {
     background: rgba(255,255,255,0.18) !important;
     border-color: rgba(255,255,255,0.35) !important;
     color: #fff !important;
 }
+/* 月ナビは白背景・濃いテキスト（見やすくする） */
+.delivery-cal-nav {
+    background: rgba(255,255,255,0.95) !important;
+    border-color: rgba(255,255,255,0.5) !important;
+}
+.delivery-cal-month {
+    color: #1e293b !important;
+    font-weight: 700 !important;
+}
+.delivery-cal-arrow {
+    color: #1e293b !important;
+}
+.delivery-cal-arrow:hover {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+/* タブは白系 */
+.delivery-cal-tab {
+    color: rgba(255,255,255,0.8) !important;
+    border-color: rgba(255,255,255,0.35) !important;
+    background: rgba(255,255,255,0.15) !important;
+}
+.delivery-cal-tab.active {
+    background: #fff !important;
+    color: #2563eb !important;
+    border-color: #fff !important;
+}
+/* チェックボックス・単位テキスト */
+.delivery-cal-check { color: #fff !important; }
+.delivery-cal-unit { color: rgba(255,255,255,0.8) !important; }
 
 /* ── 受注データページ ヘッダー ── */
 #accept-order-list-page .page-title h2 {
