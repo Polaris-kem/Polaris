@@ -12710,3 +12710,272 @@ textarea {
     font-size: 11px !important;
     max-width: 100% !important;
 }
+
+/* ════════════════════════════════════════════
+   Polaris デザイン統一 総合オーバーライド
+   ════════════════════════════════════════════ */
+
+/* ── ホーム ウェルカムバナー（コンパクト・1行レイアウト） ── */
+.dashboard-welcome {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0 !important;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%) !important;
+    border-radius: 14px !important;
+    padding: 10px 18px !important;
+    margin-bottom: 12px !important;
+    border: none !important;
+    box-shadow: 0 4px 16px rgba(37,99,235,0.25) !important;
+}
+.dashboard-welcome-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 12px;
+}
+.dashboard-welcome-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex: 1;
+    min-width: 0;
+}
+.dashboard-welcome-bear {
+    font-size: 26px !important;
+    flex-shrink: 0;
+}
+.dashboard-welcome-texts {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    min-width: 0;
+}
+.dashboard-welcome-greeting {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: rgba(255,255,255,0.7) !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+}
+.dashboard-welcome-date {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    color: #fff !important;
+    margin: 0 !important;
+    letter-spacing: -0.3px !important;
+    white-space: nowrap !important;
+    text-align: left !important;
+    width: auto !important;
+}
+.dashboard-welcome-brand {
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    color: rgba(255,255,255,0.5) !important;
+    letter-spacing: 0.1em !important;
+    flex-shrink: 0;
+}
+/* 旧 top ラッパーは非表示（新構造に置き換え済み） */
+.dashboard-welcome-top { display: none !important; }
+
+/* ── 掲示板：コンパクト（1行のみ） ── */
+#dashboard-page .dashboard-card.bulletin-card {
+    background: #fff !important;
+    border: 1px solid #dbeafe !important;
+    border-left: 4px solid #2563eb !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin-bottom: 12px !important;
+    cursor: pointer;
+}
+#dashboard-page .bulletin-card .section-header {
+    background: #eff6ff !important;
+    border-bottom: 1px solid #dbeafe !important;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 8px 14px !important;
+    min-height: 0 !important;
+}
+#dashboard-page .bulletin-card .section-header h3 {
+    color: #1d4ed8 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+}
+#dashboard-page .bulletin-card .section-header h3 i {
+    color: #2563eb !important;
+    font-size: 13px !important;
+}
+/* 旧の ::before 絵文字は無効化 */
+#dashboard-page .bulletin-card .section-header h3::before { content: '' !important; }
+
+/* ── カレンダージャンプボタン：見やすく ── */
+.calendar-jump-btn {
+    padding: 5px 9px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    height: 30px !important;
+    gap: 4px !important;
+    border: 1.5px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    color: #334155 !important;
+    border-radius: 7px !important;
+}
+.calendar-jump-btn i { font-size: 11px !important; }
+.calendar-jump-btn span { font-size: 11px !important; font-weight: 700 !important; }
+.calendar-jump-btn.cal-past { border-color: #bfdbfe !important; background: #eff6ff !important; color: #1d4ed8 !important; }
+.calendar-jump-btn.cal-future { border-color: #bbf7d0 !important; background: #f0fdf4 !important; color: #15803d !important; }
+.calendar-jump-btn:hover { opacity: 0.85 !important; transform: translateY(-1px) !important; }
+.calendar-today-btn {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    height: 30px !important;
+    padding: 5px 12px !important;
+}
+
+/* ── 加工進捗ページ：色をPolaris青系に統一 ── */
+/* ヘッダー */
+.pp-header {
+    background: var(--polaris-header-bg) !important;
+    box-shadow: var(--polaris-header-shadow) !important;
+}
+/* 加工作業カード → 青 */
+.pp-detail-section > .pp-sub-card {
+    border: 1px solid #dbeafe !important;
+    border-top: 3px solid #2563eb !important;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.08) !important;
+}
+.pp-detail-section > .pp-sub-card .pp-sub-title {
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+}
+.pp-detail-section > .pp-sub-card .pp-sub-table thead th {
+    background: var(--polaris-table-head-bg) !important;
+}
+/* 材料手配カード → シアン青 */
+.pp-sub-right > .pp-sub-card:first-child {
+    border: 1px solid #cffafe !important;
+    border-top: 3px solid #0891b2 !important;
+    box-shadow: 0 2px 8px rgba(8,145,178,0.08) !important;
+}
+.pp-sub-right > .pp-sub-card:first-child .pp-sub-title {
+    background: linear-gradient(135deg, #164e63 0%, #0891b2 100%) !important;
+}
+.pp-sub-right > .pp-sub-card:first-child .pp-sub-table thead th {
+    background: linear-gradient(135deg, #155e75, #0e7490) !important;
+}
+/* 外注加工カード → インディゴ */
+.pp-sub-right > .pp-sub-card:last-child {
+    border: 1px solid #e0e7ff !important;
+    border-top: 3px solid #4f46e5 !important;
+    box-shadow: 0 2px 8px rgba(79,70,229,0.08) !important;
+}
+.pp-sub-right > .pp-sub-card:last-child .pp-sub-title {
+    background: linear-gradient(135deg, #312e81 0%, #4f46e5 100%) !important;
+}
+.pp-sub-right > .pp-sub-card:last-child .pp-sub-table thead th {
+    background: linear-gradient(135deg, #3730a3, #4338ca) !important;
+}
+/* 検索ボタン行 */
+.pp-filter-btns-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+}
+.pp-filter-btns-row .pp-btn-eq {
+    min-width: 100px;
+}
+/* フィルターカードのラベル */
+.pp-label {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+}
+
+/* ── 登録・編集ページ：ヘッダー余白修正 ── */
+#register-page .page-title {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 14px 4px 10px !important;
+    border-bottom: 2px solid #2563eb !important;
+    margin-bottom: 18px !important;
+}
+#register-page .page-title h2 {
+    color: #1e293b !important;
+    -webkit-text-fill-color: #1e293b !important;
+    font-size: 22px !important;
+    font-weight: 800 !important;
+}
+.reg-tab-nav {
+    gap: 6px !important;
+    margin-bottom: 16px !important;
+    flex-wrap: wrap !important;
+}
+.reg-tab {
+    font-size: 12px !important;
+    padding: 8px 14px !important;
+    border-radius: 8px !important;
+    gap: 5px !important;
+}
+
+/* ── 集計ページ：ボタンをカード化 ── */
+.aggregate-buttons {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 16px 4px !important;
+}
+.aggregate-btn {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 14px 20px !important;
+    background: #fff !important;
+    border: 1px solid #dbeafe !important;
+    border-left: 4px solid #2563eb !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    transition: all 0.18s ease !important;
+    box-shadow: 0 1px 4px rgba(37,99,235,0.07) !important;
+    font-size: 14px !important;
+    color: #1e293b !important;
+    font-weight: 700 !important;
+    width: 100% !important;
+}
+.aggregate-btn:hover {
+    background: #eff6ff !important;
+    border-left-color: #1d4ed8 !important;
+    box-shadow: 0 3px 10px rgba(37,99,235,0.14) !important;
+    transform: translateX(3px) !important;
+}
+.aggregate-btn > i {
+    font-size: 18px !important;
+    color: #2563eb !important;
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+}
+.agg-btn-title {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    flex: 1;
+}
+.agg-btn-desc {
+    font-size: 11px !important;
+    font-weight: 400 !important;
+    color: #64748b !important;
+    margin-left: auto;
+    white-space: nowrap;
+}
