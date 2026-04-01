@@ -16852,11 +16852,25 @@ function _csAggregate(rawData, level, filters) {
             };
         }
         const cost = Number(r.each_price || 0) * Number(r.qty || 1);
-        const div  = String(r.order_div || '').toUpperCase().trim();
-        if      (div === 'P' || div === 'A') groups[key].purchased += cost;
-        else if (div === 'C')                groups[key].outsource += cost;
-        else if (div === 'R')                groups[key].material  += cost;
-        else                                 groups[key].misc      += cost;
+        // order_div は日本語テキスト（一括発注/個別発注）またはレガシー英字(P/C/R/A)
+        // betsu_seisaku_flg=true の場合は外注扱い
+        if (r.betsu_seisaku_flg) {
+            groups[key].outsource += cost;
+        } else {
+            const div = String(r.order_div || '').trim();
+            const arr = String(r.arrange_div || '').trim();
+            if (div === '一括発注' || div === '個別発注' || div === 'P' || div === 'A') {
+                groups[key].purchased += cost;
+            } else if (div === '外注' || div === 'C') {
+                groups[key].outsource += cost;
+            } else if (div === '材料' || div === 'R') {
+                groups[key].material  += cost;
+            } else if (arr === '在庫使用') {
+                groups[key].material  += cost;  // 在庫品は材料費扱い
+            } else if (cost > 0) {
+                groups[key].purchased += cost;  // その他の購買部品は購入扱い
+            }
+        }
     });
 
     // 工数合算（工事番号レベルのみ）
