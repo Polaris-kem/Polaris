@@ -11,7 +11,7 @@ function getTaskStorageKey() {
 
 // タスクの読み込み（ローカルストレージから）
 function loadTasks() {
-    const stored = localStorage.getItem('tasks');
+    const stored = localStorage.getItem(getTaskStorageKey());
     if (stored) {
         try {
             tasks = JSON.parse(stored);
