@@ -9312,11 +9312,9 @@ function clearPPSearch() {
     document.getElementById('pp-filter-unit').value = '';
     document.getElementById('pp-filter-drawing-no').value = '';
     const partNoEl = document.getElementById('pp-filter-part-no');
-    const orderStartEl = document.getElementById('pp-filter-order-start');
-    const orderEndEl = document.getElementById('pp-filter-order-end');
+    const keydateEl = document.getElementById('pp-filter-keydate');
     if (partNoEl) partNoEl.value = '';
-    if (orderStartEl) orderStartEl.value = '';
-    if (orderEndEl) orderEndEl.value = '';
+    if (keydateEl) keydateEl.value = '';
     document.querySelector('input[name="pp-status"][value="all"]').checked = true;
     const countEl = document.getElementById('pp-result-count');
     if (countEl) countEl.textContent = '—';
