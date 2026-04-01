@@ -12856,47 +12856,47 @@ textarea {
     padding: 5px 12px !important;
 }
 
-/* ── 加工進捗ページ：色をPolaris青系に統一 ── */
+/* ── 加工進捗ページ：サブカードを紫・緑・オレンジで識別しやすく ── */
 /* ヘッダー */
 .pp-header {
     background: var(--polaris-header-bg) !important;
     box-shadow: var(--polaris-header-shadow) !important;
 }
-/* 加工作業カード → 青 */
+/* 加工作業カード → 紫 */
 .pp-detail-section > .pp-sub-card {
-    border: 1px solid #dbeafe !important;
-    border-top: 3px solid #2563eb !important;
-    box-shadow: 0 2px 8px rgba(37,99,235,0.08) !important;
+    border: 1px solid #ede9fe !important;
+    border-top: 3px solid #7c3aed !important;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.08) !important;
 }
 .pp-detail-section > .pp-sub-card .pp-sub-title {
-    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+    background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%) !important;
 }
 .pp-detail-section > .pp-sub-card .pp-sub-table thead th {
-    background: var(--polaris-table-head-bg) !important;
+    background: linear-gradient(135deg, #6d28d9, #8b5cf6) !important;
 }
-/* 材料手配カード → シアン青 */
+/* 材料手配カード → 緑 */
 .pp-sub-right > .pp-sub-card:first-child {
-    border: 1px solid #cffafe !important;
-    border-top: 3px solid #0891b2 !important;
-    box-shadow: 0 2px 8px rgba(8,145,178,0.08) !important;
+    border: 1px solid #d1fae5 !important;
+    border-top: 3px solid #059669 !important;
+    box-shadow: 0 2px 8px rgba(5,150,105,0.08) !important;
 }
 .pp-sub-right > .pp-sub-card:first-child .pp-sub-title {
-    background: linear-gradient(135deg, #164e63 0%, #0891b2 100%) !important;
+    background: linear-gradient(135deg, #065f46 0%, #059669 100%) !important;
 }
 .pp-sub-right > .pp-sub-card:first-child .pp-sub-table thead th {
-    background: linear-gradient(135deg, #155e75, #0e7490) !important;
+    background: linear-gradient(135deg, #047857, #10b981) !important;
 }
-/* 外注加工カード → インディゴ */
+/* 外注加工カード → オレンジ */
 .pp-sub-right > .pp-sub-card:last-child {
-    border: 1px solid #e0e7ff !important;
-    border-top: 3px solid #4f46e5 !important;
-    box-shadow: 0 2px 8px rgba(79,70,229,0.08) !important;
+    border: 1px solid #fed7aa !important;
+    border-top: 3px solid #ea580c !important;
+    box-shadow: 0 2px 8px rgba(234,88,12,0.08) !important;
 }
 .pp-sub-right > .pp-sub-card:last-child .pp-sub-title {
-    background: linear-gradient(135deg, #312e81 0%, #4f46e5 100%) !important;
+    background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%) !important;
 }
 .pp-sub-right > .pp-sub-card:last-child .pp-sub-table thead th {
-    background: linear-gradient(135deg, #3730a3, #4338ca) !important;
+    background: linear-gradient(135deg, #b45309, #f97316) !important;
 }
 /* 検索ボタン行 */
 .pp-filter-btns-row {
