@@ -32,7 +32,7 @@ function loadTasks() {
 
 // タスクの保存（ローカルストレージへ）
 function saveTasks() {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
+    localStorage.setItem(getTaskStorageKey(), JSON.stringify(tasks));
     // window.tasksを更新（右サイドバーの期限タスク表示用）
     if (typeof window !== 'undefined') {
         window.tasks = tasks;
@@ -398,7 +398,7 @@ function saveTask() {
     
     // 保存
     try {
-        localStorage.setItem('tasks', JSON.stringify(tasks));
+        localStorage.setItem(getTaskStorageKey(), JSON.stringify(tasks));
     } catch (error) {
         alert('保存に失敗しました: ' + error.message);
         return;
