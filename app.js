@@ -9342,9 +9342,8 @@ function clearPPSearch() {
     const partNoEl = document.getElementById('pp-filter-part-no');
     const keydateEl = document.getElementById('pp-filter-keydate');
     if (partNoEl) partNoEl.value = '';
-    // keydate は工事番号クリア後にプレースホルダーに戻す
     if (keydateEl) {
-        keydateEl.innerHTML = '<option value="">― 工事番号を入力すると選択可 ―</option>';
+        keydateEl.innerHTML = '<option value="">― 工事番号を入力 ―</option>';
     }
     document.querySelector('input[name="pp-status"][value="all"]').checked = true;
     const countEl = document.getElementById('pp-result-count');
