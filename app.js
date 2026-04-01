@@ -16835,6 +16835,30 @@ function _csAggregate(rawData, level, filters) {
     };
 
     const groups = {};
+
+    // 工事番号レベルの場合、受注情報だけのレコードも先に追加（部品0件でも表示）
+    if (level === 'construct') {
+        const cnFilter = filters && filters.constructno;
+        acceptOrders.forEach(ao => {
+            if (!ao.constructno) return;
+            if (cnFilter && ao.constructno !== cnFilter) return;
+            const key = ao.constructno;
+            if (!groups[key]) {
+                groups[key] = {
+                    constructno:       ao.constructno,
+                    machine:           '',
+                    unit:              '',
+                    drawingno:         '',
+                    name:              '',
+                    _constructionname: (ao.constructname || '').trim(),
+                    _customername:     ao.ownercode || '',
+                    sales:   Number(ao.orderprice || ao.urikake || 0),
+                    purchased: 0, outsource: 0, material: 0, misc: 0, internal: 0
+                };
+            }
+        });
+    }
+
     parts.forEach(r => {
         const key = makeKey(r);
         if (!groups[key]) {
