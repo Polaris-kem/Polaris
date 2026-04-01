@@ -8945,8 +8945,7 @@ async function searchProcessingProgress() {
         const unit = document.getElementById('pp-filter-unit').value;
         const drawingNo = document.getElementById('pp-filter-drawing-no').value.trim();
         const partNo = (document.getElementById('pp-filter-part-no')?.value || '').trim();
-        const orderStart = document.getElementById('pp-filter-order-start')?.value || '';
-        const orderEnd = document.getElementById('pp-filter-order-end')?.value || '';
+        const keydateVal = (document.getElementById('pp-filter-keydate')?.value || '').trim();
         const status = document.querySelector('input[name="pp-status"]:checked').value;
 
         // データ取得元: t_manufctparts を優先（確実に読めるように）、次に v_加工進捗
@@ -8967,8 +8966,7 @@ async function searchProcessingProgress() {
         if (unit) query = query.ilike('symbolunit', `${unit}%`);
         if (drawingNo) query = query.ilike('drawingno', `%${drawingNo}%`);
         if (partNo) query = query.ilike('partno', `%${partNo}%`);
-        if (orderStart) query = query.gte('keydate', orderStart);
-        if (orderEnd) query = query.lte('keydate', orderEnd);
+        if (keydateVal) query = query.ilike('keydate', `${keydateVal}%`);
 
         let rawData = null;
         let error = null;
@@ -8980,8 +8978,7 @@ async function searchProcessingProgress() {
             if (unit) query = query.ilike('symbolunit', `${unit}%`);
             if (drawingNo) query = query.ilike('drawingno', `%${drawingNo}%`);
             if (partNo) query = query.ilike('partno', `%${partNo}%`);
-            if (orderStart) query = query.gte('keydate', orderStart);
-            if (orderEnd) query = query.lte('keydate', orderEnd);
+            if (keydateVal) query = query.ilike('keydate', `${keydateVal}%`);
             const res = await query.limit(1000);
             rawData = res.data;
             error = res.error;
