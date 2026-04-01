@@ -8873,12 +8873,15 @@ async function loadPPFilterOptions(constructNo, machine, unitOnly) {
         const supabase = getSupabaseClient();
         if (!supabase) return;
 
-        // 機械プルダウン更新（unitOnly=trueのときはスキップ）
+        // 機械・keydate プルダウン更新（unitOnly=trueのときはスキップ）
         if (!unitOnly) {
-            let mQuery = supabase.from('t_manufctparts').select('symbolmachine').limit(2000);
+            let mQuery = supabase.from('t_manufctparts').select('symbolmachine, keydate').limit(2000);
             if (constructNo) mQuery = mQuery.ilike('constructionno', `%${constructNo}%`);
             const { data: mRows } = await mQuery;
-            const machines = [...new Set((mRows || []).map(r => (r.symbolmachine || '').trim()).filter(Boolean))].sort();
+            const rows = mRows || [];
+
+            // 機械プルダウン
+            const machines = [...new Set(rows.map(r => (r.symbolmachine || '').trim()).filter(Boolean))].sort();
             const machineSelect = document.getElementById('pp-filter-machine');
             if (machineSelect) {
                 const prevVal = machineSelect.value;
@@ -8889,8 +8892,30 @@ async function loadPPFilterOptions(constructNo, machine, unitOnly) {
                     option.textContent = code;
                     machineSelect.appendChild(option);
                 });
-                // 以前の選択値が引き続き存在する場合は復元
                 if (prevVal && machines.includes(prevVal)) machineSelect.value = prevVal;
+            }
+
+            // 受注登録日（keydate）プルダウン：工事番号が入力されたときのみ有効
+            const keydateSelect = document.getElementById('pp-filter-keydate');
+            if (keydateSelect) {
+                if (!constructNo) {
+                    keydateSelect.innerHTML = '<option value="">― 工事番号を入力すると選択可 ―</option>';
+                } else {
+                    const keydates = [...new Set(rows.map(r => (r.keydate || '').trim()).filter(Boolean))]
+                        .sort((a, b) => b.localeCompare(a)); // 新しい順
+                    const prevKd = keydateSelect.value;
+                    keydateSelect.innerHTML = '<option value="">すべて（全巡）</option>';
+                    keydates.forEach(kd => {
+                        const option = document.createElement('option');
+                        option.value = kd;
+                        // YYYY-MM-DD → YYYY/MM/DD 表示
+                        option.textContent = kd.replace(/-/g, '/');
+                        keydateSelect.appendChild(option);
+                    });
+                    if (prevKd && keydates.includes(prevKd)) keydateSelect.value = prevKd;
+                    // 1件しかない場合は自動選択
+                    if (keydates.length === 1) keydateSelect.value = keydates[0];
+                }
             }
         }
 
