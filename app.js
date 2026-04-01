@@ -8955,7 +8955,7 @@ async function searchProcessingProgress() {
             't_zumendata_manufct', 'T_ZumenData_Manufct', 'zumendata_manufct'
         ]);
         if (!mainTable) {
-            tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 20px; color: #ef4444;">テーブル／ビューが見つかりません（v_加工進捗, t_manufctparts, t_zumendata_manufct のいずれかを用意してください）</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="22" style="text-align: center; padding: 20px; color: #ef4444;">テーブル／ビューが見つかりません（v_加工進捗, t_manufctparts, t_zumendata_manufct のいずれかを用意してください）</td></tr>';
             return;
         }
 
