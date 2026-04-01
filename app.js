@@ -9149,7 +9149,7 @@ async function searchProcessingProgress() {
 
     } catch (e) {
         console.error('searchProcessingProgress error:', e);
-        tbody.innerHTML = `<tr><td colspan="21" style="text-align: center; padding: 20px; color: #ef4444;">エラーが発生しました: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="22" style="text-align: center; padding: 20px; color: #ef4444;">エラーが発生しました: ${e.message}</td></tr>`;
         const countEl = document.getElementById('pp-result-count');
         if (countEl) countEl.textContent = '—';
     }
