@@ -3,6 +3,12 @@
 // タスクデータ
 let tasks = [];
 
+// ログインユーザー別ストレージキー取得
+function getTaskStorageKey() {
+    const loginId = localStorage.getItem('loginId') || localStorage.getItem('username') || 'default';
+    return 'tasks_' + loginId;
+}
+
 // タスクの読み込み（ローカルストレージから）
 function loadTasks() {
     const stored = localStorage.getItem('tasks');
