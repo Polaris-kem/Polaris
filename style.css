@@ -12622,18 +12622,22 @@ textarea {
 }
 #dashboard-page .bulletin-card .section-header {
     background: #eff6ff !important;
-    border-bottom: 1px solid #dbeafe !important;
+    border-bottom: 1px solid #bfdbfe !important;
     padding: 9px 14px !important;
     margin: 0 !important;
     border-radius: 0 !important;
 }
 #dashboard-page .bulletin-card .section-header h3 {
-    color: #1d4ed8 !important;
+    color: #1e40af !important;
     font-weight: 700 !important;
     font-size: 13px !important;
 }
 #dashboard-page .bulletin-card .section-header h3::before {
-    content: '📢 ';
+    content: '' !important;
+}
+#dashboard-page .bulletin-card .section-header h3 i {
+    color: #1e40af !important;
+    margin-right: 6px !important;
 }
 #dashboard-page .bulletin-card .btn-primary.btn-small {
     background: #2563eb !important;
