@@ -12991,6 +12991,89 @@ textarea {
     font-size: 11px !important;
     font-weight: 400 !important;
     color: #64748b !important;
-    margin-left: auto;
     white-space: nowrap;
+    display: none; /* 狭い画面では非表示 */
 }
+@media (min-width: 500px) {
+    .agg-btn-desc { display: inline !important; margin-left: auto; }
+}
+.agg-btn-title {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    flex: 1;
+    white-space: normal;
+    word-break: keep-all;
+}
+
+/* ── 加工進捗：ヘッダーをコンパクト化（折り返し対応） ── */
+.pp-header {
+    flex-wrap: wrap !important;
+    padding: 10px 14px !important;
+    gap: 8px !important;
+    border-radius: 12px !important;
+}
+.pp-title {
+    font-size: 16px !important;
+    margin: 0 !important;
+}
+.pp-desc {
+    font-size: 11px !important;
+    display: none !important; /* 狭い画面では説明文非表示 */
+}
+.pp-header-actions {
+    gap: 6px !important;
+    flex-wrap: wrap !important;
+}
+.pp-header > div:first-child {
+    flex: 1;
+    min-width: 0;
+}
+.btn-pp {
+    padding: 5px 10px !important;
+    font-size: 12px !important;
+}
+.pp-result-count {
+    font-size: 12px !important;
+    padding: 3px 8px !important;
+}
+
+/* フィルターカードもコンパクトに */
+.pp-filter-card {
+    padding: 10px 12px !important;
+}
+.pp-filter-title {
+    font-size: 12px !important;
+    margin-bottom: 8px !important;
+}
+.pp-filter-row {
+    gap: 8px 10px !important;
+}
+.pp-label {
+    font-size: 11px !important;
+}
+.pp-input-eq, select.pp-input-eq {
+    height: 34px !important;
+    min-height: 34px !important;
+    font-size: 13px !important;
+}
+.pp-btn-eq {
+    height: 34px !important;
+    font-size: 13px !important;
+    line-height: 32px !important;
+    padding: 0 12px !important;
+}
+.pp-filter-btns-row {
+    margin-top: 8px !important;
+    padding-top: 8px !important;
+}
+
+/* 集計ページ：ボタン内テキスト折り返し対応 */
+.aggregate-btn {
+    flex-wrap: wrap !important;
+    gap: 10px 14px !important;
+}
+.aggregate-btn > i {
+    font-size: 16px !important;
+}
+
