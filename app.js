@@ -1570,7 +1570,7 @@ function setupEventListeners() {
         btn.addEventListener('click', (e) => {
             const type = btn.dataset.type || e.target.closest('.register-btn')?.dataset.type;
             // 以下は onclick でページ表示するためモーダルを開かない
-            if (type === 'construct-number' || type === 'work-ticket' || type === 'drawing-number' || type === 'accept-order' || type === 'misc-purchase' || type === 'misc-delivery' || type === 'shipping' || type === 'outsource-delivery' || type === 'parts-delivery' || type === 'surplus-register' || type === 'surplus-search' || type === 'project-shipping' || type === 'estimate-request' || type === 'quotation' || type === 'barcode-work-ticket') {
+            if (type === 'construct-number' || type === 'work-ticket' || type === 'drawing-number' || type === 'accept-order' || type === 'accept-order-search' || type === 'misc-purchase' || type === 'misc-delivery' || type === 'shipping' || type === 'outsource-delivery' || type === 'parts-delivery' || type === 'surplus-register' || type === 'surplus-search' || type === 'project-shipping' || type === 'estimate-request' || type === 'quotation' || type === 'barcode-work-ticket') {
                 return;
             } else {
                 e.preventDefault();
