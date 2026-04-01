@@ -9015,7 +9015,7 @@ async function searchProcessingProgress() {
         });
 
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="21" style="text-align: center; padding: 40px; color: #94a3b8;">該当するデータが見つかりませんでした</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="22" style="text-align: center; padding: 40px; color: #94a3b8;">該当するデータが見つかりませんでした</td></tr>';
             const countEl = document.getElementById('pp-result-count');
             if (countEl) countEl.textContent = '0件';
             return;
