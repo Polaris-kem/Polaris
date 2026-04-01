@@ -8831,46 +8831,78 @@ function selectWorkName(option, name, code, kakemochi, mujin) {
 async function initializeProcessingProgressPage() {
     console.log('initializeProcessingProgressPage 開始');
     try {
-        await loadPPFilterOptions();
+        await loadPPFilterOptions('', '');
         // Enterキーで検索
         const runSearch = () => searchProcessingProgress();
         ['pp-filter-construct-no', 'pp-filter-drawing-no', 'pp-filter-part-no', 'pp-filter-order-start', 'pp-filter-order-end'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); runSearch(); } });
         });
+
+        // 工事番号変更時：機械プルダウンを絞り込み
+        let ppConstructTimer = null;
+        const constructNoEl = document.getElementById('pp-filter-construct-no');
+        if (constructNoEl) {
+            constructNoEl.addEventListener('input', () => {
+                clearTimeout(ppConstructTimer);
+                ppConstructTimer = setTimeout(async () => {
+                    const cn = constructNoEl.value.trim();
+                    await loadPPFilterOptions(cn, '');
+                }, 400);
+            });
+        }
+
+        // 機械変更時：ユニットプルダウンを絞り込み
+        const machineEl = document.getElementById('pp-filter-machine');
+        if (machineEl) {
+            machineEl.addEventListener('change', async () => {
+                const cn = (document.getElementById('pp-filter-construct-no') || {}).value || '';
+                await loadPPFilterOptions(cn.trim(), machineEl.value, true);
+            });
+        }
+
         console.log('加工進捗ページの初期化完了');
     } catch (e) {
         console.error('initializeProcessingProgressPage error:', e);
     }
 }
 
-// 加工進捗フィルターの選択肢をロード（t_manufctparts の実データから取得）
-async function loadPPFilterOptions() {
+// 加工進捗フィルターの選択肢をロード（工事番号・機械で絞り込み対応）
+async function loadPPFilterOptions(constructNo, machine, unitOnly) {
     try {
         const supabase = getSupabaseClient();
         if (!supabase) return;
 
-        // t_manufctparts からユニーク機械コード・ユニットコードを取得
-        const { data: rows } = await supabase.from('t_manufctparts').select('symbolmachine, symbolunit').limit(5000);
-        if (!rows) return;
-
-        // 機械コード（末尾スペースをトリム・重複排除・ソート）
-        const machines = [...new Set(rows.map(r => (r.symbolmachine || '').trim()).filter(Boolean))].sort();
-        const machineSelect = document.getElementById('pp-filter-machine');
-        if (machineSelect) {
-            machineSelect.innerHTML = '<option value="">すべて</option>';
-            machines.forEach(code => {
-                const option = document.createElement('option');
-                option.value = code;
-                option.textContent = code;
-                machineSelect.appendChild(option);
-            });
+        // 機械プルダウン更新（unitOnly=trueのときはスキップ）
+        if (!unitOnly) {
+            let mQuery = supabase.from('t_manufctparts').select('symbolmachine').limit(2000);
+            if (constructNo) mQuery = mQuery.ilike('constructionno', `%${constructNo}%`);
+            const { data: mRows } = await mQuery;
+            const machines = [...new Set((mRows || []).map(r => (r.symbolmachine || '').trim()).filter(Boolean))].sort();
+            const machineSelect = document.getElementById('pp-filter-machine');
+            if (machineSelect) {
+                const prevVal = machineSelect.value;
+                machineSelect.innerHTML = '<option value="">すべて</option>';
+                machines.forEach(code => {
+                    const option = document.createElement('option');
+                    option.value = code;
+                    option.textContent = code;
+                    machineSelect.appendChild(option);
+                });
+                // 以前の選択値が引き続き存在する場合は復元
+                if (prevVal && machines.includes(prevVal)) machineSelect.value = prevVal;
+            }
         }
 
-        // ユニットコード（末尾スペースをトリム・重複排除・ソート）
-        const units = [...new Set(rows.map(r => (r.symbolunit || '').trim()).filter(Boolean))].sort();
+        // ユニットプルダウン更新
+        let uQuery = supabase.from('t_manufctparts').select('symbolunit').limit(2000);
+        if (constructNo) uQuery = uQuery.ilike('constructionno', `%${constructNo}%`);
+        if (machine) uQuery = uQuery.ilike('symbolmachine', `${machine}%`);
+        const { data: uRows } = await uQuery;
+        const units = [...new Set((uRows || []).map(r => (r.symbolunit || '').trim()).filter(Boolean))].sort();
         const unitSelect = document.getElementById('pp-filter-unit');
         if (unitSelect) {
+            const prevUnit = unitSelect.value;
             unitSelect.innerHTML = '<option value="">すべて</option>';
             units.forEach(code => {
                 const option = document.createElement('option');
@@ -8878,6 +8910,7 @@ async function loadPPFilterOptions() {
                 option.textContent = code;
                 unitSelect.appendChild(option);
             });
+            if (prevUnit && units.includes(prevUnit)) unitSelect.value = prevUnit;
         }
     } catch (e) {
         console.warn('loadPPFilterOptions error:', e);
