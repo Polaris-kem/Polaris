@@ -9152,7 +9152,6 @@ async function searchProcessingProgress() {
                 <td style="font-weight:600;">${(ppVal(row, 'constructionno', 'constructno') || '').trim()}</td>
                 <td>${(ppVal(row, 'symbolmachine') || '').trim()}</td>
                 <td>${(ppVal(row, 'symbolunit') || '').trim()}</td>
-                <td style="text-align:center;">${(ppVal(row, 'consecutiveno') || '').trim()}</td>
                 <td style="text-align:center;">${planBadge}</td>
                 <td style="text-align:center;">${shikyuBadge}</td>
                 <td style="font-family:monospace;font-size:12px;">${(ppVal(row, 'drawingno') || '').trim()}</td>
@@ -9160,6 +9159,7 @@ async function searchProcessingProgress() {
                 <td style="font-weight:500;">${ppVal(row, 'description')}</td>
                 <td>${ppVal(row, 'materialcode')}</td>
                 <td style="text-align:right;">${ppVal(row, 'qty')}</td>
+                <td style="text-align:right;">${ppVal(row, 'spareqty')}</td>
                 <td>${ppVal(row, 'qtyunit')}</td>
                 <td style="text-align:right;">${ppVal(row, 'weightmaterial')}</td>
                 <td style="text-align:right;">${ppVal(row, 'weightfinished')}</td>
