@@ -9319,7 +9319,7 @@ function clearPPSearch() {
     document.querySelector('input[name="pp-status"][value="all"]').checked = true;
     const countEl = document.getElementById('pp-result-count');
     if (countEl) countEl.textContent = '—';
-    document.getElementById('pp-main-table-body').innerHTML = '<tr><td colspan="21" class="pp-empty-msg">条件を入力して「検索」を押すか、そのまま検索で一覧を表示します（Enterでも検索）</td></tr>';
+    document.getElementById('pp-main-table-body').innerHTML = '<tr><td colspan="22" class="pp-empty-msg">条件を入力して「検索」を押すか、そのまま検索で一覧を表示します（Enterでも検索）</td></tr>';
     document.getElementById('pp-work-table-body').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #cbd5e1;">行を選択してください</td></tr>';
     document.getElementById('pp-material-table-body').innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #cbd5e1;">行を選択してください</td></tr>';
     document.getElementById('pp-outsource-table-body').innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #cbd5e1;">行を選択してください</td></tr>';
