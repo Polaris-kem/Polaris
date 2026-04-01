@@ -16774,7 +16774,7 @@ async function _csRtFetch(q, filters) {
     try {
         const cns = constructNos.slice(0, 50);
         const { data } = await sb.from('t_purchaseparts')
-            .select('construction_no,symbol_machine,symbol_unit,consecutive_no,description,order_div,each_price,qty,cancel_flg,betsu_seisaku_flg')
+            .select('construction_no,symbol_machine,symbol_unit,consecutive_no,description,order_div,arrange_div,each_price,qty,cancel_flg,betsu_seisaku_flg')
             .in('construction_no', cns)
             .limit(20000);
         purchaseParts = (data || []).filter(r => !r.cancel_flg);
