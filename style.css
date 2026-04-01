@@ -12786,10 +12786,13 @@ textarea {
     border-left: 4px solid #2563eb !important;
     border-radius: 12px !important;
     padding: 0 !important;
-    min-height: 0 !important;
+    min-height: auto !important;
     max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
     margin-bottom: 12px !important;
     cursor: pointer;
+    transform: none !important;
 }
 #dashboard-page .bulletin-card .section-header {
     background: #eff6ff !important;
