@@ -12430,19 +12430,19 @@ textarea {
     overflow: hidden !important;
 }
 #dashboard-page .bulletin-card .section-header {
-    background: #f3e8ff !important;
-    border-bottom: 2px solid #e9d5ff !important;
-    padding: 10px 14px !important;
+    background: #eff6ff !important;
+    border-bottom: 1px solid #bfdbfe !important;
+    padding: 9px 14px !important;
     margin: 0 !important;
-    border-radius: 14px 14px 0 0 !important;
+    border-radius: 0 !important;
 }
 #dashboard-page .bulletin-card .section-header h3 {
-    color: #7c3aed !important;
-    font-weight: 800 !important;
-    font-size: 14px !important;
+    color: #1e40af !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
 }
 #dashboard-page .bulletin-card .section-header h3::before {
-    content: '📌 ';
+    content: '' !important;
 }
 #dashboard-page .bulletin-card .bulletin-list {
     padding: 8px 12px !important;
