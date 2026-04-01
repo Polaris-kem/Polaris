@@ -13109,7 +13109,11 @@ textarea {
 }
 .pp-keydate-select {
     flex: 1 1 auto !important;
-    min-width: 120px !important;
+    min-width: 100px !important;
+}
+.pp-keydate-btns-inline .pp-btn-eq {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
 }
 
 /* テーブルセル：折り返し禁止 */
