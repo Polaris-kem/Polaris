@@ -12715,35 +12715,33 @@ textarea {
    Polaris デザイン統一 総合オーバーライド
    ════════════════════════════════════════════ */
 
-/* ── ホーム ウェルカムバナー（コンパクト・1行レイアウト） ── */
+/* ── ホーム ウェルカムバナー（水色・日付大きく中央） ── */
 .dashboard-welcome {
     display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 0 !important;
-    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%) !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    background: #e0f2fe !important;
     border-radius: 14px !important;
-    padding: 10px 18px !important;
+    padding: 10px 16px 12px !important;
     margin-bottom: 12px !important;
-    border: none !important;
-    box-shadow: 0 4px 16px rgba(37,99,235,0.25) !important;
+    border: 1px solid #bae6fd !important;
+    box-shadow: 0 2px 8px rgba(14,165,233,0.12) !important;
 }
 .dashboard-welcome-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    gap: 12px;
 }
 .dashboard-welcome-left {
     display: flex !important;
     align-items: center !important;
-    gap: 10px !important;
+    gap: 8px !important;
     flex: 1;
     min-width: 0;
 }
 .dashboard-welcome-bear {
-    font-size: 26px !important;
+    font-size: 28px !important;
     flex-shrink: 0;
 }
 .dashboard-welcome-texts {
@@ -12753,35 +12751,37 @@ textarea {
     min-width: 0;
 }
 .dashboard-welcome-greeting {
-    font-size: 11px !important;
+    font-size: 12px !important;
     font-weight: 600 !important;
-    color: rgba(255,255,255,0.7) !important;
+    color: #0369a1 !important;
     margin: 0 !important;
     white-space: nowrap !important;
 }
 .dashboard-welcome-date {
-    font-size: 14px !important;
-    font-weight: 800 !important;
-    color: #fff !important;
-    margin: 0 !important;
-    letter-spacing: -0.2px !important;
-    white-space: nowrap !important;
-    text-align: left !important;
-    width: auto !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: none !important; /* textsの中では非表示 */
 }
 .dashboard-welcome-brand {
-    font-size: 13px !important;
+    font-size: 14px !important;
     font-weight: 800 !important;
-    color: rgba(255,255,255,0.45) !important;
-    letter-spacing: 0.05em !important;
+    color: #7dd3fc !important;
+    letter-spacing: 0.08em !important;
     flex-shrink: 0;
     white-space: nowrap;
-    padding-left: 8px;
 }
 /* 旧 top ラッパーは非表示（新構造に置き換え済み） */
 .dashboard-welcome-top { display: none !important; }
+
+/* 日付は独立した中央配置の大きいテキスト */
+#dashboard-today-date {
+    display: block !important;
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    color: #0c4a6e !important;
+    text-align: center !important;
+    width: 100% !important;
+    margin: 4px 0 0 !important;
+    letter-spacing: -0.5px !important;
+}
 
 /* ── 掲示板：コンパクト（1行のみ） ── */
 #dashboard-page .dashboard-card.bulletin-card {
