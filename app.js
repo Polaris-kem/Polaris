@@ -8991,7 +8991,7 @@ async function searchProcessingProgress() {
         if (unit) query = query.ilike('symbolunit', `${unit}%`);
         if (drawingNo) query = query.ilike('drawingno', `%${drawingNo}%`);
         if (partNo) query = query.ilike('partno', `%${partNo}%`);
-        if (keydateVal) query = query.ilike('keydate', `${keydateVal}%`);
+        if (keydateVal) query = query.eq('keydate', keydateVal);
 
         let rawData = null;
         let error = null;
@@ -9003,7 +9003,7 @@ async function searchProcessingProgress() {
             if (unit) query = query.ilike('symbolunit', `${unit}%`);
             if (drawingNo) query = query.ilike('drawingno', `%${drawingNo}%`);
             if (partNo) query = query.ilike('partno', `%${partNo}%`);
-            if (keydateVal) query = query.ilike('keydate', `${keydateVal}%`);
+            if (keydateVal) query = query.eq('keydate', keydateVal);
             const res = await query.limit(1000);
             rawData = res.data;
             error = res.error;
