@@ -12794,14 +12794,19 @@ textarea {
     cursor: pointer;
     transform: none !important;
 }
-#dashboard-page .bulletin-card .section-header {
+/* 掲示板 section-header（すべての旧スタイルを上書き） */
+#dashboard-page .bulletin-card .section-header,
+#dashboard-page .dashboard-card.bulletin-card .section-header {
     background: #eff6ff !important;
     border-bottom: 1px solid #dbeafe !important;
+    border-top: none !important;
     border-radius: 12px 12px 0 0 !important;
     padding: 8px 14px !important;
     min-height: 0 !important;
+    margin: 0 !important;
 }
-#dashboard-page .bulletin-card .section-header h3 {
+#dashboard-page .bulletin-card .section-header h3,
+#dashboard-page .dashboard-card.bulletin-card .section-header h3 {
     color: #1d4ed8 !important;
     font-size: 13px !important;
     font-weight: 700 !important;
@@ -12814,8 +12819,11 @@ textarea {
     color: #2563eb !important;
     font-size: 13px !important;
 }
-/* 旧の ::before 絵文字は無効化 */
-#dashboard-page .bulletin-card .section-header h3::before { content: '' !important; }
+#dashboard-page .bulletin-card .section-header h3::before,
+#dashboard-page .dashboard-card.bulletin-card .section-header h3::before {
+    content: '' !important;
+    display: none !important;
+}
 
 /* ── カレンダージャンプボタン：見やすく ── */
 .calendar-jump-btn {
