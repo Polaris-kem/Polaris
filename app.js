@@ -16845,9 +16845,9 @@ function _csAggregate(rawData, level, filters) {
                 unit:               r.symbol_unit     || '',
                 drawingno:          r.consecutive_no  || '',
                 name:               r.description     || '',
-                _constructionname:  ao.constructionname || '',
-                _customername:      ao.customername    || '',
-                sales:    Number(ao.OrderPrice || ao.orderprice || ao.Uriagekin || ao.uriagekin || 0),
+                _constructionname:  ao.constructname || '',
+                _customername:      ao.ownercode    || '',
+                sales:    Number(ao.orderprice || ao.urikake || 0),
                 purchased: 0, outsource: 0, material: 0, misc: 0, internal: 0
             };
         }
