@@ -1943,7 +1943,7 @@
                         </div>
                         <div class="pp-cell">
                             <label class="pp-label" for="pp-filter-drawing-no">図面番号</label>
-                            <input type="text" id="pp-filter-drawing-no" class="pp-input-eq" placeholder="途中一致OK" title="途中まででも検索できます">
+                            <input type="text" id="pp-filter-drawing-no" class="pp-input-eq" placeholder="途中一致OK">
                         </div>
                         <div class="pp-cell">
                             <label class="pp-label" for="pp-filter-part-no">品番</label>
@@ -1958,17 +1958,17 @@
                             </div>
                         </div>
                         <div class="pp-cell pp-cell-dates">
-                            <span class="pp-label">受注日(keydate)</span>
+                            <span class="pp-label">受注日 (Key date)</span>
                             <div class="pp-dates-inline">
                                 <input type="date" id="pp-filter-order-start" class="pp-input-eq pp-date">
-                                <span>～</span>
+                                <span>〜</span>
                                 <input type="date" id="pp-filter-order-end" class="pp-input-eq pp-date">
                             </div>
                         </div>
-                        <div class="pp-cell pp-cell-btns">
-                            <button type="button" class="btn-primary pp-btn-eq" id="pp-search-btn" onclick="searchProcessingProgress()"><i class="fas fa-search"></i> 検索</button>
-                            <button type="button" class="btn-secondary pp-btn-eq" onclick="clearPPSearch()" title="クリア"><i class="fas fa-eraser"></i></button>
-                        </div>
+                    </div>
+                    <div class="pp-filter-btns-row">
+                        <button type="button" class="btn-primary pp-btn-eq" id="pp-search-btn" onclick="searchProcessingProgress()"><i class="fas fa-search"></i> 検索</button>
+                        <button type="button" class="btn-secondary pp-btn-eq" onclick="clearPPSearch()"><i class="fas fa-eraser"></i> クリア</button>
                     </div>
                     <div class="pp-legend">
                         <span class="pp-legend-title">進捗の色</span>
