@@ -13150,3 +13150,74 @@ textarea {
     font-size: 16px !important;
 }
 
+
+/* ── 部門別アコーディオンサイドバー ── */
+.dept-group {
+    margin: 2px 0;
+}
+.dept-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s;
+}
+.dept-header:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+}
+.dept-header .dept-arrow {
+    margin-left: auto;
+    font-size: 10px;
+    transition: transform 0.25s;
+}
+.dept-group.open .dept-header .dept-arrow {
+    transform: rotate(180deg);
+}
+.dept-group.open .dept-header {
+    background: rgba(99,179,237,0.2);
+    color: #fff;
+}
+.dept-items {
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 0 4px 12px;
+}
+.dept-group.open .dept-items {
+    display: flex;
+}
+.menu-sub-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: #94a3b8;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, color 0.15s;
+}
+.menu-sub-item:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+.menu-sub-item i {
+    width: 14px;
+    text-align: center;
+    font-size: 11px;
+    flex-shrink: 0;
+}

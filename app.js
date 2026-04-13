@@ -1800,6 +1800,15 @@ window.toggleMobileSidebar = toggleMobileSidebar;
 window.closeMobileSidebar  = closeMobileSidebar;
 
 // ページ表示切り替え
+function toggleDept(deptId) {
+    const group = document.getElementById(deptId);
+    if (!group) return;
+    const isOpen = group.classList.contains('open');
+    // 全部閉じる
+    document.querySelectorAll('.dept-group.open').forEach(g => g.classList.remove('open'));
+    if (!isOpen) group.classList.add('open');
+}
+
 function showPage(pageName) {
     console.log('showPage関数が呼ばれました:', pageName);
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));

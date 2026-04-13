@@ -62,22 +62,91 @@
                     <i class="fas fa-home"></i>
                     <span>ホーム</span>
                 </button>
-                <button class="menu-item" data-page="list">
-                    <i class="fas fa-list"></i>
-                    <span>一覧表示</span>
-                </button>
-                <button class="menu-item" data-page="register">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>登録</span>
-                </button>
-                <button class="menu-item" data-page="search">
-                    <i class="fas fa-search"></i>
-                    <span>検索</span>
-                </button>
-                <button class="menu-item" data-page="aggregate">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>集計</span>
-                </button>
+
+                <!-- 営業部 -->
+                <div class="dept-group" id="dept-sales">
+                    <button class="dept-header" onclick="toggleDept('dept-sales')">
+                        <i class="fas fa-briefcase"></i>
+                        <span>営業部</span>
+                        <i class="fas fa-chevron-down dept-arrow"></i>
+                    </button>
+                    <div class="dept-items">
+                        <button class="menu-sub-item" onclick="showPage('order-registration')"><i class="fas fa-file-signature"></i> 受注登録</button>
+                        <button class="menu-sub-item" onclick="showPage('accept-order-list')"><i class="fas fa-list"></i> 受注一覧</button>
+                        <button class="menu-sub-item" onclick="showPage('construct-number')"><i class="fas fa-hashtag"></i> 工事番号採番</button>
+                    </div>
+                </div>
+
+                <!-- 製造管理部 -->
+                <div class="dept-group" id="dept-mfg">
+                    <button class="dept-header" onclick="toggleDept('dept-mfg')">
+                        <i class="fas fa-industry"></i>
+                        <span>製造管理部</span>
+                        <i class="fas fa-chevron-down dept-arrow"></i>
+                    </button>
+                    <div class="dept-items">
+                        <button class="menu-sub-item" onclick="showPage('outsource-delivery')"><i class="fas fa-truck"></i> 外注・材料 納入</button>
+                        <button class="menu-sub-item" onclick="showPage('parts-delivery')"><i class="fas fa-box"></i> 購入品 納入</button>
+                        <button class="menu-sub-item" onclick="showPage('surplus-register')"><i class="fas fa-archive"></i> 余り品登録</button>
+                        <button class="menu-sub-item" onclick="showPage('surplus-search')"><i class="fas fa-search"></i> 余り品検索</button>
+                        <button class="menu-sub-item" onclick="showPage('processing-progress')"><i class="fas fa-tasks"></i> 加工進捗</button>
+                        <button class="menu-sub-item" onclick="showPage('aggregate')"><i class="fas fa-chart-bar"></i> 集計</button>
+                    </div>
+                </div>
+
+                <!-- 組立部 -->
+                <div class="dept-group" id="dept-assy">
+                    <button class="dept-header" onclick="toggleDept('dept-assy')">
+                        <i class="fas fa-tools"></i>
+                        <span>組立部</span>
+                        <i class="fas fa-chevron-down dept-arrow"></i>
+                    </button>
+                    <div class="dept-items">
+                        <button class="menu-sub-item" onclick="showPage('shipping')"><i class="fas fa-shipping-fast"></i> 出荷管理（部品）</button>
+                        <button class="menu-sub-item" onclick="showPage('project-shipping')"><i class="fas fa-truck-loading"></i> 出荷登録（工事）</button>
+                        <button class="menu-sub-item" onclick="showPage('work-ticket')"><i class="fas fa-clipboard-check"></i> 作業票登録</button>
+                    </div>
+                </div>
+
+                <!-- 明石製造部 -->
+                <div class="dept-group" id="dept-akashi">
+                    <button class="dept-header" onclick="toggleDept('dept-akashi')">
+                        <i class="fas fa-cogs"></i>
+                        <span>明石製造部</span>
+                        <i class="fas fa-chevron-down dept-arrow"></i>
+                    </button>
+                    <div class="dept-items">
+                        <button class="menu-sub-item" onclick="showPage('outsource-delivery')"><i class="fas fa-truck"></i> 納入処理</button>
+                        <button class="menu-sub-item" onclick="showPage('work-ticket')"><i class="fas fa-clipboard-check"></i> 作業票登録</button>
+                    </div>
+                </div>
+
+                <!-- 製造設計部 -->
+                <div class="dept-group" id="dept-design">
+                    <button class="dept-header" onclick="toggleDept('dept-design')">
+                        <i class="fas fa-pencil-ruler"></i>
+                        <span>製造設計部</span>
+                        <i class="fas fa-chevron-down dept-arrow"></i>
+                    </button>
+                    <div class="dept-items">
+                        <button class="menu-sub-item" onclick="showPage('drawing-number')"><i class="fas fa-drafting-compass"></i> 図面番号採番</button>
+                        <button class="menu-sub-item" onclick="showPage('bom-import')"><i class="fas fa-file-import"></i> BOMインポート</button>
+                    </div>
+                </div>
+
+                <!-- 総務部 -->
+                <div class="dept-group" id="dept-general">
+                    <button class="dept-header" onclick="toggleDept('dept-general')">
+                        <i class="fas fa-building"></i>
+                        <span>総務部</span>
+                        <i class="fas fa-chevron-down dept-arrow"></i>
+                    </button>
+                    <div class="dept-items">
+                        <button class="menu-sub-item" onclick="showPage('misc-purchase')"><i class="fas fa-receipt"></i> 諸掛購入登録</button>
+                        <button class="menu-sub-item" onclick="showPage('misc-delivery')"><i class="fas fa-file-invoice"></i> 諸掛納入処理</button>
+                    </div>
+                </div>
+
                 <button class="menu-item" data-page="settings">
                     <i class="fas fa-user-cog"></i>
                     <span>個人設定</span>
