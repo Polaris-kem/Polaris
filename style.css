@@ -12767,6 +12767,7 @@ textarea {
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    position: relative;
 }
 .dashboard-welcome-left {
     display: flex !important;
@@ -12806,7 +12807,15 @@ textarea {
 /* 旧 top ラッパーは非表示（新構造に置き換え済み） */
 .dashboard-welcome-top { display: none !important; }
 
-/* 日付はグリーティングと同じ行にインライン表示 */
+/* 日付は中央エリアに独立配置 */
+.dashboard-welcome-center {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    display: flex !important;
+    align-items: center !important;
+    pointer-events: none;
+}
 #dashboard-today-date {
     display: inline !important;
     font-size: 15px !important;
