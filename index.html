@@ -81,6 +81,31 @@
                     </div>
                 </div>
 
+                <!-- 製造設計部 -->
+                <div class="dept-group" id="dept-design">
+                    <button class="dept-header" onclick="toggleDept('dept-design')">
+                        <i class="fas fa-pencil-ruler"></i>
+                        <span>製造設計部</span>
+                        <i class="fas fa-chevron-down dept-arrow"></i>
+                    </button>
+                    <div class="dept-items">
+                        <button class="menu-sub-item" onclick="showPage('drawing-number')"><i class="fas fa-drafting-compass"></i> 図面番号採番</button>
+                        <button class="menu-sub-item" onclick="showPage('bom-import')"><i class="fas fa-file-import"></i> BOMインポート</button>
+                    </div>
+                </div>
+
+                <!-- 操業部 -->
+                <div class="dept-group" id="dept-ops">
+                    <button class="dept-header" onclick="toggleDept('dept-ops')">
+                        <i class="fas fa-hard-hat"></i>
+                        <span>操業部</span>
+                        <i class="fas fa-chevron-down dept-arrow"></i>
+                    </button>
+                    <div class="dept-items">
+                        <button class="menu-sub-item" onclick="showPage('work-ticket')"><i class="fas fa-clipboard-check"></i> 作業票登録</button>
+                    </div>
+                </div>
+
                 <!-- 製造管理部 -->
                 <div class="dept-group" id="dept-mfg">
                     <button class="dept-header" onclick="toggleDept('dept-mfg')">
@@ -98,20 +123,6 @@
                     </div>
                 </div>
 
-                <!-- 組立部 -->
-                <div class="dept-group" id="dept-assy">
-                    <button class="dept-header" onclick="toggleDept('dept-assy')">
-                        <i class="fas fa-tools"></i>
-                        <span>組立部</span>
-                        <i class="fas fa-chevron-down dept-arrow"></i>
-                    </button>
-                    <div class="dept-items">
-                        <button class="menu-sub-item" onclick="showPage('shipping')"><i class="fas fa-shipping-fast"></i> 出荷管理（部品）</button>
-                        <button class="menu-sub-item" onclick="showPage('project-shipping')"><i class="fas fa-truck-loading"></i> 出荷登録（工事）</button>
-                        <button class="menu-sub-item" onclick="showPage('work-ticket')"><i class="fas fa-clipboard-check"></i> 作業票登録</button>
-                    </div>
-                </div>
-
                 <!-- 明石製造部 -->
                 <div class="dept-group" id="dept-akashi">
                     <button class="dept-header" onclick="toggleDept('dept-akashi')">
@@ -125,16 +136,17 @@
                     </div>
                 </div>
 
-                <!-- 製造設計部 -->
-                <div class="dept-group" id="dept-design">
-                    <button class="dept-header" onclick="toggleDept('dept-design')">
-                        <i class="fas fa-pencil-ruler"></i>
-                        <span>製造設計部</span>
+                <!-- 組立部 -->
+                <div class="dept-group" id="dept-assy">
+                    <button class="dept-header" onclick="toggleDept('dept-assy')">
+                        <i class="fas fa-tools"></i>
+                        <span>組立部</span>
                         <i class="fas fa-chevron-down dept-arrow"></i>
                     </button>
                     <div class="dept-items">
-                        <button class="menu-sub-item" onclick="showPage('drawing-number')"><i class="fas fa-drafting-compass"></i> 図面番号採番</button>
-                        <button class="menu-sub-item" onclick="showPage('bom-import')"><i class="fas fa-file-import"></i> BOMインポート</button>
+                        <button class="menu-sub-item" onclick="showPage('shipping')"><i class="fas fa-shipping-fast"></i> 出荷管理（部品）</button>
+                        <button class="menu-sub-item" onclick="showPage('project-shipping')"><i class="fas fa-truck-loading"></i> 出荷登録（工事）</button>
+                        <button class="menu-sub-item" onclick="showPage('work-ticket')"><i class="fas fa-clipboard-check"></i> 作業票登録</button>
                     </div>
                 </div>
 
