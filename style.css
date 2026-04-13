@@ -13158,14 +13158,15 @@ textarea {
 .dept-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 10px 12px;
-    background: rgba(255,255,255,0.08);
-    border: none;
-    border-radius: 8px;
-    color: #cbd5e1;
-    font-size: 13px;
+    gap: 14px;
+    width: calc(100% - 24px);
+    margin: 6px 12px;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    color: rgba(255,255,255,0.92);
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     text-align: left;
