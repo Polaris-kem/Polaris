@@ -12115,37 +12115,26 @@ textarea {
 }
 
 
-/ *   g~y?g~o?]~m?]~|?]~k?]~??0:~n?g~k?g~y?g~?]~?iF0g~z?  * / 
- : : - w e b k i t - s c r o l l b a r   { 
-         w i d t h :   8 p x ; 
-         h e i g h t :   8 p x ; 
- } 
- 
- : : - w e b k i t - s c r o l l b a r - t r a c k   { 
-         b a c k g r o u n d :   t r a n s p a r e n t ; 
- } 
- 
- : : - w e b k i t - s c r o l l b a r - t h u m b   { 
-         b a c k g r o u n d :   r g b a ( 0 ,   0 ,   0 ,   0 . 1 ) ; 
-         b o r d e r - r a d i u s :   1 0 p x ; 
- } 
- 
- : : - w e b k i t - s c r o l l b a r - t h u m b : h o v e r   { 
-         b a c k g r o u n d :   r g b a ( 0 ,   0 ,   0 ,   0 . 2 ) ; 
- } 
- 
- / *   ]~? ]~|?g~o?]~b?]~|?]~O|?;SW0g~d?]~?\?0]~|?r?O|??Qu:~n?g~y?g~o?]~m?]~|?]~k?]~??0  * / 
- . s i d e b a r   : : - w e b k i t - s c r o l l b a r - t h u m b , 
- . l e f t - s i d e b a r   : : - w e b k i t - s c r o l l b a r - t h u m b   { 
-         b a c k g r o u n d :   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 1 ) ; 
- } 
- 
- . s i d e b a r   : : - w e b k i t - s c r o l l b a r - t h u m b : h o v e r , 
- . l e f t - s i d e b a r   : : - w e b k i t - s c r o l l b a r - t h u m b : h o v e r   { 
-         b a c k g r o u n d :   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 2 ) ; 
- } 
- 
- /* Scrollbar styles */
+/* 繧㽹繧㽯繝㽭繝㽼繝㽫繝㼌〿縺㽮繧㽫繧㽹繧㽿繝椿う繧㽺 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* 繝?繝㽼繧㽯繝㽢繝㽼繝会㽼医し繧㽤繝尿〿繝㽼㽲会㽼儿㩵湾朿祾朿潾崿浾崿籾崿歾崿౾㼿‰⨀⼀਀⸀猀椀搀攀戀愀爀 㨀㨀ⴀ眀攀戀欀椀琀ⴀ猀挀爀漀氀氀戀愀爀ⴀ琀栀甀洀戀Ⰰ਀⸀氀攀昀琀ⴀ猀椀搀攀戀愀爀 㨀㨀ⴀ眀攀戀欀椀琀ⴀ猀挀爀漀氀氀戀愀爀ⴀ琀栀甀洀戀 笀਀    戀愀挀欀最爀漀甀渀搀㨀 爀最戀愀⠀㈀㔀㔀Ⰰ ㈀㔀㔀Ⰰ ㈀㔀㔀Ⰰ 　⸀㄀⤀㬀਀紀਀਀⸀猀椀搀攀戀愀爀 㨀㨀ⴀ眀攀戀欀椀琀ⴀ猀挀爀漀氀氀戀愀爀ⴀ琀栀甀洀戀㨀栀漀瘀攀爀Ⰰ਀⸀氀攀昀琀ⴀ猀椀搀攀戀愀爀 㨀㨀ⴀ眀攀戀欀椀琀ⴀ猀挀爀漀氀氀戀愀爀ⴀ琀栀甀洀戀㨀栀漀瘀攀爀 笀਀    戀愀挀欀最爀漀甀渀搀㨀 爀最戀愀⠀㈀㔀㔀Ⰰ ㈀㔀㔀Ⰰ ㈀㔀㔀Ⰰ 　⸀㈀⤀㬀਀紀਀਀⼀* Scrollbar styles */
 /* ========== バーコード作業票 スマホ対応 ========== */
 @media (max-width: 768px) {
     .left-sidebar  { display: none !important; }

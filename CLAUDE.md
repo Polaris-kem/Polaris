@@ -54,6 +54,15 @@
 - ホーム：日付をバナー中央に配置
 - 掲示板：アイコンを fa-clipboard-list に変更、色を白に変更
 - git push 自動ブロック：`.claude/settings.json` に PreToolUse フック設定済み
+- サイドバー：全7部門のボタンを追加（ページIDはmemory参照）
+
+### 未実装ページ（ボタンは追加済み・中身なし）
+- `estimate-request`（見積依頼）, `quotation`（見積書作成）, `e-document`（電子帳簿保存）
+- `work-order`（製造指図書発行）, `invoice-sales`（請求書・売上登録）
+- `project-plan`（工事企画表作成）, `purchase-parts-list`（購入部品表）
+- `realtime-result`（実績登録）, `progress-check`（進捗確認）, `rework`（再加工）, `non-work`（非稼働）
+- `data-import`（データインポート）, `purchase-order`（発注業務）, `price-inquiry`（見積照会）, `invoice-verify`（請求照合）
+- `payable-management`（債務管理）, `receivable-management`（債権管理）
 
 ### 次のタスク
 - なし（ユーザーからの指示待ち）
