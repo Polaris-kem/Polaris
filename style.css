@@ -13211,3 +13211,43 @@ textarea {
     font-size: 11px;
     flex-shrink: 0;
 }
+
+/* 部署ハブページ */
+.dept-hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+    padding: 24px;
+}
+
+.dept-hub-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 28px 16px;
+    background: var(--bg-card, #1e293b);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    color: var(--text-primary, #f1f5f9);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.dept-hub-btn i {
+    font-size: 28px;
+    color: #7c3aed;
+}
+
+.dept-hub-btn:hover {
+    background: rgba(124, 58, 237, 0.15);
+    transform: translateY(-2px);
+}
+
+.dept-hub-btn span {
+    text-align: center;
+    line-height: 1.4;
+}
