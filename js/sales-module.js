@@ -377,6 +377,16 @@ textarea.qt-inp{resize:vertical;min-height:80px;}
 .qt-btn-back{background:#f1f5f9;color:#475569;border:1.5px solid #cbd5e1;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
 .qt-btn-back:hover{background:#e2e8f0;}
 .qt-msg{padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;margin-bottom:14px;display:none;}
+/* ステップ */
+.sm-steps{display:flex;background:white;border-radius:16px;padding:16px 20px;margin-bottom:22px;box-shadow:0 4px 16px rgba(99,102,241,0.09);border:1px solid rgba(99,102,241,0.12);}
+.sm-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;text-align:center;}
+.sm-step:not(:last-child)::after{content:'';position:absolute;top:19px;left:50%;width:100%;height:2px;background:#e2e8f0;z-index:0;}
+.sm-step-n{width:38px;height:38px;background:#e2e8f0;color:#94a3b8;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;position:relative;z-index:1;transition:all .25s;}
+.sm-step.active .sm-step-n{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;box-shadow:0 4px 14px rgba(99,102,241,0.45);}
+.sm-step.done .sm-step-n{background:linear-gradient(135deg,#22c55e,#16a34a);color:white;}
+.sm-step .lbl{font-size:12px;color:#94a3b8;margin-top:7px;font-weight:600;}
+.sm-step.active .lbl{color:#6366f1;}
+.sm-step.done .lbl{color:#16a34a;}
 /* 印刷 */
 @media print{
   .sm-steps,.qt-actions,.qt-hicon,.qt-btn-back,.qt-btn-import{display:none!important;}
