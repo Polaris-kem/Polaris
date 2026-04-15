@@ -827,171 +827,191 @@ var DEPT_LIST = [
     { key:'general', label:'総務部' }
 ];
 
-// フォーム行のプレビュー更新
-function updateClRowPreview(row) {
-    var labelEl = row.querySelector('.cl-f-label');
-    var urlEl = row.querySelector('.cl-f-url');
-    var faEl = row.querySelector('.cl-f-fa');
-    var thumb = row.querySelector('.cl-img-thumb');
-    var preview = row.querySelector('.cl-preview-mini');
-    if (!preview) return;
-    var label = labelEl ? labelEl.value.trim() : '';
-    var url = urlEl ? urlEl.value.trim() : '';
-    var fa = faEl ? faEl.value.trim() : '';
-    var hasImg = thumb && !thumb.hidden && thumb.src;
-    var iconEl = preview.querySelector('.cl-prev-icon');
-    var spanEl = preview.querySelector('span');
-    if (spanEl) spanEl.textContent = label || url || 'リンク名';
-    if (iconEl) {
-        if (hasImg) {
-            iconEl.outerHTML = '<img class="cl-prev-icon" src="' + escapeHtml(thumb.src) + '" style="width:36px;height:36px;border-radius:8px;object-fit:cover;" alt="">';
-        } else {
-            var resolvedFa = fa || guessIconFromUrl(url, label);
-            iconEl.className = 'fas ' + resolvedFa + ' cl-prev-icon';
-        }
-    }
-}
-
 // 個人/全体共通のリンク行を生成
 function buildClRow(item, isGlobal) {
     item = item || {};
+    var rowId = 'clrow_' + Math.random().toString(36).slice(2, 8);
     var row = document.createElement('div');
     row.className = 'cl-row';
 
-    // --- プレビュー ---
-    var previewDiv = document.createElement('div');
-    previewDiv.className = 'cl-preview';
+    // ドラッグハンドル
+    var dragHandle = document.createElement('div');
+    dragHandle.className = 'cl-drag-handle';
+    dragHandle.innerHTML = '<i class="fas fa-grip-vertical"></i>';
+    dragHandle.title = 'ドラッグして並び替え';
+    dragHandle.addEventListener('mousedown', function() { row.draggable = true; });
+    row.addEventListener('dragend', function() {
+        row.draggable = false;
+        row.classList.remove('cl-dragging');
+        if (row.parentNode) {
+            row.parentNode.querySelectorAll('.cl-row').forEach(function(r) { r.classList.remove('cl-drag-over'); });
+        }
+    });
+    row.addEventListener('dragstart', function(e) {
+        window._clDragSrc = row;
+        e.dataTransfer.effectAllowed = 'move';
+        row.classList.add('cl-dragging');
+    });
+    row.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        if (window._clDragSrc && window._clDragSrc !== row) row.classList.add('cl-drag-over');
+    });
+    row.addEventListener('dragleave', function() { row.classList.remove('cl-drag-over'); });
+    row.addEventListener('drop', function(e) {
+        e.preventDefault();
+        row.classList.remove('cl-drag-over');
+        var src = window._clDragSrc;
+        if (src && src !== row && row.parentNode) {
+            var siblings = Array.from(row.parentNode.querySelectorAll('.cl-row'));
+            if (siblings.indexOf(src) < siblings.indexOf(row)) {
+                row.parentNode.insertBefore(src, row.nextSibling);
+            } else {
+                row.parentNode.insertBefore(src, row);
+            }
+        }
+    });
+    row.appendChild(dragHandle);
+
+    // プレビュー
+    var initFa = item.faIcon || guessIconFromUrl(item.url, item.label);
     var previewBtn = document.createElement('a');
     previewBtn.className = 'dept-hub-btn cl-preview-mini';
     previewBtn.href = '#';
-    previewBtn.onclick = function(e){ e.preventDefault(); };
-    var initFa = item.faIcon || (item.imgData ? '' : guessIconFromUrl(item.url, item.label));
-    var initIcon = item.imgData
-        ? '<img class="cl-prev-icon" src="' + escapeHtml(item.imgData) + '" style="width:36px;height:36px;border-radius:8px;object-fit:cover;" alt="">'
-        : '<i class="fas ' + escapeHtml(initFa || 'fa-external-link-alt') + ' cl-prev-icon"></i>';
-    previewBtn.innerHTML = initIcon + '<span>' + escapeHtml(item.label || 'リンク名') + '</span>';
-    previewDiv.appendChild(previewBtn);
-    row.appendChild(previewDiv);
+    previewBtn.onclick = function(e) { e.preventDefault(); };
+    previewBtn.innerHTML = item.imgData
+        ? '<img class="cl-prev-icon" src="' + escapeHtml(item.imgData) + '" style="width:36px;height:36px;border-radius:8px;object-fit:cover;" alt=""><span>' + escapeHtml(item.label || 'リンク名') + '</span>'
+        : '<i class="fas ' + escapeHtml(initFa) + ' cl-prev-icon"></i><span>' + escapeHtml(item.label || 'リンク名') + '</span>';
+    row.appendChild(previewBtn);
 
-    // --- フィールド ---
-    var fieldsDiv = document.createElement('div');
-    fieldsDiv.className = 'cl-fields-area';
+    // フォームエリア
+    var formDiv = document.createElement('div');
+    formDiv.className = 'cl-form';
 
     // 1行目: 表示名 + URL
     var line1 = document.createElement('div');
-    line1.className = 'cl-line';
+    line1.className = 'cl-line1';
     var labelInput = document.createElement('input');
-    labelInput.type = 'text';
-    labelInput.className = 'form-input cl-f-label';
-    labelInput.placeholder = '表示名';
-    labelInput.value = item.label || '';
+    labelInput.type = 'text'; labelInput.className = 'form-input cl-f-label'; labelInput.placeholder = '表示名'; labelInput.value = item.label || '';
     var urlInput = document.createElement('input');
-    urlInput.type = 'url';
-    urlInput.className = 'form-input cl-f-url';
-    urlInput.placeholder = 'https://...';
-    urlInput.value = item.url || '';
-    line1.appendChild(labelInput);
-    line1.appendChild(urlInput);
-    fieldsDiv.appendChild(line1);
+    urlInput.type = 'text'; urlInput.className = 'form-input cl-f-url'; urlInput.placeholder = 'https://...'; urlInput.value = item.url || '';
+    line1.appendChild(labelInput); line1.appendChild(urlInput);
+    formDiv.appendChild(line1);
 
-    // 2行目: アイコン
-    var line2 = document.createElement('div');
-    line2.className = 'cl-icon-line';
-    line2.innerHTML = '<span class="cl-icon-label">アイコン</span>';
-    var faInput = document.createElement('input');
-    faInput.type = 'text';
-    faInput.className = 'form-input cl-f-fa';
-    faInput.placeholder = '空白で自動（例: fa-star）';
-    faInput.value = item.faIcon || '';
-    var orSpan = document.createElement('span');
-    orSpan.className = 'cl-or-text';
-    orSpan.textContent = 'または';
-    // 画像ボタン
-    var imgLabel = document.createElement('label');
-    imgLabel.className = 'btn-secondary btn-small cl-img-label-btn';
-    imgLabel.innerHTML = '<i class="fas fa-image"></i> 画像';
-    var imgInput = document.createElement('input');
-    imgInput.type = 'file';
-    imgInput.className = 'cl-f-img';
-    imgInput.accept = 'image/*';
-    imgInput.hidden = true;
-    imgLabel.appendChild(imgInput);
-    // サムネイル
+    // アイコン候補ピッカー
+    var pickerWrap = document.createElement('div');
+    pickerWrap.className = 'cl-icon-picker';
+    var pickerLbl = document.createElement('span');
+    pickerLbl.className = 'cl-picker-label'; pickerLbl.textContent = 'アイコン';
+    pickerWrap.appendChild(pickerLbl);
+    var candidatesDiv = document.createElement('div');
+    candidatesDiv.className = 'cl-icon-candidates';
+    pickerWrap.appendChild(candidatesDiv);
+
+    // 画像サムネイル
     var imgThumb = document.createElement('img');
-    imgThumb.className = 'cl-img-thumb';
-    imgThumb.style.cssText = 'width:30px;height:30px;border-radius:6px;object-fit:cover;';
-    imgThumb.hidden = true;
-    if (item.imgData) { imgThumb.src = item.imgData; imgThumb.hidden = false; }
-    // クリアボタン
-    var imgClear = document.createElement('button');
-    imgClear.type = 'button';
-    imgClear.className = 'btn-secondary btn-small cl-img-clr';
-    imgClear.innerHTML = '<i class="fas fa-times"></i>';
-    imgClear.hidden = !item.imgData;
-    line2.appendChild(faInput);
-    line2.appendChild(orSpan);
-    line2.appendChild(imgLabel);
-    line2.appendChild(imgThumb);
-    line2.appendChild(imgClear);
-    fieldsDiv.appendChild(line2);
+    imgThumb.className = 'cl-img-thumb-small';
+    if (item.imgData) { imgThumb.src = item.imgData; imgThumb.style.display = ''; } else { imgThumb.style.display = 'none'; }
+    pickerWrap.appendChild(imgThumb);
+    formDiv.appendChild(pickerWrap);
 
-    // 3行目（全体のみ）: 表示場所
+    var hasImg = !!item.imgData;
+
+    function updatePreview() {
+        var lbl = labelInput.value.trim(), url = urlInput.value.trim();
+        var spanEl = previewBtn.querySelector('span');
+        if (spanEl) spanEl.textContent = lbl || url || 'リンク名';
+        var iconEl = previewBtn.querySelector('.cl-prev-icon');
+        if (hasImg && imgThumb.src && imgThumb.src.startsWith('data:')) {
+            var newTag = '<img class="cl-prev-icon" src="' + escapeHtml(imgThumb.src) + '" style="width:36px;height:36px;border-radius:8px;object-fit:cover;" alt="">';
+            if (iconEl) { iconEl.outerHTML = newTag; } else { previewBtn.insertAdjacentHTML('afterbegin', newTag); }
+        } else {
+            var selR = candidatesDiv.querySelector('input[type=radio]:checked');
+            var fa = selR ? selR.value : guessIconFromUrl(url, lbl);
+            if (iconEl && iconEl.tagName === 'I') { iconEl.className = 'fas ' + fa + ' cl-prev-icon'; }
+            else if (iconEl) { iconEl.outerHTML = '<i class="fas ' + fa + ' cl-prev-icon"></i>'; }
+            else { previewBtn.insertAdjacentHTML('afterbegin', '<i class="fas ' + fa + ' cl-prev-icon"></i>'); }
+        }
+    }
+
+    function rebuildCandidates(url, label, selFa, useImg) {
+        candidatesDiv.innerHTML = '';
+        var cands = getIconCandidates(url, label, selFa);
+        var grp = rowId + '_icon';
+        cands.forEach(function(fa) {
+            var lbl = document.createElement('label');
+            lbl.className = 'cl-icon-opt'; lbl.title = fa.replace('fa-', '');
+            var radio = document.createElement('input');
+            radio.type = 'radio'; radio.name = grp; radio.value = fa; radio.hidden = true;
+            if (!useImg && fa === (selFa || cands[0])) { radio.checked = true; lbl.classList.add('selected'); }
+            radio.addEventListener('change', function() {
+                hasImg = false; imgThumb.style.display = 'none';
+                candidatesDiv.querySelectorAll('.cl-icon-opt').forEach(function(x) { x.classList.remove('selected'); });
+                lbl.classList.add('selected');
+                updatePreview();
+            });
+            lbl.appendChild(radio);
+            lbl.innerHTML += '<i class="fas ' + fa + '"></i>';
+            candidatesDiv.appendChild(lbl);
+        });
+        // 画像ボタン
+        var imgLbl = document.createElement('label');
+        imgLbl.className = 'cl-icon-opt cl-icon-img-opt' + (useImg ? ' selected' : '');
+        imgLbl.title = '画像をアップロード';
+        var imgFile = document.createElement('input');
+        imgFile.type = 'file'; imgFile.accept = 'image/*'; imgFile.hidden = true;
+        imgFile.addEventListener('change', function() {
+            var f = imgFile.files[0]; if (!f) return;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                imgThumb.src = e.target.result; imgThumb.style.display = '';
+                hasImg = true;
+                candidatesDiv.querySelectorAll('.cl-icon-opt').forEach(function(x) { x.classList.remove('selected'); });
+                imgLbl.classList.add('selected');
+                updatePreview();
+            };
+            reader.readAsDataURL(f);
+        });
+        imgLbl.appendChild(imgFile);
+        imgLbl.innerHTML += '<i class="fas fa-image"></i>';
+        imgLbl.addEventListener('click', function(e) { if (e.target === imgLbl || e.target.tagName === 'I') { imgFile.click(); e.preventDefault(); } });
+        if (useImg) imgLbl.classList.add('selected');
+        candidatesDiv.appendChild(imgLbl);
+    }
+
+    rebuildCandidates(item.url, item.label, item.faIcon || null, hasImg);
+
+    // 部署チェック（全体のみ）
     if (isGlobal) {
         var deptLine = document.createElement('div');
         deptLine.className = 'cl-dept-line';
-        deptLine.innerHTML = '<span class="cl-dept-label">表示場所</span>';
+        var deptLbl = document.createElement('span');
+        deptLbl.className = 'cl-dept-label'; deptLbl.textContent = '表示場所';
+        deptLine.appendChild(deptLbl);
         var depts = Array.isArray(item.depts) ? item.depts : ['home'];
         DEPT_LIST.forEach(function(d) {
-            var lbl = document.createElement('label');
-            lbl.className = 'cl-dept-check';
-            var cb = document.createElement('input');
-            cb.type = 'checkbox';
-            cb.className = 'cl-dept-cb';
-            cb.value = d.key;
-            cb.checked = depts.indexOf(d.key) !== -1;
-            lbl.appendChild(cb);
-            lbl.appendChild(document.createTextNode(' ' + d.label));
+            var lbl = document.createElement('label'); lbl.className = 'cl-dept-check';
+            var cb = document.createElement('input'); cb.type = 'checkbox'; cb.className = 'cl-dept-cb'; cb.value = d.key; cb.checked = depts.indexOf(d.key) !== -1;
+            lbl.appendChild(cb); lbl.appendChild(document.createTextNode(d.label));
             deptLine.appendChild(lbl);
         });
-        fieldsDiv.appendChild(deptLine);
+        formDiv.appendChild(deptLine);
     }
+
+    row.appendChild(formDiv);
 
     // 削除ボタン
     var delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.className = 'btn-secondary btn-small cl-del-btn';
-    delBtn.innerHTML = '<i class="fas fa-trash"></i> 削除';
-    fieldsDiv.appendChild(delBtn);
+    delBtn.type = 'button'; delBtn.className = 'cl-del-btn'; delBtn.innerHTML = '<i class="fas fa-trash"></i>'; delBtn.title = '削除';
+    delBtn.addEventListener('click', function() { row.remove(); });
+    row.appendChild(delBtn);
 
-    row.appendChild(fieldsDiv);
-
-    // ====== イベント ======
-    var updatePreview = function() { updateClRowPreview(row); };
+    // イベント
     labelInput.addEventListener('input', updatePreview);
-    urlInput.addEventListener('input', updatePreview);
-    faInput.addEventListener('input', updatePreview);
-
-    imgInput.addEventListener('change', function() {
-        var file = imgInput.files[0];
-        if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            imgThumb.src = e.target.result;
-            imgThumb.hidden = false;
-            imgClear.hidden = false;
-            faInput.value = '';
-            updatePreview();
-        };
-        reader.readAsDataURL(file);
-    });
-    imgClear.addEventListener('click', function() {
-        imgThumb.src = '';
-        imgThumb.hidden = true;
-        imgClear.hidden = true;
-        imgInput.value = '';
+    urlInput.addEventListener('input', function() {
+        var selR = candidatesDiv.querySelector('input[type=radio]:checked');
+        rebuildCandidates(urlInput.value.trim(), labelInput.value.trim(), selR ? selR.value : null, hasImg);
         updatePreview();
     });
-    delBtn.addEventListener('click', function() { row.remove(); });
 
     return row;
 }
