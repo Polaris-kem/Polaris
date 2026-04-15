@@ -687,7 +687,7 @@ function saveUserSettings(settings) {
     const key = 'userSettings_' + loginId;
     localStorage.setItem(key, JSON.stringify(settings));
     updateSidebarUserDisplay();
-    renderCustomLinks();
+    renderAllCustomLinks();
 }
 
 // ====== カスタムリンク管理 ======
