@@ -804,6 +804,43 @@ function saveUserSettingsFromForm() {
     };
     saveUserSettings(settings);
 }
+// 設定タブ切替
+function switchSettingsTab(tab) {
+    var tabs = ['personal', 'global'];
+    tabs.forEach(function(t) {
+        var pane = document.getElementById('settings-tab-' + t);
+        var btn = document.getElementById('tab-btn-' + t);
+        if (!pane || !btn) return;
+        var isActive = (t === tab);
+        pane.style.display = isActive ? '' : 'none';
+        btn.classList.toggle('active', isActive);
+    });
+}
+// カスタムリンクをダッシュボードに描画
+function renderCustomLinks() {
+    var card = document.getElementById('dashboard-custom-links');
+    var grid = document.getElementById('custom-links-grid');
+    if (!card || !grid) return;
+    var s = getUserSettings();
+    var list = s.customQuickActions;
+    if (!Array.isArray(list) || list.length === 0) {
+        card.style.display = 'none';
+        return;
+    }
+    card.style.display = '';
+    grid.innerHTML = '';
+    list.forEach(function(item) {
+        if (!item || !item.url) return;
+        var a = document.createElement('a');
+        a.href = item.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.className = 'dept-hub-btn';
+        a.style.textDecoration = 'none';
+        a.innerHTML = '<i class="fas fa-external-link-alt"></i><span>' + escapeHtml(item.label || item.url) + '</span>';
+        grid.appendChild(a);
+    });
+}
 function updateSidebarUserDisplay() {
     const s = getUserSettings();
     var name = s.displayName || localStorage.getItem('username') || 'ログインユーザー';
