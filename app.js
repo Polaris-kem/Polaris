@@ -791,6 +791,31 @@ function renderAllCustomLinks() {
 
 // ====== カスタムリンクフォーム ======
 
+var ICON_CANDIDATES_ALL = [
+    'fa-external-link-alt','fa-globe','fa-link','fa-file-alt','fa-folder',
+    'fa-envelope','fa-calendar-alt','fa-users','fa-chart-bar','fa-search',
+    'fa-cloud','fa-star','fa-bookmark','fa-building','fa-home','fa-tools',
+    'fa-file-excel','fa-file-word','fa-file-pdf','fa-tasks','fa-clipboard-list',
+    'fa-shopping-cart','fa-video','fa-comments','fa-bell','fa-map-marker-alt',
+    'fa-cog','fa-code-branch','fa-download','fa-upload','fa-image','fa-table',
+    'fa-phone','fa-heart','fa-clock','fa-user','fa-box','fa-truck'
+];
+
+function getIconCandidates(url, label, selected) {
+    var guessed = guessIconFromUrl(url, label);
+    var pool = [guessed];
+    for (var i = 0; i < ICON_CANDIDATES_ALL.length && pool.length < 8; i++) {
+        if (ICON_CANDIDATES_ALL[i] !== guessed) pool.push(ICON_CANDIDATES_ALL[i]);
+    }
+    if (selected && pool.indexOf(selected) === -1) {
+        pool = [selected].concat(pool.slice(0, 7));
+    } else if (selected && pool[0] !== selected) {
+        pool.splice(pool.indexOf(selected), 1);
+        pool.unshift(selected);
+    }
+    return pool.slice(0, 8);
+}
+
 var DEPT_LIST = [
     { key:'home', label:'ホーム' },
     { key:'sales', label:'営業部' },
