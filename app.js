@@ -1065,6 +1065,11 @@ function loadUserSettingsIntoForm() {
 }
 // 設定タブ切替
 function switchSettingsTab(tab) {
+    // 全体タブから離れる前に自動保存
+    var globalPane = document.getElementById('settings-tab-global');
+    if (globalPane && globalPane.style.display !== 'none' && tab !== 'global') {
+        saveGlobalLinksFromForm(true); // silent=true でメッセージなし
+    }
     var tabs = ['personal', 'global'];
     tabs.forEach(function(t) {
         var pane = document.getElementById('settings-tab-' + t);
