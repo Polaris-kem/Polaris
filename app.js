@@ -988,12 +988,11 @@ function loadCustomLinksIntoForms() {
         globalContainer.innerHTML = '';
         getGlobalCustomLinks().forEach(function(it) { globalContainer.appendChild(buildClRow(it, true)); });
     }
-    // 管理者判定で全体セクション表示
+    // 全体リンクは全員が編集可能
     var adminSection = document.getElementById('global-custom-links-admin');
     var noAdminNote = document.getElementById('global-links-no-admin');
-    var isAdmin = isCurrentUserAdmin();
-    if (adminSection) adminSection.style.display = isAdmin ? '' : 'none';
-    if (noAdminNote) noAdminNote.style.display = isAdmin ? 'none' : '';
+    if (adminSection) adminSection.style.display = '';
+    if (noAdminNote) noAdminNote.style.display = 'none';
 }
 
 // 設定フォームのイベント初期化
