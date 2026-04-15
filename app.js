@@ -1045,6 +1045,7 @@ function saveUserSettingsFromForm() {
         customLinks: customLinks
     };
     saveUserSettings(settings);
+    saveGlobalLinksFromForm(true); // 全体リンクも同時保存
 }
 
 // 全体設定フォームから保存
