@@ -686,6 +686,7 @@ function saveUserSettings(settings) {
     const key = 'userSettings_' + loginId;
     localStorage.setItem(key, JSON.stringify(settings));
     updateSidebarUserDisplay();
+    renderCustomLinks();
 }
 
 // クイックアクションの定義（id, ラベル, アイコン, ページ）
