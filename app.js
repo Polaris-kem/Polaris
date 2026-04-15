@@ -1048,10 +1048,10 @@ function saveUserSettingsFromForm() {
 }
 
 // 全体設定フォームから保存
-function saveGlobalLinksFromForm() {
+function saveGlobalLinksFromForm(silent) {
     var list = collectClRows(document.getElementById('settings-global-custom-urls'));
     saveGlobalCustomLinks(list);
-    showMessage('全体リンクを保存しました', 'success');
+    if (!silent) showMessage('全体リンクを保存しました', 'success');
 }
 
 // 設定ページ表示時に呼ぶ（showPage('settings')から）
