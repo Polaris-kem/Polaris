@@ -1059,19 +1059,17 @@ function collectClRows(container) {
     var list = [];
     if (!container) return list;
     container.querySelectorAll('.cl-row').forEach(function(row) {
-        var url = (row.querySelector('.cl-f-url') || {}).value || '';
-        url = url.trim();
+        var url = ((row.querySelector('.cl-f-url') || {}).value || '').trim();
         if (!url) return;
         var label = ((row.querySelector('.cl-f-label') || {}).value || '').trim();
-        var fa = ((row.querySelector('.cl-f-fa') || {}).value || '').trim();
-        var thumb = row.querySelector('.cl-img-thumb');
-        var imgData = (thumb && !thumb.hidden && thumb.src && thumb.src.startsWith('data:')) ? thumb.src : null;
-        var item = { label: label || url, url: url, faIcon: fa || null, imgData: imgData || null };
-        // 部署チェック（全体のみ）
+        var selR = row.querySelector('input[type=radio]:checked');
+        var fa = selR ? selR.value : null;
+        var thumb = row.querySelector('.cl-img-thumb-small');
+        var imgData = (thumb && thumb.style.display !== 'none' && thumb.src && thumb.src.startsWith('data:')) ? thumb.src : null;
+        var item = { label: label || url, url: url, faIcon: imgData ? null : fa, imgData: imgData || null };
         var depCbs = row.querySelectorAll('.cl-dept-cb');
         if (depCbs.length > 0) {
-            var depts = [];
-            depCbs.forEach(function(cb) { if (cb.checked) depts.push(cb.value); });
+            var depts = []; depCbs.forEach(function(cb) { if (cb.checked) depts.push(cb.value); });
             item.depts = depts;
         }
         list.push(item);
