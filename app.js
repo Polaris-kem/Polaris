@@ -556,7 +556,7 @@ function checkLoginStatus() {
         mainApp.style.display = 'block';
     }
     if (typeof updateSidebarUserDisplay === 'function') updateSidebarUserDisplay();
-    if (typeof renderCustomLinks === 'function') renderCustomLinks();
+    if (typeof renderAllCustomLinks === 'function') renderAllCustomLinks();
     return true; // 常にログイン済みとして扱う
 }
 
