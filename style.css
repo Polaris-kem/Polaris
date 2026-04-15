@@ -1750,6 +1750,114 @@ a.quick-action-btn:hover { color: white; }
 .settings-custom-url-row .settings-custom-url-remove:hover {
     color: var(--error);
 }
+
+/* カスタムリンクフォーム */
+.cl-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px;
+    background: var(--bg-hover, #f9f9fb);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+.cl-preview {
+    flex-shrink: 0;
+}
+.cl-preview-mini {
+    width: 90px !important;
+    min-width: 90px !important;
+    padding: 14px 8px !important;
+    gap: 8px !important;
+    font-size: 11px !important;
+}
+.cl-preview-mini i {
+    font-size: 22px !important;
+}
+.cl-preview-mini .cl-prev-icon {
+    font-size: 22px !important;
+}
+.cl-fields-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.cl-line {
+    display: flex;
+    gap: 8px;
+}
+.cl-line .cl-f-label {
+    flex: 0 0 160px;
+}
+.cl-line .cl-f-url {
+    flex: 1;
+}
+.cl-icon-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.cl-icon-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.cl-f-fa {
+    flex: 1;
+    min-width: 120px;
+    max-width: 220px;
+}
+.cl-or-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.cl-img-label-btn {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.cl-dept-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 6px 0;
+    border-top: 1px solid var(--border-light);
+}
+.cl-dept-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    font-weight: 600;
+}
+.cl-dept-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-primary);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.cl-dept-check input {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+}
+.cl-del-btn {
+    align-self: flex-start;
+    color: #ef4444 !important;
+    border-color: #fecaca !important;
+}
+.cl-del-btn:hover {
+    background: #fee2e2 !important;
+}
+
 .settings-form .field-note {
     display: block;
     margin-top: 4px;
