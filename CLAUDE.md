@@ -15,11 +15,10 @@
 - `.claude/settings.json` に PreToolUse フックで `git push` をブロック済み
 
 ## ファイル構造（重要）
-- **編集対象は必ず `Polaris/` サブフォルダ内のファイル**
-  - `D:\Claude\supabase-data-viewer\Polaris\` ← GitHubに繋がる本物のリポジトリ
-  - `D:\Claude\supabase-data-viewer\` ← 外側の親フォルダ（GitHubに繋がっていない）
-- ルートの `app.js` / `index.html` / `style.css` を編集しても本番に反映されない
-- 必ず `Polaris/app.js`、`Polaris/index.html`、`Polaris/style.css` を編集すること
+- **リポジトリルート: `D:\Claude\Polaris\`**
+  - このフォルダ直下の `app.js` / `index.html` / `style.css` を編集する
+  - GitHubリポジトリはこのフォルダ自体（`.git` がここにある）
+- `D:\Claude\Polaris\Polaris\` という空フォルダが残っているが無視してよい（削除可）
 
 ## プロジェクト概要
 - アプリ名: **Polaris**（製造業向け社内管理システム）
@@ -36,8 +35,8 @@
 - keydate は受注登録日（何巡目かの識別子）
 
 ## 作業の流れ
-1. `Polaris/` 内のファイルを修正する
-2. `Polaris/` 内で `git add` → `git commit`
+1. `D:\Claude\Polaris\` 内のファイルを修正する
+2. `D:\Claude\Polaris\` で `git add` → `git commit`
 3. 「GitHub Desktopでpushできます」と伝える
 4. pushはユーザーがGitHub Desktopで実行する
 
