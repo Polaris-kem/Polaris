@@ -690,121 +690,379 @@ function saveUserSettings(settings) {
     renderCustomLinks();
 }
 
-// クイックアクションの定義（id, ラベル, アイコン, ページ）
-var QUICK_ACTIONS_DEF = [
-    { id: 'order-registration', label: '受注登録', icon: 'fa-file-invoice-dollar', page: 'order-registration' },
-    { id: 'drawing-number', label: '図面番号採番', icon: 'fa-drafting-compass', page: 'drawing-number' },
-    { id: 'construct-number', label: '工事番号採番', icon: 'fa-hashtag', page: 'construct-number' },
-    { id: 'search', label: '検索', icon: 'fa-search', page: 'search' },
-    { id: 'settings', label: '個人設定', icon: 'fa-user-cog', page: 'settings' }
-];
-function renderQuickActions() {
-    const grid = document.getElementById('quick-actions-grid');
-    const container = document.getElementById('dashboard-quick-actions');
-    if (!grid || !container) return;
-    const s = getUserSettings();
-    const show = s.showQuickActions !== false;
-    container.style.display = show ? '' : 'none';
-    var ids = s.quickActionIds;
-    if (!Array.isArray(ids) || ids.length === 0) {
-        ids = QUICK_ACTIONS_DEF.map(function(d) { return d.id; });
-    }
-    grid.innerHTML = '';
-    ids.forEach(function(id) {
-        var def = QUICK_ACTIONS_DEF.find(function(d) { return d.id === id; });
-        if (!def) return;
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'quick-action-btn';
-        btn.dataset.id = def.id;
-        btn.innerHTML = '<i class="fas ' + def.icon + '"></i><span>' + def.label + '</span>';
-        btn.onclick = (function(p) { return function() { showPage(p); }; })(def.page);
-        grid.appendChild(btn);
-    });
-    var custom = s.customQuickActions;
-    if (Array.isArray(custom) && custom.length > 0) {
-        custom.forEach(function(item) {
-            if (!item || !item.url || !item.label) return;
-            var a = document.createElement('a');
-            a.href = item.url;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            a.className = 'quick-action-btn';
-            a.innerHTML = '<i class="fas fa-external-link-alt"></i><span>' + escapeHtml(item.label) + '</span>';
-            grid.appendChild(a);
-        });
-    }
+// ====== カスタムリンク管理 ======
+
+// 管理者チェック
+function isCurrentUserAdmin() {
+    var loginId = getCurrentLoginId();
+    if (typeof loadUsers === 'function') loadUsers();
+    if (typeof users === 'undefined' || !Array.isArray(users)) return false;
+    var user = users.find(function(u) { return u.loginId === loginId; });
+    return user ? user.isAdmin === true : false;
 }
-function loadUserSettingsIntoForm() {
-    const s = getUserSettings();
-    const displayNameEl = document.getElementById('settings-display-name');
-    const quickActionsEl = document.getElementById('settings-show-quick-actions');
-    const notifyTasksEl = document.getElementById('settings-notify-tasks');
-    if (displayNameEl) displayNameEl.value = s.displayName || '';
-    if (quickActionsEl) quickActionsEl.checked = s.showQuickActions !== false;
-    if (notifyTasksEl) notifyTasksEl.checked = !!s.notifyTasks;
-    var ids = s.quickActionIds;
-    if (!Array.isArray(ids) || ids.length === 0) ids = QUICK_ACTIONS_DEF.map(function(d) { return d.id; });
-    var checks = document.querySelectorAll('#settings-quick-action-checks input[name="quick-action"]');
-    checks.forEach(function(cb) {
-        cb.checked = ids.indexOf(cb.value) !== -1;
-    });
-    var container = document.getElementById('settings-custom-urls');
-    if (container) {
+
+// 全体リンクの取得・保存
+function getGlobalCustomLinks() {
+    try { return JSON.parse(localStorage.getItem('globalCustomLinks') || '[]'); }
+    catch(e) { return []; }
+}
+function saveGlobalCustomLinks(list) {
+    localStorage.setItem('globalCustomLinks', JSON.stringify(list));
+    renderAllCustomLinks();
+}
+
+// URLからアイコン自動推測
+function guessIconFromUrl(url, label) {
+    var s = ((url || '') + ' ' + (label || '')).toLowerCase();
+    if (/youtube/.test(s)) return 'fa-play-circle';
+    if (/github/.test(s)) return 'fa-code-branch';
+    if (/drive\.google/.test(s)) return 'fa-cloud';
+    if (/onedrive|sharepoint/.test(s)) return 'fa-cloud';
+    if (/docs\.google/.test(s)) return 'fa-file-word';
+    if (/sheets\.google/.test(s)) return 'fa-file-excel';
+    if (/slides\.google/.test(s)) return 'fa-file-powerpoint';
+    if (/excel|\.xlsx/.test(s)) return 'fa-file-excel';
+    if (/word|\.docx/.test(s)) return 'fa-file-word';
+    if (/\.pdf/.test(s)) return 'fa-file-pdf';
+    if (/mail|outlook|gmail/.test(s)) return 'fa-envelope';
+    if (/zoom|meet\.google/.test(s)) return 'fa-video';
+    if (/teams/.test(s)) return 'fa-users';
+    if (/slack/.test(s)) return 'fa-comments';
+    if (/maps?\.google/.test(s)) return 'fa-map-marker-alt';
+    if (/calendar/.test(s)) return 'fa-calendar-alt';
+    if (/chat|line\.me/.test(s)) return 'fa-comment';
+    if (/wiki/.test(s)) return 'fa-book';
+    if (/report|レポート|報告/.test(s)) return 'fa-chart-bar';
+    if (/manual|マニュアル/.test(s)) return 'fa-book-open';
+    if (/注文|発注/.test(s)) return 'fa-shopping-cart';
+    if (/在庫|stock/.test(s)) return 'fa-boxes';
+    if (/社内|intranet/.test(s)) return 'fa-building';
+    if (/map|地図/.test(s)) return 'fa-map';
+    return 'fa-external-link-alt';
+}
+
+// カスタムリンクボタンのDOM要素生成
+function buildCustomLinkBtn(item) {
+    var a = document.createElement('a');
+    a.href = item.url || '#';
+    if (item.url) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+    a.className = 'dept-hub-btn';
+    a.style.textDecoration = 'none';
+    var iconHtml;
+    if (item.imgData) {
+        iconHtml = '<img src="' + escapeHtml(item.imgData) + '" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" alt="">';
+    } else {
+        var fa = item.faIcon || guessIconFromUrl(item.url, item.label);
+        iconHtml = '<i class="fas ' + escapeHtml(fa) + '"></i>';
+    }
+    a.innerHTML = iconHtml + '<span>' + escapeHtml(item.label || item.url || 'リンク') + '</span>';
+    return a;
+}
+
+// 全ページにカスタムリンクを描画
+function renderAllCustomLinks() {
+    var s = getUserSettings();
+    var personal = Array.isArray(s.customLinks) ? s.customLinks :
+                   (Array.isArray(s.customQuickActions) ? s.customQuickActions : []);
+    var global = getGlobalCustomLinks();
+
+    // ホームダッシュボード
+    var homeCard = document.getElementById('dashboard-custom-links');
+    var homeGrid = document.getElementById('custom-links-grid');
+    if (homeGrid) {
+        homeGrid.innerHTML = '';
+        var homeItems = personal.concat(
+            global.filter(function(it) { return it.depts && it.depts.indexOf('home') !== -1; })
+        );
+        if (homeCard) homeCard.style.display = homeItems.length > 0 ? '' : 'none';
+        homeItems.forEach(function(it) { homeGrid.appendChild(buildCustomLinkBtn(it)); });
+    }
+
+    // 各ハブページ
+    ['sales','design','ops','mfg','akashi','assy','general'].forEach(function(dept) {
+        var container = document.getElementById('cl-hub-' + dept);
+        if (!container) return;
+        var items = global.filter(function(it) { return it.depts && it.depts.indexOf(dept) !== -1; });
+        container.style.display = items.length > 0 ? '' : 'none';
         container.innerHTML = '';
-        var list = s.customQuickActions;
-        if (!Array.isArray(list) || list.length === 0) {
-            addCustomUrlRow('', '');
+        items.forEach(function(it) { container.appendChild(buildCustomLinkBtn(it)); });
+    });
+}
+
+// ====== カスタムリンクフォーム ======
+
+var DEPT_LIST = [
+    { key:'home', label:'ホーム' },
+    { key:'sales', label:'営業部' },
+    { key:'design', label:'製造設計部' },
+    { key:'ops', label:'操業部' },
+    { key:'mfg', label:'製造管理部' },
+    { key:'akashi', label:'明石製造部' },
+    { key:'assy', label:'組立部' },
+    { key:'general', label:'総務部' }
+];
+
+// フォーム行のプレビュー更新
+function updateClRowPreview(row) {
+    var labelEl = row.querySelector('.cl-f-label');
+    var urlEl = row.querySelector('.cl-f-url');
+    var faEl = row.querySelector('.cl-f-fa');
+    var thumb = row.querySelector('.cl-img-thumb');
+    var preview = row.querySelector('.cl-preview-mini');
+    if (!preview) return;
+    var label = labelEl ? labelEl.value.trim() : '';
+    var url = urlEl ? urlEl.value.trim() : '';
+    var fa = faEl ? faEl.value.trim() : '';
+    var hasImg = thumb && !thumb.hidden && thumb.src;
+    var iconEl = preview.querySelector('.cl-prev-icon');
+    var spanEl = preview.querySelector('span');
+    if (spanEl) spanEl.textContent = label || url || 'リンク名';
+    if (iconEl) {
+        if (hasImg) {
+            iconEl.outerHTML = '<img class="cl-prev-icon" src="' + escapeHtml(thumb.src) + '" style="width:36px;height:36px;border-radius:8px;object-fit:cover;" alt="">';
         } else {
-            list.forEach(function(item) {
-                addCustomUrlRow(item.label || '', item.url || '');
-            });
+            var resolvedFa = fa || guessIconFromUrl(url, label);
+            iconEl.className = 'fas ' + resolvedFa + ' cl-prev-icon';
         }
     }
 }
-function addCustomUrlRow(label, url) {
-    var container = document.getElementById('settings-custom-urls');
-    if (!container) return;
+
+// 個人/全体共通のリンク行を生成
+function buildClRow(item, isGlobal) {
+    item = item || {};
     var row = document.createElement('div');
-    row.className = 'settings-custom-url-row';
-    row.innerHTML = '<input type="text" class="form-input settings-custom-url-label" placeholder="表示名" value="' + (label ? escapeHtml(label) : '') + '">' +
-        '<input type="text" class="form-input settings-custom-url-url" placeholder="https://..." value="' + (url ? escapeHtml(url) : '') + '">' +
-        '<button type="button" class="btn-secondary btn-small settings-custom-url-remove" title="削除"><i class="fas fa-times"></i></button>';
-    var removeBtn = row.querySelector('.settings-custom-url-remove');
-    removeBtn.addEventListener('click', function() {
-        row.remove();
+    row.className = 'cl-row';
+
+    // --- プレビュー ---
+    var previewDiv = document.createElement('div');
+    previewDiv.className = 'cl-preview';
+    var previewBtn = document.createElement('a');
+    previewBtn.className = 'dept-hub-btn cl-preview-mini';
+    previewBtn.href = '#';
+    previewBtn.onclick = function(e){ e.preventDefault(); };
+    var initFa = item.faIcon || (item.imgData ? '' : guessIconFromUrl(item.url, item.label));
+    var initIcon = item.imgData
+        ? '<img class="cl-prev-icon" src="' + escapeHtml(item.imgData) + '" style="width:36px;height:36px;border-radius:8px;object-fit:cover;" alt="">'
+        : '<i class="fas ' + escapeHtml(initFa || 'fa-external-link-alt') + ' cl-prev-icon"></i>';
+    previewBtn.innerHTML = initIcon + '<span>' + escapeHtml(item.label || 'リンク名') + '</span>';
+    previewDiv.appendChild(previewBtn);
+    row.appendChild(previewDiv);
+
+    // --- フィールド ---
+    var fieldsDiv = document.createElement('div');
+    fieldsDiv.className = 'cl-fields-area';
+
+    // 1行目: 表示名 + URL
+    var line1 = document.createElement('div');
+    line1.className = 'cl-line';
+    var labelInput = document.createElement('input');
+    labelInput.type = 'text';
+    labelInput.className = 'form-input cl-f-label';
+    labelInput.placeholder = '表示名';
+    labelInput.value = item.label || '';
+    var urlInput = document.createElement('input');
+    urlInput.type = 'url';
+    urlInput.className = 'form-input cl-f-url';
+    urlInput.placeholder = 'https://...';
+    urlInput.value = item.url || '';
+    line1.appendChild(labelInput);
+    line1.appendChild(urlInput);
+    fieldsDiv.appendChild(line1);
+
+    // 2行目: アイコン
+    var line2 = document.createElement('div');
+    line2.className = 'cl-icon-line';
+    line2.innerHTML = '<span class="cl-icon-label">アイコン</span>';
+    var faInput = document.createElement('input');
+    faInput.type = 'text';
+    faInput.className = 'form-input cl-f-fa';
+    faInput.placeholder = '空白で自動（例: fa-star）';
+    faInput.value = item.faIcon || '';
+    var orSpan = document.createElement('span');
+    orSpan.className = 'cl-or-text';
+    orSpan.textContent = 'または';
+    // 画像ボタン
+    var imgLabel = document.createElement('label');
+    imgLabel.className = 'btn-secondary btn-small cl-img-label-btn';
+    imgLabel.innerHTML = '<i class="fas fa-image"></i> 画像';
+    var imgInput = document.createElement('input');
+    imgInput.type = 'file';
+    imgInput.className = 'cl-f-img';
+    imgInput.accept = 'image/*';
+    imgInput.hidden = true;
+    imgLabel.appendChild(imgInput);
+    // サムネイル
+    var imgThumb = document.createElement('img');
+    imgThumb.className = 'cl-img-thumb';
+    imgThumb.style.cssText = 'width:30px;height:30px;border-radius:6px;object-fit:cover;';
+    imgThumb.hidden = true;
+    if (item.imgData) { imgThumb.src = item.imgData; imgThumb.hidden = false; }
+    // クリアボタン
+    var imgClear = document.createElement('button');
+    imgClear.type = 'button';
+    imgClear.className = 'btn-secondary btn-small cl-img-clr';
+    imgClear.innerHTML = '<i class="fas fa-times"></i>';
+    imgClear.hidden = !item.imgData;
+    line2.appendChild(faInput);
+    line2.appendChild(orSpan);
+    line2.appendChild(imgLabel);
+    line2.appendChild(imgThumb);
+    line2.appendChild(imgClear);
+    fieldsDiv.appendChild(line2);
+
+    // 3行目（全体のみ）: 表示場所
+    if (isGlobal) {
+        var deptLine = document.createElement('div');
+        deptLine.className = 'cl-dept-line';
+        deptLine.innerHTML = '<span class="cl-dept-label">表示場所</span>';
+        var depts = Array.isArray(item.depts) ? item.depts : ['home'];
+        DEPT_LIST.forEach(function(d) {
+            var lbl = document.createElement('label');
+            lbl.className = 'cl-dept-check';
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'cl-dept-cb';
+            cb.value = d.key;
+            cb.checked = depts.indexOf(d.key) !== -1;
+            lbl.appendChild(cb);
+            lbl.appendChild(document.createTextNode(' ' + d.label));
+            deptLine.appendChild(lbl);
+        });
+        fieldsDiv.appendChild(deptLine);
+    }
+
+    // 削除ボタン
+    var delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'btn-secondary btn-small cl-del-btn';
+    delBtn.innerHTML = '<i class="fas fa-trash"></i> 削除';
+    fieldsDiv.appendChild(delBtn);
+
+    row.appendChild(fieldsDiv);
+
+    // ====== イベント ======
+    var updatePreview = function() { updateClRowPreview(row); };
+    labelInput.addEventListener('input', updatePreview);
+    urlInput.addEventListener('input', updatePreview);
+    faInput.addEventListener('input', updatePreview);
+
+    imgInput.addEventListener('change', function() {
+        var file = imgInput.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            imgThumb.src = e.target.result;
+            imgThumb.hidden = false;
+            imgClear.hidden = false;
+            faInput.value = '';
+            updatePreview();
+        };
+        reader.readAsDataURL(file);
     });
-    container.appendChild(row);
+    imgClear.addEventListener('click', function() {
+        imgThumb.src = '';
+        imgThumb.hidden = true;
+        imgClear.hidden = true;
+        imgInput.value = '';
+        updatePreview();
+    });
+    delBtn.addEventListener('click', function() { row.remove(); });
+
+    return row;
 }
+
+// フォームにリンク一覧を読み込む
+function loadCustomLinksIntoForms() {
+    // 個人
+    var personalContainer = document.getElementById('settings-custom-urls');
+    if (personalContainer) {
+        personalContainer.innerHTML = '';
+        var s = getUserSettings();
+        var list = Array.isArray(s.customLinks) ? s.customLinks :
+                   (Array.isArray(s.customQuickActions) ? s.customQuickActions : []);
+        list.forEach(function(it) { personalContainer.appendChild(buildClRow(it, false)); });
+    }
+    // 全体
+    var globalContainer = document.getElementById('settings-global-custom-urls');
+    if (globalContainer) {
+        globalContainer.innerHTML = '';
+        getGlobalCustomLinks().forEach(function(it) { globalContainer.appendChild(buildClRow(it, true)); });
+    }
+    // 管理者判定で全体セクション表示
+    var adminSection = document.getElementById('global-custom-links-admin');
+    var noAdminNote = document.getElementById('global-links-no-admin');
+    var isAdmin = isCurrentUserAdmin();
+    if (adminSection) adminSection.style.display = isAdmin ? '' : 'none';
+    if (noAdminNote) noAdminNote.style.display = isAdmin ? 'none' : '';
+}
+
+// 設定フォームのイベント初期化
 function initCustomUrlAddButton() {
-    var btn = document.getElementById('settings-add-custom-url');
-    if (btn) btn.addEventListener('click', function() { addCustomUrlRow('', ''); });
+    var personalBtn = document.getElementById('settings-add-custom-url');
+    if (personalBtn) personalBtn.addEventListener('click', function() {
+        var container = document.getElementById('settings-custom-urls');
+        if (container) container.appendChild(buildClRow({}, false));
+    });
+    var globalBtn = document.getElementById('settings-add-global-url');
+    if (globalBtn) globalBtn.addEventListener('click', function() {
+        var container = document.getElementById('settings-global-custom-urls');
+        if (container) container.appendChild(buildClRow({}, true));
+    });
 }
+
+// フォームから読み取ってリンク一覧を生成
+function collectClRows(container) {
+    var list = [];
+    if (!container) return list;
+    container.querySelectorAll('.cl-row').forEach(function(row) {
+        var url = (row.querySelector('.cl-f-url') || {}).value || '';
+        url = url.trim();
+        if (!url) return;
+        var label = ((row.querySelector('.cl-f-label') || {}).value || '').trim();
+        var fa = ((row.querySelector('.cl-f-fa') || {}).value || '').trim();
+        var thumb = row.querySelector('.cl-img-thumb');
+        var imgData = (thumb && !thumb.hidden && thumb.src && thumb.src.startsWith('data:')) ? thumb.src : null;
+        var item = { label: label || url, url: url, faIcon: fa || null, imgData: imgData || null };
+        // 部署チェック（全体のみ）
+        var depCbs = row.querySelectorAll('.cl-dept-cb');
+        if (depCbs.length > 0) {
+            var depts = [];
+            depCbs.forEach(function(cb) { if (cb.checked) depts.push(cb.value); });
+            item.depts = depts;
+        }
+        list.push(item);
+    });
+    return list;
+}
+
+// 個人設定フォームから保存
 function saveUserSettingsFromForm() {
-    const displayNameEl = document.getElementById('settings-display-name');
-    const quickActionsEl = document.getElementById('settings-show-quick-actions');
-    const notifyTasksEl = document.getElementById('settings-notify-tasks');
-    var ids = [];
-    document.querySelectorAll('#settings-quick-action-checks input[name="quick-action"]:checked').forEach(function(cb) {
-        ids.push(cb.value);
-    });
-    if (ids.length === 0) ids = QUICK_ACTIONS_DEF.map(function(d) { return d.id; });
-    var customList = [];
-    document.querySelectorAll('.settings-custom-url-row').forEach(function(row) {
-        var labelEl = row.querySelector('.settings-custom-url-label');
-        var urlEl = row.querySelector('.settings-custom-url-url');
-        var label = labelEl ? labelEl.value.trim() : '';
-        var url = urlEl ? urlEl.value.trim() : '';
-        if (url) customList.push({ label: label || url, url: url });
-    });
-    const settings = {
+    var displayNameEl = document.getElementById('settings-display-name');
+    var notifyTasksEl = document.getElementById('settings-notify-tasks');
+    var customLinks = collectClRows(document.getElementById('settings-custom-urls'));
+    var settings = {
         displayName: displayNameEl ? displayNameEl.value.trim() : '',
-        showQuickActions: quickActionsEl ? quickActionsEl.checked : true,
-        quickActionIds: ids,
-        customQuickActions: customList,
-        notifyTasks: notifyTasksEl ? notifyTasksEl.checked : false
+        notifyTasks: notifyTasksEl ? notifyTasksEl.checked : false,
+        customLinks: customLinks
     };
     saveUserSettings(settings);
+}
+
+// 全体設定フォームから保存
+function saveGlobalLinksFromForm() {
+    var list = collectClRows(document.getElementById('settings-global-custom-urls'));
+    saveGlobalCustomLinks(list);
+    showMessage('全体リンクを保存しました', 'success');
+}
+
+// 設定ページ表示時に呼ぶ（showPage('settings')から）
+function loadUserSettingsIntoForm() {
+    var s = getUserSettings();
+    var displayNameEl = document.getElementById('settings-display-name');
+    var notifyTasksEl = document.getElementById('settings-notify-tasks');
+    if (displayNameEl) displayNameEl.value = s.displayName || '';
+    if (notifyTasksEl) notifyTasksEl.checked = !!s.notifyTasks;
+    loadCustomLinksIntoForms();
 }
 // 設定タブ切替
 function switchSettingsTab(tab) {
