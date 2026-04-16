@@ -778,14 +778,24 @@ function renderAllCustomLinks() {
         homeItems.forEach(function(it) { homeGrid.appendChild(buildCustomLinkBtn(it)); });
     }
 
-    // 各ハブページ
-    ['sales','design','ops','mfg','akashi','assy','general'].forEach(function(dept) {
-        var container = document.getElementById('cl-hub-' + dept);
-        if (!container) return;
+    // 各ハブページ（既存グリッドに直接追加）
+    var deptPageMap = {
+        sales:'sales-hub-page', design:'design-hub-page', ops:'ops-hub-page',
+        mfg:'mfg-hub-page', akashi:'akashi-hub-page', assy:'assy-hub-page', general:'general-hub-page'
+    };
+    Object.keys(deptPageMap).forEach(function(dept) {
+        var page = document.getElementById(deptPageMap[dept]);
+        if (!page) return;
+        var grid = page.querySelector('.dept-hub-grid');
+        if (!grid) return;
+        // 前回追加したカスタムボタンを削除
+        grid.querySelectorAll('.cl-custom-btn').forEach(function(el) { el.remove(); });
         var items = global.filter(function(it) { return it.depts && it.depts.indexOf(dept) !== -1; });
-        container.style.display = items.length > 0 ? '' : 'none';
-        container.innerHTML = '';
-        items.forEach(function(it) { container.appendChild(buildCustomLinkBtn(it)); });
+        items.forEach(function(it) {
+            var btn = buildCustomLinkBtn(it);
+            btn.classList.add('cl-custom-btn');
+            grid.appendChild(btn);
+        });
     });
 }
 
