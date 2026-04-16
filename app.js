@@ -953,14 +953,17 @@ function buildClRow(item, isGlobal) {
             var radio = document.createElement('input');
             radio.type = 'radio'; radio.name = grp; radio.value = fa; radio.hidden = true;
             if (!useImg && fa === (selFa || cands[0])) { radio.checked = true; lbl.classList.add('selected'); }
-            radio.addEventListener('change', function() {
+            var icon = document.createElement('i');
+            icon.className = 'fas ' + fa;
+            lbl.appendChild(radio);
+            lbl.appendChild(icon);
+            lbl.addEventListener('click', function() {
                 hasImg = false; imgThumb.style.display = 'none';
+                radio.checked = true;
                 candidatesDiv.querySelectorAll('.cl-icon-opt').forEach(function(x) { x.classList.remove('selected'); });
                 lbl.classList.add('selected');
                 updatePreview();
             });
-            lbl.appendChild(radio);
-            lbl.innerHTML += '<i class="fas ' + fa + '"></i>';
             candidatesDiv.appendChild(lbl);
         });
         // 画像ボタン
