@@ -1085,7 +1085,8 @@ function collectClRows(container) {
         var fa = selR ? selR.value : null;
         var thumb = row.querySelector('.cl-img-thumb-small');
         var imgData = (thumb && thumb.style.display !== 'none' && thumb.src && thumb.src.startsWith('data:')) ? thumb.src : null;
-        var item = { label: label || url, url: url, faIcon: imgData ? null : fa, imgData: imgData || null };
+        var sameTabCb = row.querySelector('.cl-same-tab-cb');
+        var item = { label: label || url, url: url, faIcon: imgData ? null : fa, imgData: imgData || null, sameTab: sameTabCb ? sameTabCb.checked : false };
         var depCbs = row.querySelectorAll('.cl-dept-cb');
         if (depCbs.length > 0) {
             var depts = []; depCbs.forEach(function(cb) { if (cb.checked) depts.push(cb.value); });
