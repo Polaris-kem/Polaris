@@ -984,9 +984,11 @@ function buildClRow(item, isGlobal) {
             };
             reader.readAsDataURL(f);
         });
+        var imgIcon = document.createElement('i');
+        imgIcon.className = 'fas fa-image';
         imgLbl.appendChild(imgFile);
-        imgLbl.innerHTML += '<i class="fas fa-image"></i>';
-        imgLbl.addEventListener('click', function(e) { if (e.target === imgLbl || e.target.tagName === 'I') { imgFile.click(); e.preventDefault(); } });
+        imgLbl.appendChild(imgIcon);
+        imgLbl.addEventListener('click', function(e) { e.preventDefault(); imgFile.click(); });
         if (useImg) imgLbl.classList.add('selected');
         candidatesDiv.appendChild(imgLbl);
     }
