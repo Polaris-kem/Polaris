@@ -999,7 +999,7 @@ function buildClRow(item, isGlobal) {
     var sameTabLine = document.createElement('div');
     sameTabLine.className = 'cl-dept-line';
     var sameTabLbl = document.createElement('label'); sameTabLbl.className = 'cl-dept-check';
-    var sameTabCb = document.createElement('input'); sameTabCb.type = 'checkbox'; sameTabCb.className = 'cl-same-tab-cb'; sameTabCb.checked = !!item.sameTab;
+    var sameTabCb = document.createElement('input'); sameTabCb.type = 'checkbox'; sameTabCb.className = 'cl-same-tab-cb'; sameTabCb.checked = item.sameTab !== false;
     sameTabLbl.appendChild(sameTabCb); sameTabLbl.appendChild(document.createTextNode('同じタブで開く（ブラウザの戻るボタンで戻れます）'));
     sameTabLine.appendChild(sameTabLbl);
     formDiv.appendChild(sameTabLine);
