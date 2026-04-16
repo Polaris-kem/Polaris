@@ -990,6 +990,15 @@ function buildClRow(item, isGlobal) {
 
     rebuildCandidates(item.url, item.label, item.faIcon || null, hasImg);
 
+    // 同じタブで開くオプション
+    var sameTabLine = document.createElement('div');
+    sameTabLine.className = 'cl-dept-line';
+    var sameTabLbl = document.createElement('label'); sameTabLbl.className = 'cl-dept-check';
+    var sameTabCb = document.createElement('input'); sameTabCb.type = 'checkbox'; sameTabCb.className = 'cl-same-tab-cb'; sameTabCb.checked = !!item.sameTab;
+    sameTabLbl.appendChild(sameTabCb); sameTabLbl.appendChild(document.createTextNode('同じタブで開く（ブラウザの戻るボタンで戻れます）'));
+    sameTabLine.appendChild(sameTabLbl);
+    formDiv.appendChild(sameTabLine);
+
     // 部署チェック（全体のみ）
     if (isGlobal) {
         var deptLine = document.createElement('div');
