@@ -745,7 +745,7 @@ function guessIconFromUrl(url, label) {
 function buildCustomLinkBtn(item) {
     var a = document.createElement('a');
     a.href = item.url || '#';
-    if (item.url && !item.sameTab) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+    if (item.url && item.sameTab === false) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
     a.className = 'dept-hub-btn';
     a.style.textDecoration = 'none';
     var iconHtml;
