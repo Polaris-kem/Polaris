@@ -3,13 +3,15 @@
  * ページID: bom-import-page
  *
  * 対象テーブル:
- *   製作部品 → t_manufctparts  (constructionno, symbolmachine, symbolunit, drawingno, ...)
- *   購入部品 → t_purchaseparts (construction_no, symbol_machine, symbol_unit, ...)
+ *   製作部品 → t_manufctparts  (CAD出力の工事企画表)
+ *     キー: constructionno, symbolmachine, symbolunit, drawingno, partno
+ *   購入部品 → t_purchaseparts (購入部品表)
+ *     キー: construction_no, symbol_machine, symbol_unit, consecutive_no（インポート後付与）
  *
  * 運用ルール:
  *   - Excelの8行目からデータ読込（設定変更可）
- *   - プレビュー最下行に納期/工程計画を入力 → 全行に一括コピー
- *   - 登録後はキー項目（工事番号・機械・ユニット・図面番号・品番）編集不可
+ *   - プレビュー最下行に納期を入力 → 全行に一括コピー
+ *   - 登録後はキー項目編集不可
  */
 (function () {
     'use strict';
