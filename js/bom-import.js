@@ -284,17 +284,18 @@
         var container = document.getElementById('bom-col-mapping');
         if (!container) return;
         var cols = getCols();
-        var html = '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+        var html = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">';
         cols.forEach(function(c) {
-            html += '<div style="display:flex;align-items:center;gap:4px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:5px 10px;">' +
-                '<span style="font-size:12px;font-weight:600;min-width:58px;">' + c.label + '</span>' +
-                '<span style="font-size:11px;color:#9ca3af;">→</span>' +
-                '<select onchange="window._bomColChange(\'' + c.key + '\', parseInt(this.value))" style="font-size:12px;padding:2px 4px;border:1px solid #d1d5db;border-radius:4px;">';
-            html += '<option value="-1">（使用しない）</option>';
+            var sel = '<select onchange="window._bomColChange(\'' + c.key + '\', parseInt(this.value))" style="flex:1;min-width:0;font-size:12px;padding:2px 4px;border:1px solid #d1d5db;border-radius:4px;">';
+            sel += '<option value="-1">-</option>';
             for (var i = 0; i < 26; i++) {
-                html += '<option value="' + i + '"' + (i === c.excelCol ? ' selected' : '') + '>' + colLetter(i) + '列</option>';
+                sel += '<option value="' + i + '"' + (i === c.excelCol ? ' selected' : '') + '>' + colLetter(i) + '列</option>';
             }
-            html += '</select></div>';
+            sel += '</select>';
+            html += '<div style="display:flex;align-items:center;gap:4px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:5px 8px;overflow:hidden;">' +
+                '<span style="font-size:11px;font-weight:600;white-space:nowrap;min-width:72px;max-width:72px;overflow:hidden;text-overflow:ellipsis;" title="' + c.label + '">' + c.label + '</span>' +
+                '<span style="font-size:10px;color:#9ca3af;flex-shrink:0;">→</span>' +
+                sel + '</div>';
         });
         html += '</div>';
         container.innerHTML = html;
