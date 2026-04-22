@@ -430,6 +430,14 @@
             window._bomOnFile        = handleExcelFile;
             window._bomSwitchType    = switchType;
             window._bomOnBatchInput  = onBatchInput;
+            window._bomToggleMapping = function() {
+                var body = document.getElementById('bom-mapping-body');
+                var icon = document.getElementById('bom-mapping-chevron');
+                if (!body) return;
+                var open = body.style.display === 'none';
+                body.style.display = open ? 'block' : 'none';
+                if (icon) icon.style.transform = open ? 'rotate(180deg)' : '';
+            };
             window._bomColChange     = function(key, colIdx) {
                 var cols = getCols();
                 var c = cols.find(function(x){ return x.key === key; });
