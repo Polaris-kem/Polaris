@@ -322,16 +322,16 @@
     // ── HTML生成 ──────────────────────────────────────
     function buildHTML() {
         return [
-            '<div class="page-title" style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">',
+            '<div class="page-title" style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">',
             '  <button class="btn-secondary" onclick="showPage(\'search\')" style="display:flex;align-items:center;gap:6px;"><i class="fas fa-arrow-left"></i> 戻る</button>',
             '  <h2 style="margin:0;">BOMインポート</h2>',
             '  <span style="font-size:12px;color:#6b7280;">工事企画表・購入部品表をDBに取り込みます</span>',
             '</div>',
 
             // タブ
-            '<div style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:20px;">',
-            '  <button class="bom-tab" data-type="manufct" onclick="window._bomSwitchType(\'manufct\')" style="padding:10px 24px;border:none;background:transparent;cursor:pointer;border-bottom:3px solid #3b82f6;color:#3b82f6;font-weight:700;font-size:14px;">製作部品（工事企画表）</button>',
-            '  <button class="bom-tab" data-type="purchase" onclick="window._bomSwitchType(\'purchase\')" style="padding:10px 24px;border:none;background:transparent;cursor:pointer;border-bottom:3px solid transparent;color:#6b7280;font-size:14px;">購入部品（購入部品表）</button>',
+            '<div style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:12px;">',
+            '  <button class="bom-tab" data-type="manufct" onclick="window._bomSwitchType(\'manufct\')" style="padding:8px 24px;border:none;background:transparent;cursor:pointer;border-bottom:3px solid #3b82f6;color:#3b82f6;font-weight:700;font-size:14px;">製作部品（工事企画表）</button>',
+            '  <button class="bom-tab" data-type="purchase" onclick="window._bomSwitchType(\'purchase\')" style="padding:8px 24px;border:none;background:transparent;cursor:pointer;border-bottom:3px solid transparent;color:#6b7280;font-size:14px;">購入部品（購入部品表）</button>',
             '</div>',
 
             // Step 1
