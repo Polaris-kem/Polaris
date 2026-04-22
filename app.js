@@ -5524,6 +5524,9 @@ function openSettingsPage(page) {
         targetModal = document.getElementById('company-calendar-modal');
         if (targetModal) {
             loadCompanyCalendarEdit();
+            setTimeout(function() {
+                if (typeof initCalendarExcelImport === 'function') initCalendarExcelImport();
+            }, 100);
         }
     } else if (page === 'notification-settings') {
         targetModal = document.getElementById('notification-settings-modal');
