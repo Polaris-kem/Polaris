@@ -2239,16 +2239,8 @@ function showPage(pageName) {
     }
 
     if (pageName === 'work-ticket') {
-        // 作業票登録ページを開いた時の初期化
-        console.log('作業票登録ページを表示します');
-        setTimeout(() => {
-            console.log('generateWorkTicketFormPageを呼び出します');
-            const container = document.getElementById('work-ticket-page-content');
-            if (container) {
-                generateWorkTicketFormPage(container);
-            } else {
-                console.error('work-ticket-page-content要素が見つかりません');
-            }
+        setTimeout(function() {
+            if (typeof initDailyReportPage === 'function') initDailyReportPage();
         }, 100);
     } else if (pageName === 'construct-number') {
         // 工事番号採番ページを開いた時の初期化
