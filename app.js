@@ -1003,8 +1003,8 @@ function buildClRow(item, isGlobal) {
         imgIcon.className = 'fas fa-image';
         var imgTxt = document.createElement('span');
         imgTxt.textContent = '画像';
-        imgTxt.style.cssText = 'font-size:9px;display:block;margin-top:2px;';
-        imgLbl.style.cssText = 'flex-direction:column;width:40px;height:40px;font-size:14px;';
+        imgTxt.style.cssText = 'font-size:9px;display:block;margin-top:2px;line-height:1;';
+        imgLbl.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:40px;font-size:14px;';
         imgLbl.appendChild(imgFile);
         imgLbl.appendChild(imgIcon);
         imgLbl.appendChild(imgTxt);
