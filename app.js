@@ -1001,8 +1001,13 @@ function buildClRow(item, isGlobal) {
         });
         var imgIcon = document.createElement('i');
         imgIcon.className = 'fas fa-image';
+        var imgTxt = document.createElement('span');
+        imgTxt.textContent = '画像';
+        imgTxt.style.cssText = 'font-size:9px;display:block;margin-top:2px;';
+        imgLbl.style.cssText = 'flex-direction:column;width:40px;height:40px;font-size:14px;';
         imgLbl.appendChild(imgFile);
         imgLbl.appendChild(imgIcon);
+        imgLbl.appendChild(imgTxt);
         imgLbl.addEventListener('click', function(e) { e.preventDefault(); imgFile.click(); });
         if (useImg) imgLbl.classList.add('selected');
         candidatesDiv.appendChild(imgLbl);
