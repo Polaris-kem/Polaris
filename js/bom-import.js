@@ -363,16 +363,19 @@
             '  </div>',
             '</div>',
 
-            // Step 2: カラムマッピング
-            '<div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:16px;margin-bottom:12px;">',
-            '  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">',
-            '    <h3 style="margin:0;font-size:15px;color:#374151;">',
-            '      <span style="background:#3b82f6;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;margin-right:8px;font-size:12px;font-weight:700;">2</span>',
-            '      列の対応設定（Excelの何列目がどの項目か）',
-            '    </h3>',
-            '    <button class="btn-secondary" onclick="window._bomReparse()" style="font-size:12px;padding:5px 12px;"><i class="fas fa-sync-alt"></i> プレビュー更新</button>',
+            // Step 2: カラムマッピング（折りたたみ）
+            '<div style="background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:12px;">',
+            '  <div onclick="window._bomToggleMapping()" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none;">',
+            '    <div style="display:flex;align-items:center;gap:8px;">',
+            '      <span style="background:#94a3b8;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">2</span>',
+            '      <span style="font-size:14px;color:#6b7280;">列の対応設定（通常は変更不要）</span>',
+            '    </div>',
+            '    <i id="bom-mapping-chevron" class="fas fa-chevron-down" style="color:#94a3b8;font-size:13px;transition:transform .2s;"></i>',
             '  </div>',
-            '  <div id="bom-col-mapping"></div>',
+            '  <div id="bom-mapping-body" style="display:none;padding:0 16px 14px;">',
+            '    <div id="bom-col-mapping"></div>',
+            '    <button class="btn-secondary" onclick="window._bomReparse()" style="margin-top:10px;font-size:12px;padding:5px 12px;"><i class="fas fa-sync-alt"></i> この設定でプレビュー更新</button>',
+            '  </div>',
             '</div>',
 
             // Step 3: プレビュー
