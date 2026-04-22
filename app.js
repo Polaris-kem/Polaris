@@ -802,28 +802,35 @@ function renderAllCustomLinks() {
 // ====== カスタムリンクフォーム ======
 
 var ICON_CANDIDATES_ALL = [
-    // 外部・リンク系
-    'fa-external-link-alt','fa-globe','fa-link','fa-compass','fa-map-marker-alt',
-    // ファイル・書類
-    'fa-file-alt','fa-file-excel','fa-file-word','fa-file-pdf','fa-file-invoice',
-    'fa-file-contract','fa-file-signature','fa-paste','fa-print','fa-receipt',
-    // フォルダ・保存
-    'fa-folder','fa-folder-open','fa-archive','fa-database','fa-cloud',
-    // 製造・工場
+    // 🏭 製造・工場
     'fa-industry','fa-cogs','fa-tools','fa-wrench','fa-hammer',
-    'fa-hard-hat','fa-drafting-compass','fa-ruler-combined','fa-truck','fa-box',
-    // ビジネス・管理
-    'fa-briefcase','fa-chart-bar','fa-chart-line','fa-chart-pie','fa-table',
-    'fa-tasks','fa-clipboard-list','fa-check-square','fa-calculator','fa-coins',
-    // コミュニケーション
-    'fa-envelope','fa-phone','fa-video','fa-comments','fa-comment-alt',
-    'fa-bell','fa-paper-plane','fa-at','fa-headset',
-    // 人・組織
-    'fa-users','fa-user','fa-user-tie','fa-building','fa-sitemap',
-    // その他
-    'fa-home','fa-star','fa-bookmark','fa-heart','fa-calendar-alt',
-    'fa-clock','fa-search','fa-cog','fa-lightbulb','fa-graduation-cap',
-    'fa-shopping-cart','fa-download','fa-upload','fa-code-branch','fa-flag'
+    'fa-screwdriver','fa-hard-hat','fa-drafting-compass','fa-ruler-combined','fa-ruler',
+    'fa-toolbox','fa-oil-can','fa-burn','fa-bolt','fa-tachometer-alt',
+    'fa-thermometer-half','fa-cut','fa-warehouse','fa-pallet','fa-boxes',
+    'fa-box','fa-truck','fa-truck-loading','fa-dolly','fa-flask',
+    // 💼 事務・ビジネス
+    'fa-briefcase','fa-building','fa-sitemap','fa-user-tie','fa-users',
+    'fa-handshake','fa-file-signature','fa-file-contract','fa-file-invoice','fa-receipt',
+    'fa-stamp','fa-calculator','fa-coins','fa-money-bill-wave','fa-cash-register',
+    'fa-pen-alt','fa-pencil-alt','fa-highlighter','fa-paperclip','fa-inbox',
+    'fa-print','fa-fax','fa-calendar-check','fa-clipboard-check','fa-tasks',
+    'fa-chart-bar','fa-chart-line','fa-chart-pie','fa-table','fa-clipboard-list',
+    // 📄 書類・ファイル
+    'fa-file-alt','fa-file-excel','fa-file-word','fa-file-pdf','fa-file-powerpoint',
+    'fa-folder','fa-folder-open','fa-archive','fa-paste','fa-copy',
+    // 💻 パソコン・IT
+    'fa-laptop','fa-desktop','fa-tablet-alt','fa-mobile-alt','fa-keyboard',
+    'fa-server','fa-database','fa-network-wired','fa-wifi','fa-microchip',
+    'fa-memory','fa-hdd','fa-cloud','fa-cloud-upload-alt','fa-cloud-download-alt',
+    'fa-download','fa-upload','fa-sync-alt','fa-code','fa-code-branch',
+    'fa-terminal','fa-shield-alt','fa-lock','fa-key','fa-qrcode','fa-barcode',
+    // 📬 コミュニケーション
+    'fa-envelope','fa-envelope-open','fa-paper-plane','fa-comments','fa-comment-alt',
+    'fa-phone','fa-headset','fa-video','fa-bell','fa-at',
+    // 🌐 その他
+    'fa-globe','fa-external-link-alt','fa-link','fa-home','fa-map-marker-alt',
+    'fa-search','fa-star','fa-bookmark','fa-calendar-alt','fa-clock',
+    'fa-cog','fa-lightbulb','fa-flag','fa-check-square','fa-exclamation-triangle'
 ];
 
 function getIconCandidates(url, label, selected) {
