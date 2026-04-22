@@ -838,7 +838,7 @@ function getIconCandidates(url, label, selected) {
         pool.splice(pool.indexOf(selected), 1);
         pool.unshift(selected);
     }
-    return pool.slice(0, 8);
+    return pool;
 }
 
 var DEPT_LIST = [
