@@ -24,31 +24,47 @@
 
     // ── Excelカラム定義 ──────────────────────────────
     var MANUFCT_COLS = [
-        { key: 'symbolmachine', label: '機械',     excelCol: 0,  required: false },
-        { key: 'symbolunit',    label: 'ユニット',  excelCol: 1,  required: false },
-        { key: 'consecutiveno', label: '通番',      excelCol: 2,  required: false },
-        { key: 'drawingno',     label: '図面番号',  excelCol: 3,  required: true  },
-        { key: 'partno',        label: '品番',      excelCol: 4,  required: false },
-        { key: 'description',   label: '品名',      excelCol: 5,  required: false },
-        { key: 'materialcode',  label: '材質',      excelCol: 6,  required: false },
-        { key: 'qty',           label: '数量',      excelCol: 7,  required: false },
-        { key: 'qtyunit',       label: '単位',      excelCol: 8,  required: false },
-        { key: 'weightmaterial',label: '素材重量',  excelCol: 9,  required: false },
-        { key: 'weightfinished',label: '仕上重量',  excelCol: 10, required: false },
-        { key: 'plancode',      label: '工程計画',  excelCol: 11, required: false, batchCopy: true }
+        // ── キー項目 ──
+        { key: 'symbolmachine',  label: '機械',          excelCol: 0,  required: false },
+        { key: 'symbolunit',     label: 'ユニット',       excelCol: 1,  required: false },
+        { key: 'drawingno',      label: '図面番号',       excelCol: 2,  required: true  },
+        { key: 'partno',         label: '品番',           excelCol: 3,  required: false },
+        // ── 詳細項目 ──
+        { key: 'description',    label: '品名',           excelCol: 4,  required: false },
+        { key: 'materialcode',   label: '素材（材質）',   excelCol: 5,  required: false },
+        { key: 'qty',            label: '数量',           excelCol: 6,  required: false },
+        { key: 'qtyspare',       label: '予備数',         excelCol: 7,  required: false },
+        { key: 'qtyunit',        label: '単位',           excelCol: 8,  required: false },
+        { key: 'weightmaterial', label: '素材重量',       excelCol: 9,  required: false },
+        { key: 'weightfinished', label: '仕上重量',       excelCol: 10, required: false },
+        { key: 'article',        label: '記事',           excelCol: 11, required: false },
+        { key: 'comment',        label: '備考',           excelCol: 12, required: false },
+        { key: 'unitdrawingno',  label: '組図/風船番号',  excelCol: 13, required: false },
+        { key: 'designer',       label: '設計者',         excelCol: 14, required: false },
+        { key: 'printdate',      label: '印刷日',         excelCol: 15, required: false },
+        { key: 'deliverydate',   label: '納期',           excelCol: 16, required: false, batchCopy: true }
     ];
 
     var PURCHASE_COLS = [
-        { key: 'symbol_machine', label: '機械',       excelCol: 0,  required: false },
-        { key: 'symbol_unit',    label: 'ユニット',    excelCol: 1,  required: false },
-        { key: 'consecutive_no', label: '通番',        excelCol: 2,  required: false },
-        { key: 'description',    label: '品名',        excelCol: 3,  required: true  },
-        { key: 'dimension_type', label: '寸法・型式',  excelCol: 4,  required: false },
-        { key: 'qty',            label: '数量',        excelCol: 5,  required: false },
-        { key: 'qty_unit',       label: '単位',        excelCol: 6,  required: false },
-        { key: 'maker',          label: 'メーカー',    excelCol: 7,  required: false },
-        { key: 'each_price',     label: '単価',        excelCol: 8,  required: false },
-        { key: 'delivery_date',  label: '納期',        excelCol: 9,  required: false, batchCopy: true }
+        // ── キー項目（通番はインポート後に自動付与） ──
+        { key: 'symbol_machine',  label: '機械',          excelCol: 0,  required: false },
+        { key: 'symbol_unit',     label: 'ユニット',       excelCol: 1,  required: false },
+        // ── 詳細項目 ──
+        { key: 'description',     label: '品名',           excelCol: 2,  required: true  },
+        { key: 'dimension_type',  label: '型式',           excelCol: 3,  required: false },
+        { key: 'qty',             label: '数量',           excelCol: 4,  required: false },
+        { key: 'qty_spare',       label: '予備数',         excelCol: 5,  required: false },
+        { key: 'qty_unit',        label: '単位',           excelCol: 6,  required: false },
+        { key: 'maker',           label: 'メーカー',       excelCol: 7,  required: false },
+        { key: 'each_price',      label: '単価',           excelCol: 8,  required: false },
+        { key: 'article',         label: '記事',           excelCol: 9,  required: false },
+        { key: 'remarks',         label: '備考',           excelCol: 10, required: false },
+        { key: 'unit_drawing_no', label: '組図/風船番号',  excelCol: 11, required: false },
+        { key: 'designer',        label: '設計者',         excelCol: 12, required: false },
+        { key: 'print_date',      label: '印刷日',         excelCol: 13, required: false },
+        { key: 'flg_purchase',    label: '締結品以外',     excelCol: 14, required: false },
+        { key: 'flg_bolt',        label: '締結品',         excelCol: 15, required: false },
+        { key: 'delivery_date',   label: '納期',           excelCol: 16, required: false, batchCopy: true }
     ];
 
     function getCols() { return _currentType === 'manufct' ? MANUFCT_COLS : PURCHASE_COLS; }
