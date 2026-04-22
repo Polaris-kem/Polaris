@@ -829,11 +829,11 @@ var ICON_CANDIDATES_ALL = [
 function getIconCandidates(url, label, selected) {
     var guessed = guessIconFromUrl(url, label);
     var pool = [guessed];
-    for (var i = 0; i < ICON_CANDIDATES_ALL.length && pool.length < 8; i++) {
+    for (var i = 0; i < ICON_CANDIDATES_ALL.length; i++) {
         if (ICON_CANDIDATES_ALL[i] !== guessed) pool.push(ICON_CANDIDATES_ALL[i]);
     }
     if (selected && pool.indexOf(selected) === -1) {
-        pool = [selected].concat(pool.slice(0, 7));
+        pool = [selected].concat(pool.slice(0, pool.length - 1));
     } else if (selected && pool[0] !== selected) {
         pool.splice(pool.indexOf(selected), 1);
         pool.unshift(selected);
