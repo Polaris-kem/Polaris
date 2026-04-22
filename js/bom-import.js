@@ -228,11 +228,13 @@
                 if (keydate) obj.keydate = keydate;
                 obj.dateinput  = obj.dateinput  || today;
                 obj.dateupdate = today;
+                obj.importdate = today;
             } else {
                 obj.construction_no = constructno;
                 if (keydate) obj.key_date = keydate;
                 obj.date_input  = obj.date_input  || today;
                 obj.date_update = today;
+                obj.import_date = today;
             }
             return obj;
         });
