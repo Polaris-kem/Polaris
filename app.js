@@ -2306,6 +2306,8 @@ function showPage(pageName) {
         }, 100);
     } else if (pageName === 'worktime-entry') {
         setTimeout(() => { if (typeof initWorktimeEntryPage === 'function') initWorktimeEntryPage(); }, 100);
+    } else if (pageName === 'non-work') {
+        setTimeout(() => { if (typeof initNonWorkPage === 'function') initNonWorkPage(); }, 100);
     } else if (pageName === 'bom-import') {
         setTimeout(() => { if (typeof initBomImportPage === 'function') initBomImportPage(); }, 100);
     } else if (pageName === 'acceptance') {
