@@ -993,7 +993,8 @@ function buildClRow(item, isGlobal) {
         imgLbl.className = 'cl-icon-opt cl-icon-img-opt' + (useImg ? ' selected' : '');
         imgLbl.title = '画像をアップロード';
         var imgFile = document.createElement('input');
-        imgFile.type = 'file'; imgFile.accept = 'image/*'; imgFile.hidden = true;
+        imgFile.type = 'file'; imgFile.accept = 'image/*';
+        imgFile.style.cssText = 'display:none;position:absolute;';
         imgFile.addEventListener('change', function() {
             var f = imgFile.files[0]; if (!f) return;
             var reader = new FileReader();
@@ -1011,11 +1012,11 @@ function buildClRow(item, isGlobal) {
         var imgTxt = document.createElement('span');
         imgTxt.textContent = '画像';
         imgTxt.style.cssText = 'font-size:9px;display:block;margin-top:2px;line-height:1;';
-        imgLbl.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:40px;font-size:14px;';
+        imgLbl.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:40px;font-size:14px;cursor:pointer;';
         imgLbl.appendChild(imgFile);
         imgLbl.appendChild(imgIcon);
         imgLbl.appendChild(imgTxt);
-        imgLbl.addEventListener('click', function(e) { e.preventDefault(); imgFile.click(); });
+        imgLbl.addEventListener('click', function() { imgFile.click(); });
         if (useImg) imgLbl.classList.add('selected');
         candidatesDiv.appendChild(imgLbl);
     }
