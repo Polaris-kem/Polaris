@@ -3139,13 +3139,6 @@ window.clearGlobalSearch = clearGlobalSearch;
 async function updateDashboard() {
     console.log('updateDashboard関数が呼ばれました');
 
-    // テーブルCOUNTはバックグラウンドで実行（カレンダー等をブロックしない）
-    Promise.all(availableTables.map(async table => {
-        try {
-            const { count } = await getSupabaseClient().from(table).select('*', { count: 'exact', head: true });
-            return count || 0;
-        } catch (e) { return 0; }
-    })).then(() => {}).catch(() => {});
 
     // KPIカードの更新（削除済み）
     
