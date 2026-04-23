@@ -6089,16 +6089,7 @@ async function loadTables() {
             showMessage('テーブルが見つかりませんでした', 'warning');
         }
         
-        // 最初のテーブルを読み込む（listページが表示中の場合のみ）
-        if (availableTables.length > 0 && !currentTable && document.getElementById('list-page')?.style.display !== 'none') {
-            currentTable = availableTables[0];
-            try {
-                await loadTableData(currentTable);
-            } catch (error) {
-                console.error('最初のテーブルの読み込みエラー:', error);
-                showMessage('テーブルデータの読み込みに失敗しました: ' + (error.message || '不明なエラー'), 'error');
-            }
-        }
+        // 自動テーブルロードなし（ユーザーがクリックして選択）
     } catch (error) {
         console.error('テーブル読み込みエラー:', error);
         const container = document.getElementById('table-list-content');
