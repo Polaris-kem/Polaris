@@ -701,7 +701,7 @@ function isCurrentUserAdmin() {
     return user ? user.isAdmin === true : false;
 }
 
-// 全体リンクの取得・保存
+// 全体リンクの取得・保存（localStorageキャッシュ + Supabase永続化）
 function getGlobalCustomLinks() {
     try { return JSON.parse(localStorage.getItem('globalCustomLinks') || '[]'); }
     catch(e) { return []; }
@@ -709,6 +709,44 @@ function getGlobalCustomLinks() {
 function saveGlobalCustomLinks(list) {
     localStorage.setItem('globalCustomLinks', JSON.stringify(list));
     renderAllCustomLinks();
+    // Supabaseにも保存（非同期・バックグラウンド）
+    _saveGlobalLinksToSupabase(list);
+}
+async function _saveGlobalLinksToSupabase(list) {
+    const sb = window.supabaseClient;
+    if (!sb) return;
+    try {
+        await sb.from('t_custom_links').delete().eq('link_type', 'global');
+        if (list.length > 0) {
+            await sb.from('t_custom_links').insert(list.map((item, i) => ({
+                link_type: 'global',
+                label: item.label || item.url,
+                url: item.url,
+                fa_icon: item.faIcon || null,
+                img_data: item.imgData || null,
+                same_tab: item.sameTab !== false,
+                depts: item.depts || [],
+                sort_order: i,
+                updated_at: new Date().toISOString()
+            })));
+        }
+    } catch(e) { console.warn('リンクSupabase保存エラー:', e); }
+}
+async function _loadGlobalLinksFromSupabase() {
+    const sb = window.supabaseClient;
+    if (!sb) return;
+    try {
+        const { data } = await sb.from('t_custom_links').select('*')
+            .eq('link_type', 'global').order('sort_order');
+        if (data && data.length > 0) {
+            const links = data.map(r => ({
+                label: r.label, url: r.url, faIcon: r.fa_icon,
+                imgData: r.img_data, sameTab: r.same_tab, depts: r.depts || []
+            }));
+            localStorage.setItem('globalCustomLinks', JSON.stringify(links));
+            renderAllCustomLinks();
+        }
+    } catch(e) { console.warn('リンクSupabase読み込みエラー:', e); }
 }
 
 // URLからアイコン自動推測
