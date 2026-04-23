@@ -1,89 +1,132 @@
 (function () {
     'use strict';
 
-    /* ─── 定数 ─── */
-    const TABLE = 't_cost_manual';
-    const COLS = [
-        { key: 'constructno', label: '工事番号', type: 'text' },
-        { key: 'outsource',   label: '外注加工費', type: 'number' },
-        { key: 'material',    label: '材料費',     type: 'number' },
-        { key: 'purchase',    label: '購入部品費',  type: 'number' },
-        { key: 'misc',        label: '諸経費',     type: 'number' },
-        { key: 'budget',      label: '予算',       type: 'number' },
-        { key: 'note',        label: '備考',       type: 'text' },
-    ];
+    const TABLE = 't_expense';
 
-    let _rows = [];         // 表示中レコード一覧
-    let _editId = null;     // 編集中レコードID
+    // purchaseno の頭文字で原価区分を判定
+    const COST_DIV = {
+        'C': '外注加工費',
+        'R': '材料費',
+        'P': '購入部品費',
+        'E': '諸経費',
+    };
+
+    // CSVヘッダー → DBカラム マッピング（大文字小文字無視）
+    const HEADER_MAP = {
+        'keydate': 'keydate',
+        'constructionno': 'constructionno',
+        '工事番号': 'constructionno',
+        'symbolmachine': 'symbolmachine',
+        'symbolunit': 'symbolunit',
+        'consecutiveno': 'consecutiveno',
+        'description': 'description',
+        '品名': 'description',
+        'dimensiontype': 'dimensiontype',
+        'comment': 'comment',
+        'datasource': 'datasource',
+        'qty': 'qty',
+        '数量': 'qty',
+        'orderqtyint': 'orderqtyint',
+        'qtyunit': 'qtyunit',
+        'orderqtyunit': 'orderqtyunit',
+        'eachprice': 'eachprice',
+        '単価': 'eachprice',
+        'totalprice': 'totalprice',
+        '合計金額': 'totalprice',
+        'purchaseno': 'purchaseno',
+        '発注番号': 'purchaseno',
+        'orderdiv': 'orderdiv',
+        'ordercompanycode': 'ordercompanycode',
+        '発注先': 'ordercompanycode',
+        'outputdate': 'outputdate',
+        'deliverydate': 'deliverydate',
+        '納期': 'deliverydate',
+        'nounyudate': 'nounyudate',
+        'kensyudate': 'kensyudate',
+        'taxfreeflg': 'taxfreeflg',
+        'importtaxflg': 'importtaxflg',
+        'deptcode': 'deptcode',
+        'orderdone': 'orderdone',
+        'orderpc': 'orderpc',
+        'kamoku': 'kamoku',
+        '勘定科目': 'kamoku',
+        'uchiwake': 'uchiwake',
+        '内訳': 'uchiwake',
+        'dateinput': 'dateinput',
+        'dateupdate': 'dateupdate',
+        'reissuetimes': 'reissuetimes',
+        'reorderreason': 'reorderreason',
+        'selectflg': 'selectflg',
+        'cancelflg': 'cancelflg',
+        'deleteflg': 'deleteflg',
+        'outputperson': 'outputperson',
+        'repeatflg': 'repeatflg',
+        'accepttestflg': 'accepttestflg',
+        'maker': 'maker',
+        'category': 'category',
+        'orderdivname': 'orderdivname',
+        'selectperson': 'selectperson',
+        'registercode': 'registercode',
+        'purchasenoa': 'purchasenoa',
+        'oldpurchaseno': 'oldpurchaseno',
+        'orderdate': 'orderdate',
+        'orderperson': 'orderperson',
+        'inputperson': 'inputperson',
+        'orderqty': 'orderqty',
+        'designer': 'designer',
+        'includetaxflg': 'includetaxflg',
+        'paperid': 'paperid',
+        'partsbudget': 'partsbudget',
+        '予算': 'partsbudget',
+        'pendingflg': 'pendingflg',
+        'zaikonum': 'zaikonum',
+        'tempcompanyname': 'tempcompanyname',
+        'dealingdocmitsumori': 'dealingdocmitsumori',
+        'dealingdocseikyu': 'dealingdocseikyu',
+        'dealingdocchuumon': 'dealingdocchuumon',
+        'dealingdocnouhin': 'dealingdocnouhin',
+        'fromamarihin': 'fromamarihin',
+        'fromkeihiapp': 'fromkeihiapp',
+        'seikyuprice': 'seikyuprice',
+        'secondtaxflg': 'secondtaxflg',
+        'currency': 'currency',
+        'foreigneachprice': 'foreigneachprice',
+        'currencyrate': 'currencyrate',
+        'foreigntotalprice': 'foreigntotalprice',
+        'inquiryid': 'inquiryid',
+        'mitsumoridate': 'mitsumoridate',
+    };
+
+    let _searchRows = [];
 
     /* ─── エントリポイント ─── */
     function initCostManualPage() {
         const el = document.getElementById('cost-manual-content');
         if (!el) return;
         el.innerHTML = buildUI();
-        _loadList();
+        _loadSummary();
     }
 
     /* ─── UI ─── */
     function buildUI() {
         return `
-<div style="max-width:900px;margin:0 auto;">
+<div style="max-width:960px;margin:0 auto;">
   <!-- タイトル -->
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
     <i class="fas fa-file-invoice-dollar" style="font-size:28px;color:#6366f1;"></i>
     <div>
-      <h2 style="margin:0;font-size:20px;color:#1e293b;">原価手入力</h2>
-      <p style="margin:0;font-size:13px;color:#64748b;">外注加工費・材料費・購入部品費・諸経費・予算を工事番号ごとに登録</p>
-    </div>
-  </div>
-
-  <!-- 入力フォーム -->
-  <div id="cm-form-card" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:20px 24px;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
-    <div style="font-weight:600;color:#1e293b;margin-bottom:14px;font-size:15px;" id="cm-form-title">新規登録</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 16px;">
-      <div>
-        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">工事番号 *</label>
-        <input id="cm-constructno" class="form-input" style="width:100%;" placeholder="例: 25001" />
-      </div>
-      <div>
-        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">外注加工費（円）</label>
-        <input id="cm-outsource" class="form-input" type="number" style="width:100%;" placeholder="0" />
-      </div>
-      <div>
-        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">材料費（円）</label>
-        <input id="cm-material" class="form-input" type="number" style="width:100%;" placeholder="0" />
-      </div>
-      <div>
-        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">購入部品費（円）</label>
-        <input id="cm-purchase" class="form-input" type="number" style="width:100%;" placeholder="0" />
-      </div>
-      <div>
-        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">諸経費（円）</label>
-        <input id="cm-misc" class="form-input" type="number" style="width:100%;" placeholder="0" />
-      </div>
-      <div>
-        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">予算（円）</label>
-        <input id="cm-budget" class="form-input" type="number" style="width:100%;" placeholder="0" />
-      </div>
-      <div style="grid-column:1/-1;">
-        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">備考</label>
-        <input id="cm-note" class="form-input" style="width:100%;" placeholder="任意メモ" />
-      </div>
-    </div>
-    <div style="margin-top:14px;display:flex;gap:8px;">
-      <button onclick="window._cmSave()" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:14px;cursor:pointer;font-weight:600;">
-        <i class="fas fa-save"></i> 保存
-      </button>
-      <button onclick="window._cmCancelEdit()" id="cm-cancel-btn" style="display:none;background:#f1f5f9;color:#475569;border:none;border-radius:8px;padding:9px 16px;font-size:14px;cursor:pointer;">
-        キャンセル
-      </button>
+      <h2 style="margin:0;font-size:20px;color:#1e293b;">発注・経費データ管理</h2>
+      <p style="margin:0;font-size:13px;color:#64748b;">CSVインポート・工事番号別原価集計（外注C / 材料R / 購入P / 経費E）</p>
     </div>
   </div>
 
   <!-- CSV取込 -->
-  <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:20px 24px;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
-    <div style="font-weight:600;color:#1e293b;margin-bottom:10px;font-size:15px;"><i class="fas fa-file-csv" style="color:#10b981;"></i> CSV一括取込</div>
-    <p style="font-size:12px;color:#64748b;margin:0 0 10px;">列順: <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">工事番号,外注加工費,材料費,購入部品費,諸経費,予算,備考</code>（1行目はヘッダー可）</p>
+  <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+    <div style="font-weight:600;color:#1e293b;margin-bottom:8px;font-size:15px;"><i class="fas fa-file-csv" style="color:#10b981;"></i> CSV一括インポート</div>
+    <p style="font-size:12px;color:#64748b;margin:0 0 10px;">
+      1行目はヘッダー行として扱います。列名はDBカラム名または日本語（工事番号・発注番号・品名・単価・合計金額 など）に対応。<br>
+      <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">purchaseno</code> の頭文字で区分判定（C=外注 / R=材料 / P=購入 / E=経費）
+    </p>
     <div id="cm-drop-zone"
          style="border:2px dashed #c7d2fe;border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:background .2s;color:#6366f1;"
          onclick="document.getElementById('cm-csv-input').click()"
@@ -92,218 +135,286 @@
          ondrop="window._cmDrop(event)">
       <i class="fas fa-cloud-upload-alt" style="font-size:28px;margin-bottom:8px;"></i>
       <div style="font-size:14px;font-weight:600;">クリックまたはドラッグ＆ドロップ</div>
-      <div style="font-size:12px;color:#94a3b8;margin-top:4px;">.csv ファイルを選択</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px;">.csv ファイルを選択（UTF-8 または Shift-JIS）</div>
     </div>
     <input type="file" id="cm-csv-input" accept=".csv" style="display:none;" onchange="window._cmFileSelect(event)" />
     <div id="cm-csv-preview" style="margin-top:12px;"></div>
   </div>
 
-  <!-- 一覧 -->
-  <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <div style="font-weight:600;color:#1e293b;font-size:15px;">登録済み一覧</div>
-      <input id="cm-search" class="form-input" placeholder="工事番号で絞り込み" style="width:200px;" oninput="window._cmFilter()" />
+  <!-- 検索 -->
+  <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:20px 24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);">
+    <div style="font-weight:600;color:#1e293b;margin-bottom:12px;font-size:15px;">工事番号別 原価集計</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <input id="cm-q-constructno" class="form-input" placeholder="工事番号" style="width:160px;" />
+      <select id="cm-q-div" class="form-input" style="width:140px;">
+        <option value="">全区分</option>
+        <option value="C">C: 外注加工費</option>
+        <option value="R">R: 材料費</option>
+        <option value="P">P: 購入部品費</option>
+        <option value="E">E: 諸経費</option>
+      </select>
+      <button onclick="window._cmSearch()" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:14px;cursor:pointer;font-weight:600;">
+        <i class="fas fa-search"></i> 検索
+      </button>
+      <button onclick="window._cmClear()" style="background:#f1f5f9;color:#475569;border:none;border-radius:8px;padding:9px 14px;font-size:14px;cursor:pointer;">
+        クリア
+      </button>
     </div>
-    <div id="cm-list" style="overflow-x:auto;"></div>
+    <div id="cm-result" style="margin-top:16px;"></div>
   </div>
+
+  <!-- 件数サマリー -->
+  <div id="cm-summary-cards" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;"></div>
 </div>`;
     }
 
-    /* ─── DB読み込み ─── */
-    async function _loadList() {
+    /* ─── サマリー読み込み ─── */
+    async function _loadSummary() {
         const sb = window.supabaseClient;
         if (!sb) return;
-        const { data, error } = await sb.from(TABLE).select('*').order('updated_at', { ascending: false });
-        if (error) { console.error(error); return; }
-        _rows = data || [];
-        _renderList(_rows);
+        // 各区分の合計金額
+        const { data, error } = await sb.from(TABLE)
+            .select('purchaseno, totalprice')
+            .eq('deleteflg', false)
+            .eq('cancelflg', false);
+        if (error || !data) return;
+
+        const totals = { C: 0, R: 0, P: 0, E: 0, other: 0 };
+        data.forEach(r => {
+            const div = (r.purchaseno || '').charAt(0).toUpperCase();
+            const amt = Number(r.totalprice) || 0;
+            if (totals[div] !== undefined) totals[div] += amt;
+            else totals[other] += amt;
+        });
+
+        const el = document.getElementById('cm-summary-cards');
+        if (!el) return;
+        const cards = [
+            { div: 'C', label: '外注加工費', color: '#6366f1', icon: 'fa-tools' },
+            { div: 'R', label: '材料費',     color: '#10b981', icon: 'fa-boxes' },
+            { div: 'P', label: '購入部品費', color: '#f59e0b', icon: 'fa-cogs' },
+            { div: 'E', label: '諸経費',     color: '#ef4444', icon: 'fa-receipt' },
+        ];
+        el.innerHTML = cards.map(c => `
+<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.05);">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <div style="width:32px;height:32px;border-radius:8px;background:${c.color}22;display:flex;align-items:center;justify-content:center;">
+      <i class="fas ${c.icon}" style="color:${c.color};font-size:14px;"></i>
+    </div>
+    <div style="font-size:12px;color:#64748b;">${c.label}</div>
+  </div>
+  <div style="font-size:18px;font-weight:700;color:#1e293b;">¥${Math.round(totals[c.div]).toLocaleString()}</div>
+</div>`).join('');
     }
 
-    /* ─── 一覧描画 ─── */
-    function _renderList(rows) {
-        const el = document.getElementById('cm-list');
+    /* ─── 検索 ─── */
+    window._cmSearch = async function () {
+        const sb = window.supabaseClient;
+        if (!sb) return;
+        const constructno = (document.getElementById('cm-q-constructno')?.value || '').trim();
+        const div = document.getElementById('cm-q-div')?.value || '';
+
+        const el = document.getElementById('cm-result');
+        if (el) el.innerHTML = '<p style="color:#94a3b8;">読み込み中...</p>';
+
+        let q = sb.from(TABLE).select('constructionno, purchaseno, description, qty, eachprice, totalprice, ordercompanycode, deliverydate, kamoku, uchiwake')
+            .eq('deleteflg', false)
+            .eq('cancelflg', false)
+            .order('constructionno')
+            .limit(500);
+
+        if (constructno) q = q.ilike('constructionno', `%${constructno}%`);
+        if (div) q = q.ilike('purchaseno', `${div}%`);
+
+        const { data, error } = await q;
+        if (error) { if (el) el.innerHTML = `<p style="color:#ef4444;">${error.message}</p>`; return; }
+        _searchRows = data || [];
+        _renderResult(_searchRows);
+    };
+
+    window._cmClear = function () {
+        document.getElementById('cm-q-constructno').value = '';
+        document.getElementById('cm-q-div').value = '';
+        document.getElementById('cm-result').innerHTML = '';
+    };
+
+    /* ─── 結果描画 ─── */
+    function _renderResult(rows) {
+        const el = document.getElementById('cm-result');
         if (!el) return;
-        if (!rows.length) {
-            el.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:24px 0;">登録なし</p>';
-            return;
-        }
+        if (!rows.length) { el.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">該当データなし</p>'; return; }
         const fmt = v => (v == null || v === '') ? '—' : Number(v).toLocaleString();
-        const rows_html = rows.map(r => `
-<tr style="border-bottom:1px solid #f1f5f9;">
-  <td style="padding:8px 10px;font-weight:600;color:#1e293b;">${esc(r.constructno)}</td>
-  <td style="padding:8px 10px;text-align:right;">${fmt(r.outsource)}</td>
-  <td style="padding:8px 10px;text-align:right;">${fmt(r.material)}</td>
-  <td style="padding:8px 10px;text-align:right;">${fmt(r.purchase)}</td>
-  <td style="padding:8px 10px;text-align:right;">${fmt(r.misc)}</td>
-  <td style="padding:8px 10px;text-align:right;">${fmt(r.budget)}</td>
-  <td style="padding:8px 10px;color:#64748b;font-size:12px;">${esc(r.note||'')}</td>
-  <td style="padding:8px 6px;white-space:nowrap;">
-    <button onclick="window._cmEdit(${r.id})" style="background:#eef2ff;color:#6366f1;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;margin-right:4px;">編集</button>
-    <button onclick="window._cmDelete(${r.id})" style="background:#fee2e2;color:#ef4444;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">削除</button>
-  </td>
+        const divLabel = pno => {
+            const d = (pno || '').charAt(0).toUpperCase();
+            return COST_DIV[d] ? `<span style="background:${divColor(d)};color:#fff;border-radius:4px;padding:1px 7px;font-size:11px;">${d}</span>` : (pno || '');
+        };
+        const divColor = d => ({ C: '#6366f1', R: '#10b981', P: '#f59e0b', E: '#ef4444' }[d] || '#94a3b8');
+
+        // 工事番号ごとにグループ集計も表示
+        const grouped = {};
+        rows.forEach(r => {
+            const k = r.constructionno || '?';
+            if (!grouped[k]) grouped[k] = { C: 0, R: 0, P: 0, E: 0 };
+            const d = (r.purchaseno || '').charAt(0).toUpperCase();
+            if (grouped[k][d] !== undefined) grouped[k][d] += Number(r.totalprice) || 0;
+        });
+
+        const summaryRows = Object.entries(grouped).map(([no, t]) => `
+<tr style="border-bottom:1px solid #f1f5f9;background:#fafbff;">
+  <td style="padding:7px 10px;font-weight:700;color:#1e293b;">${esc(no)}</td>
+  <td style="padding:7px 10px;text-align:right;color:#6366f1;">¥${Math.round(t.C).toLocaleString()}</td>
+  <td style="padding:7px 10px;text-align:right;color:#10b981;">¥${Math.round(t.R).toLocaleString()}</td>
+  <td style="padding:7px 10px;text-align:right;color:#f59e0b;">¥${Math.round(t.P).toLocaleString()}</td>
+  <td style="padding:7px 10px;text-align:right;color:#ef4444;">¥${Math.round(t.E).toLocaleString()}</td>
+  <td style="padding:7px 10px;text-align:right;font-weight:700;">¥${Math.round(t.C+t.R+t.P+t.E).toLocaleString()}</td>
 </tr>`).join('');
+
+        const detailRows = rows.map(r => `
+<tr style="border-bottom:1px solid #f8fafc;">
+  <td style="padding:6px 8px;color:#475569;font-size:12px;">${esc(r.constructionno||'')}</td>
+  <td style="padding:6px 8px;">${divLabel(r.purchaseno)}</td>
+  <td style="padding:6px 8px;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.description||'')}</td>
+  <td style="padding:6px 8px;text-align:right;font-size:12px;">${fmt(r.qty)}</td>
+  <td style="padding:6px 8px;text-align:right;font-size:12px;">${fmt(r.eachprice)}</td>
+  <td style="padding:6px 8px;text-align:right;font-size:12px;font-weight:600;">¥${fmt(r.totalprice)}</td>
+  <td style="padding:6px 8px;font-size:11px;color:#64748b;">${esc(r.ordercompanycode||'')}</td>
+</tr>`).join('');
+
         el.innerHTML = `
+<div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:8px;">${rows.length}件</div>
+
+<!-- 工事番号別集計 -->
+<div style="margin-bottom:16px;overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;">
 <table style="width:100%;border-collapse:collapse;font-size:13px;">
-  <thead>
-    <tr style="background:#f8fafc;color:#64748b;font-size:12px;">
+  <thead style="background:#f8fafc;color:#64748b;font-size:12px;">
+    <tr>
       <th style="padding:8px 10px;text-align:left;">工事番号</th>
-      <th style="padding:8px 10px;text-align:right;">外注加工費</th>
-      <th style="padding:8px 10px;text-align:right;">材料費</th>
-      <th style="padding:8px 10px;text-align:right;">購入部品費</th>
-      <th style="padding:8px 10px;text-align:right;">諸経費</th>
-      <th style="padding:8px 10px;text-align:right;">予算</th>
-      <th style="padding:8px 10px;text-align:left;">備考</th>
-      <th style="padding:8px 6px;"></th>
+      <th style="padding:8px 10px;text-align:right;color:#6366f1;">外注加工費</th>
+      <th style="padding:8px 10px;text-align:right;color:#10b981;">材料費</th>
+      <th style="padding:8px 10px;text-align:right;color:#f59e0b;">購入部品費</th>
+      <th style="padding:8px 10px;text-align:right;color:#ef4444;">諸経費</th>
+      <th style="padding:8px 10px;text-align:right;">合計</th>
     </tr>
   </thead>
-  <tbody>${rows_html}</tbody>
-</table>`;
+  <tbody>${summaryRows}</tbody>
+</table>
+</div>
+
+<!-- 明細 -->
+<details style="cursor:pointer;">
+  <summary style="font-size:13px;color:#6366f1;font-weight:600;margin-bottom:8px;user-select:none;">明細を表示</summary>
+  <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;margin-top:8px;">
+  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead style="background:#f8fafc;color:#64748b;font-size:12px;">
+      <tr>
+        <th style="padding:6px 8px;text-align:left;">工事番号</th>
+        <th style="padding:6px 8px;text-align:left;">区分</th>
+        <th style="padding:6px 8px;text-align:left;">品名</th>
+        <th style="padding:6px 8px;text-align:right;">数量</th>
+        <th style="padding:6px 8px;text-align:right;">単価</th>
+        <th style="padding:6px 8px;text-align:right;">合計</th>
+        <th style="padding:6px 8px;text-align:left;">発注先</th>
+      </tr>
+    </thead>
+    <tbody>${detailRows}</tbody>
+  </table>
+  </div>
+</details>`;
     }
-
-    /* ─── 絞り込み ─── */
-    window._cmFilter = function () {
-        const q = (document.getElementById('cm-search')?.value || '').trim().toLowerCase();
-        const filtered = q ? _rows.filter(r => (r.constructno || '').toLowerCase().includes(q)) : _rows;
-        _renderList(filtered);
-    };
-
-    /* ─── 保存 ─── */
-    window._cmSave = async function () {
-        const sb = window.supabaseClient;
-        if (!sb) { alert('DB未接続'); return; }
-        const constructno = (document.getElementById('cm-constructno')?.value || '').trim();
-        if (!constructno) { alert('工事番号を入力してください'); return; }
-        const rec = {
-            constructno,
-            outsource: numOrNull('cm-outsource'),
-            material:  numOrNull('cm-material'),
-            purchase:  numOrNull('cm-purchase'),
-            misc:      numOrNull('cm-misc'),
-            budget:    numOrNull('cm-budget'),
-            note:      (document.getElementById('cm-note')?.value || '').trim() || null,
-            updated_at: new Date().toISOString(),
-        };
-        let error;
-        if (_editId) {
-            ({ error } = await sb.from(TABLE).update(rec).eq('id', _editId));
-        } else {
-            ({ error } = await sb.from(TABLE).insert(rec));
-        }
-        if (error) { alert('保存失敗: ' + error.message); return; }
-        _clearForm();
-        await _loadList();
-    };
-
-    /* ─── 編集 ─── */
-    window._cmEdit = function (id) {
-        const r = _rows.find(x => x.id === id);
-        if (!r) return;
-        _editId = id;
-        setVal('cm-constructno', r.constructno);
-        setVal('cm-outsource', r.outsource ?? '');
-        setVal('cm-material',  r.material  ?? '');
-        setVal('cm-purchase',  r.purchase  ?? '');
-        setVal('cm-misc',      r.misc      ?? '');
-        setVal('cm-budget',    r.budget    ?? '');
-        setVal('cm-note',      r.note      ?? '');
-        const t = document.getElementById('cm-form-title');
-        if (t) t.textContent = `編集中: ${r.constructno}`;
-        const btn = document.getElementById('cm-cancel-btn');
-        if (btn) btn.style.display = '';
-        document.getElementById('cm-form-card')?.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    /* ─── キャンセル ─── */
-    window._cmCancelEdit = function () { _clearForm(); };
-
-    /* ─── 削除 ─── */
-    window._cmDelete = async function (id) {
-        if (!confirm('このレコードを削除しますか？')) return;
-        const sb = window.supabaseClient;
-        const { error } = await sb.from(TABLE).delete().eq('id', id);
-        if (error) { alert('削除失敗: ' + error.message); return; }
-        await _loadList();
-    };
 
     /* ─── CSV: ドロップ ─── */
     window._cmDrop = function (e) {
         e.preventDefault();
         document.getElementById('cm-drop-zone').style.background = '';
         const file = e.dataTransfer.files[0];
-        if (file) _parseCSV(file);
+        if (file) _readFile(file);
     };
 
-    /* ─── CSV: ファイル選択 ─── */
     window._cmFileSelect = function (e) {
         const file = e.target.files[0];
-        if (file) _parseCSV(file);
+        if (file) _readFile(file);
         e.target.value = '';
     };
 
-    /* ─── CSV解析 ─── */
-    function _parseCSV(file) {
+    /* ─── ファイル読み込み（UTF-8 → Shift-JIS フォールバック） ─── */
+    function _readFile(file) {
         const reader = new FileReader();
         reader.onload = function (e) {
-            const text = e.target.result;
-            const lines = text.split(/\r?\n/).filter(l => l.trim());
-            if (!lines.length) return;
-
-            // ヘッダー行スキップ判定（1列目が数字でなければヘッダーとみなす）
-            let startIdx = 0;
-            const firstCell = lines[0].split(',')[0].trim();
-            if (isNaN(firstCell) && firstCell !== '') startIdx = 1;
-
-            const parsed = [];
-            for (let i = startIdx; i < lines.length; i++) {
-                const cols = lines[i].split(',').map(s => s.trim().replace(/^"|"$/g, ''));
-                if (!cols[0]) continue;
-                parsed.push({
-                    constructno: cols[0] || '',
-                    outsource:   toNumOrNull(cols[1]),
-                    material:    toNumOrNull(cols[2]),
-                    purchase:    toNumOrNull(cols[3]),
-                    misc:        toNumOrNull(cols[4]),
-                    budget:      toNumOrNull(cols[5]),
-                    note:        cols[6] || null,
-                });
+            let text = e.target.result;
+            // 文字化けチェック（日本語が壊れていたらSJISで再読）
+            if (text.includes('�')) {
+                const r2 = new FileReader();
+                r2.onload = function (e2) { _parseCSV(e2.target.result); };
+                r2.readAsText(file, 'Shift-JIS');
+            } else {
+                _parseCSV(text);
             }
-            _showCSVPreview(parsed);
         };
         reader.readAsText(file, 'UTF-8');
+    }
+
+    /* ─── CSV解析 ─── */
+    function _parseCSV(text) {
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length < 2) { showMsg('cm-csv-preview', '有効な行がありません', 'error'); return; }
+
+        // ヘッダー解析
+        const headers = parseCSVLine(lines[0]).map(h => h.trim());
+        const colMap = headers.map(h => HEADER_MAP[h.toLowerCase()] || HEADER_MAP[h] || null);
+
+        const BOOL_COLS = new Set(['taxfreeflg','importtaxflg','orderdone','selectflg','cancelflg','deleteflg','repeatflg','accepttestflg','includetaxflg','pendingflg','dealingdocmitsumori','dealingdocseikyu','dealingdocchuumon','dealingdocnouhin','fromamarihin','fromkeihiapp','secondtaxflg']);
+        const NUM_COLS = new Set(['qty','orderqtyint','eachprice','totalprice','reissuetimes','orderqty','partsbudget','zaikonum','seikyuprice','foreigneachprice','currencyrate','foreigntotalprice']);
+        const DATE_COLS = new Set(['keydate','outputdate','deliverydate','nounyudate','kensyudate','orderdate','mitsumoridate']);
+
+        const records = [];
+        for (let i = 1; i < lines.length; i++) {
+            const cells = parseCSVLine(lines[i]);
+            const rec = {};
+            colMap.forEach((dbCol, ci) => {
+                if (!dbCol) return;
+                let v = (cells[ci] || '').trim();
+                if (v === '') { rec[dbCol] = null; return; }
+                if (BOOL_COLS.has(dbCol)) { rec[dbCol] = (v === '1' || v.toLowerCase() === 'true'); return; }
+                if (NUM_COLS.has(dbCol)) { const n = Number(v.replace(/[^\d.-]/g, '')); rec[dbCol] = isNaN(n) ? null : n; return; }
+                if (DATE_COLS.has(dbCol)) { rec[dbCol] = v || null; return; }
+                rec[dbCol] = v;
+            });
+            if (rec.constructionno || rec.purchaseno) records.push(rec);
+        }
+
+        _showCSVPreview(records);
     }
 
     /* ─── CSVプレビュー ─── */
     function _showCSVPreview(rows) {
         const el = document.getElementById('cm-csv-preview');
         if (!el) return;
-        if (!rows.length) { el.innerHTML = '<p style="color:#ef4444;">有効な行がありません</p>'; return; }
-        const fmt = v => (v == null) ? '—' : Number(v).toLocaleString();
-        const trs = rows.map((r, i) => `
-<tr style="border-bottom:1px solid #f1f5f9;">
-  <td style="padding:5px 8px;">${esc(r.constructno)}</td>
-  <td style="padding:5px 8px;text-align:right;">${fmt(r.outsource)}</td>
-  <td style="padding:5px 8px;text-align:right;">${fmt(r.material)}</td>
-  <td style="padding:5px 8px;text-align:right;">${fmt(r.purchase)}</td>
-  <td style="padding:5px 8px;text-align:right;">${fmt(r.misc)}</td>
-  <td style="padding:5px 8px;text-align:right;">${fmt(r.budget)}</td>
-  <td style="padding:5px 8px;font-size:11px;color:#64748b;">${esc(r.note||'')}</td>
+        if (!rows.length) { showMsg('cm-csv-preview', '有効な行がありません', 'error'); return; }
+        const fmt = v => (v == null) ? '—' : typeof v === 'number' ? v.toLocaleString() : v;
+
+        const preview = rows.slice(0, 10).map(r => `
+<tr style="border-bottom:1px solid #f1f5f9;font-size:12px;">
+  <td style="padding:4px 8px;">${esc(r.constructionno||'')}</td>
+  <td style="padding:4px 8px;">${esc(r.purchaseno||'')}</td>
+  <td style="padding:4px 8px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.description||'')}</td>
+  <td style="padding:4px 8px;text-align:right;">${fmt(r.totalprice)}</td>
+  <td style="padding:4px 8px;">${esc(r.kamoku||'')}</td>
 </tr>`).join('');
+
         el.innerHTML = `
-<div style="font-size:13px;color:#1e293b;margin-bottom:8px;font-weight:600;">${rows.length}行 プレビュー</div>
-<div style="overflow-x:auto;max-height:220px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;">
-<table style="width:100%;border-collapse:collapse;font-size:12px;">
-  <thead style="position:sticky;top:0;background:#f8fafc;color:#64748b;">
+<div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:6px;">${rows.length}行 読み込み（先頭10行プレビュー）</div>
+<div style="overflow-x:auto;max-height:200px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;">
+<table style="width:100%;border-collapse:collapse;">
+  <thead style="background:#f8fafc;color:#64748b;font-size:11px;position:sticky;top:0;">
     <tr>
-      <th style="padding:6px 8px;text-align:left;">工事番号</th>
-      <th style="padding:6px 8px;text-align:right;">外注加工費</th>
-      <th style="padding:6px 8px;text-align:right;">材料費</th>
-      <th style="padding:6px 8px;text-align:right;">購入部品費</th>
-      <th style="padding:6px 8px;text-align:right;">諸経費</th>
-      <th style="padding:6px 8px;text-align:right;">予算</th>
-      <th style="padding:6px 8px;text-align:left;">備考</th>
+      <th style="padding:5px 8px;text-align:left;">工事番号</th>
+      <th style="padding:5px 8px;text-align:left;">発注番号</th>
+      <th style="padding:5px 8px;text-align:left;">品名</th>
+      <th style="padding:5px 8px;text-align:right;">合計金額</th>
+      <th style="padding:5px 8px;text-align:left;">科目</th>
     </tr>
   </thead>
-  <tbody>${trs}</tbody>
+  <tbody>${preview}</tbody>
 </table>
 </div>
 <button onclick="window._cmImport()" style="background:#10b981;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:14px;cursor:pointer;font-weight:600;">
@@ -313,11 +424,10 @@
   キャンセル
 </button>`;
 
-        // プレビューデータをクロージャ外で保持
         el._pendingRows = rows;
     }
 
-    /* ─── CSVインポート実行 ─── */
+    /* ─── インポート実行 ─── */
     window._cmImport = async function () {
         const el = document.getElementById('cm-csv-preview');
         if (!el || !el._pendingRows) return;
@@ -325,44 +435,43 @@
         const sb = window.supabaseClient;
         if (!sb) { alert('DB未接続'); return; }
 
-        const now = new Date().toISOString();
-        const records = rows.map(r => ({ ...r, updated_at: now }));
+        // バッチ分割（Supabaseは一度に1000件まで推奨）
+        const BATCH = 500;
+        let inserted = 0;
+        for (let i = 0; i < rows.length; i += BATCH) {
+            const batch = rows.slice(i, i + BATCH);
+            const { error } = await sb.from(TABLE).insert(batch);
+            if (error) { alert(`インポートエラー (${i}行目〜): ${error.message}`); return; }
+            inserted += batch.length;
+        }
 
-        // upsert: 工事番号をユニークキーとして上書き
-        const { error } = await sb.from(TABLE).upsert(records, { onConflict: 'constructno' });
-        if (error) { alert('インポート失敗: ' + error.message); return; }
-
-        el.innerHTML = `<p style="color:#10b981;font-weight:600;"><i class="fas fa-check-circle"></i> ${rows.length}件インポート完了</p>`;
-        await _loadList();
+        el.innerHTML = `<p style="color:#10b981;font-weight:600;"><i class="fas fa-check-circle"></i> ${inserted}件インポート完了</p>`;
+        _loadSummary();
     };
 
     /* ─── ユーティリティ ─── */
-    function _clearForm() {
-        _editId = null;
-        ['cm-constructno','cm-outsource','cm-material','cm-purchase','cm-misc','cm-budget','cm-note']
-            .forEach(id => setVal(id, ''));
-        const t = document.getElementById('cm-form-title');
-        if (t) t.textContent = '新規登録';
-        const btn = document.getElementById('cm-cancel-btn');
-        if (btn) btn.style.display = 'none';
+    function parseCSVLine(line) {
+        const result = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < line.length; i++) {
+            const c = line[i];
+            if (c === '"') { inQ = !inQ; continue; }
+            if (c === ',' && !inQ) { result.push(cur); cur = ''; continue; }
+            cur += c;
+        }
+        result.push(cur);
+        return result;
     }
-    function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
-    function numOrNull(id) {
-        const v = document.getElementById(id)?.value;
-        if (v === '' || v == null) return null;
-        const n = Number(v);
-        return isNaN(n) ? null : n;
+
+    function showMsg(id, msg, type) {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = `<p style="color:${type === 'error' ? '#ef4444' : '#10b981'};">${msg}</p>`;
     }
-    function toNumOrNull(s) {
-        if (!s || s.trim() === '') return null;
-        const n = Number(s.replace(/[^\d.-]/g, ''));
-        return isNaN(n) ? null : n;
-    }
+
     function esc(s) {
         return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    /* ─── expose ─── */
     window.initCostManualPage = initCostManualPage;
 
 })();
