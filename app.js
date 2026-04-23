@@ -2227,7 +2227,7 @@ function showPage(pageName) {
         menuEl.classList.add('active');
     } else {
         // 納入予定カレンダー・加工進捗・機械の加工進捗は検索から開くため、検索をアクティブに
-        if (pageName === 'delivery-calendar' || pageName === 'processing-progress' || pageName === 'machine-progress' || pageName === 'cost-summary' || pageName === 'worktime-entry' || pageName === 'bom-import' || pageName === 'acceptance') {
+        if (pageName === 'delivery-calendar' || pageName === 'processing-progress' || pageName === 'machine-progress' || pageName === 'cost-summary' || pageName === 'worktime-entry' || pageName === 'bom-import' || pageName === 'acceptance' || pageName === 'bom-viewer' || pageName === 'cost-manual') {
             const searchMenu = document.querySelector('[data-page="search"]');
             if (searchMenu) searchMenu.classList.add('active');
         } else if (pageName === 'estimate-request' || pageName === 'quotation' || pageName === 'barcode-work-ticket') {
