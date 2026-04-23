@@ -3140,14 +3140,13 @@ async function updateDashboard() {
     console.log('updateDashboard関数が呼ばれました');
     
     let totalRecords = 0;
-    for (const table of availableTables) {
+    const counts = await Promise.all(availableTables.map(async table => {
         try {
             const { count } = await getSupabaseClient().from(table).select('*', { count: 'exact', head: true });
-            totalRecords += count || 0;
-        } catch (e) {
-            // エラーは無視
-        }
-    }
+            return count || 0;
+        } catch (e) { return 0; }
+    }));
+    totalRecords = counts.reduce((a, b) => a + b, 0);
 
     // KPIカードの更新（削除済み）
     
