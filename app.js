@@ -5991,6 +5991,9 @@ async function loadTables() {
                             }
                         }
                     }
+                    // OpenAPIにない既知テーブルも必ず含める
+                    const knownTables = ['t_expense','t_sagyofl','t_manufctparts','t_purchaseparts','t_cost_manual'];
+                    knownTables.forEach(t => { if (!tables.includes(t)) tables.push(t); });
                     availableTables = tables.sort();
                     console.log('取得したテーブル:', availableTables);
                 }
