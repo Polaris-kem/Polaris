@@ -5943,20 +5943,28 @@ function updateProgressIndicators() {
 // テーブル一覧の読み込み
 async function loadTables() {
     const container = document.getElementById('table-list-content');
-
-    // キャッシュがあれば即座に表示
     const CACHE_KEY = 'polaris_tables_cache';
+
+    // 既知テーブルを即座に表示（ネットワーク不要）
+    const KNOWN_TABLES = [
+        't_acceptorder','t_accountcode','t_companycode','t_computerdevice',
+        't_constructionnumber','t_currencycode','t_departmentcode','t_expense',
+        't_machinecode','t_machinemarkforsaiban','t_machineunitcode','t_manufctparts',
+        't_materialcode','t_moneyreceipt','t_processcode','t_purchase','t_purchaseparts',
+        't_sagyofl','t_saiban','t_staffcode','t_symbolmachine','t_symbolunit',
+        't_unitcode','t_workcode','t_workdepartment'
+    ];
+    // キャッシュがあればそちらを優先（追加テーブルを含む可能性）
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
         try {
-            availableTables = JSON.parse(cached);
-            if (availableTables.length > 0) {
-                updateTableList();
-            }
-        } catch(e) { availableTables = []; }
-    } else if (container) {
-        container.innerHTML = '<p class="loading">読み込み中...</p>';
+            const c = JSON.parse(cached);
+            availableTables = [...new Set([...KNOWN_TABLES, ...c])].sort();
+        } catch(e) { availableTables = [...KNOWN_TABLES]; }
+    } else {
+        availableTables = [...KNOWN_TABLES];
     }
+    updateTableList();
 
     try {
         // Supabaseクライアントが初期化されているか確認
