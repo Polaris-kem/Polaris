@@ -3197,8 +3197,7 @@ async function updateDashboard() {
                 console.error('updateCalendar関数とgoToToday関数の両方が見つかりません');
             }
         } else if (calendarUpdateAttempts < maxCalendarAttempts) {
-            console.log('カレンダー要素が見つかりません。再試行します（', calendarUpdateAttempts, '/', maxCalendarAttempts, '）');
-            setTimeout(updateCalendarWithRetry, 300);
+            setTimeout(updateCalendarWithRetry, 200);
         } else {
             console.error('カレンダー要素が見つかりません（最大試行回数に達しました）', {
                 calendarGrid: !!calendarGrid,
