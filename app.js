@@ -3170,7 +3170,7 @@ async function updateDashboard() {
     
     // カレンダーの表示を確実に更新（少し遅延して複数回試行）
     let calendarUpdateAttempts = 0;
-    const maxCalendarAttempts = 20; // 試行回数を増やす
+    const maxCalendarAttempts = 3;
     const updateCalendarWithRetry = () => {
         calendarUpdateAttempts++;
         const calendarGrid = document.getElementById('calendar-grid');
