@@ -2286,7 +2286,7 @@ function showPage(pageName) {
     } else if (pageName === 'machine-progress') {
         setTimeout(() => { if (typeof initMachineProgressPage === 'function') initMachineProgressPage(); }, 100);
     } else if (pageName === 'cost-summary') {
-        setTimeout(() => { if (typeof initCostSummaryPage === 'function') initCostSummaryPage(); }, 100);
+        setTimeout(function() { if (typeof initCostAnalysisPage === 'function') initCostAnalysisPage(); }, 100);
     } else if (pageName === 'dashboard') {
         applyUserSettingsToDashboard();
         // 少し遅延してからupdateDashboardを呼ぶ（DOMが確実に更新されるまで待つ）
