@@ -3138,15 +3138,14 @@ window.clearGlobalSearch = clearGlobalSearch;
 // ダッシュボードの更新
 async function updateDashboard() {
     console.log('updateDashboard関数が呼ばれました');
-    
-    let totalRecords = 0;
-    const counts = await Promise.all(availableTables.map(async table => {
+
+    // テーブルCOUNTはバックグラウンドで実行（カレンダー等をブロックしない）
+    Promise.all(availableTables.map(async table => {
         try {
             const { count } = await getSupabaseClient().from(table).select('*', { count: 'exact', head: true });
             return count || 0;
         } catch (e) { return 0; }
-    }));
-    totalRecords = counts.reduce((a, b) => a + b, 0);
+    })).then(() => {}).catch(() => {});
 
     // KPIカードの更新（削除済み）
     
