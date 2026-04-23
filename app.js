@@ -5995,6 +5995,7 @@ async function loadTables() {
                     const knownTables = ['t_expense','t_sagyofl','t_manufctparts','t_purchaseparts'];
                     knownTables.forEach(t => { if (!tables.includes(t)) tables.push(t); });
                     availableTables = tables.sort();
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(availableTables));
                     console.log('取得したテーブル:', availableTables);
                 }
             } else {
