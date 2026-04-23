@@ -5991,7 +5991,7 @@ async function loadTables() {
         't_machinecode','t_machinemarkforsaiban','t_machineunitcode','t_manufctparts',
         't_materialcode','t_moneyreceipt','t_processcode','t_purchase','t_purchaseparts',
         't_sagyofl','t_saiban','t_staffcode','t_symbolmachine','t_symbolunit',
-        't_unitcode','t_workcode','t_workdepartment'
+        't_unitcode','t_workcode','t_workdepartment','t_custom_links'
     ];
     // キャッシュがあればそちらを優先（追加テーブルを含む可能性）
     const cached = localStorage.getItem(CACHE_KEY);
