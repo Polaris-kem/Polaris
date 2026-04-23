@@ -5943,10 +5943,21 @@ function updateProgressIndicators() {
 // テーブル一覧の読み込み
 async function loadTables() {
     const container = document.getElementById('table-list-content');
-    if (container) {
+
+    // キャッシュがあれば即座に表示
+    const CACHE_KEY = 'polaris_tables_cache';
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+        try {
+            availableTables = JSON.parse(cached);
+            if (availableTables.length > 0) {
+                updateTableList();
+            }
+        } catch(e) { availableTables = []; }
+    } else if (container) {
         container.innerHTML = '<p class="loading">読み込み中...</p>';
     }
-    
+
     try {
         // Supabaseクライアントが初期化されているか確認
         if (!getSupabaseClient()) {
@@ -5955,7 +5966,7 @@ async function loadTables() {
             }
             return;
         }
-        
+
         // availableTablesを初期化（既存の値をクリア）
         availableTables = [];
         
