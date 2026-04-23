@@ -1016,7 +1016,6 @@ function buildClRow(item, isGlobal) {
         imgLbl.appendChild(imgFile);
         imgLbl.appendChild(imgIcon);
         imgLbl.appendChild(imgTxt);
-        imgLbl.addEventListener('click', function() { imgFile.click(); });
         if (useImg) imgLbl.classList.add('selected');
         candidatesDiv.appendChild(imgLbl);
     }
