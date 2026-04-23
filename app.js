@@ -1648,6 +1648,8 @@ async function initializeApp() {
         
         // テーブル一覧はバックグラウンドで読み込む（起動をブロックしない）
         loadTables();
+        // 全体リンクをSupabaseから復元（localStorageが空の場合に上書き）
+        _loadGlobalLinksFromSupabase();
         
         // KPIカードのイベントリスナーを設定
         setupKPICards();
