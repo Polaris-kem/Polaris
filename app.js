@@ -6089,8 +6089,8 @@ async function loadTables() {
             showMessage('テーブルが見つかりませんでした', 'warning');
         }
         
-        // 最初のテーブルを読み込む
-        if (availableTables.length > 0 && !currentTable) {
+        // 最初のテーブルを読み込む（listページが表示中の場合のみ）
+        if (availableTables.length > 0 && !currentTable && document.getElementById('list-page')?.style.display !== 'none') {
             currentTable = availableTables[0];
             try {
                 await loadTableData(currentTable);
