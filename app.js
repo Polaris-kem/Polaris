@@ -2304,6 +2304,8 @@ function showPage(pageName) {
         setTimeout(() => { if (typeof initBomImportPage === 'function') initBomImportPage(); }, 100);
     } else if (pageName === 'bom-viewer') {
         setTimeout(function() { if (typeof initBomViewerPage === 'function') initBomViewerPage(); }, 100);
+    } else if (pageName === 'cost-manual') {
+        setTimeout(function() { if (typeof initCostManualPage === 'function') initCostManualPage(); }, 100);
     } else if (pageName === 'acceptance') {
         setTimeout(() => { if (typeof initAcceptancePage === 'function') initAcceptancePage(); }, 100);
     } else if (pageName === 'estimate-request') {
