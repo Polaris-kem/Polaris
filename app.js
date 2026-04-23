@@ -2302,6 +2302,8 @@ function showPage(pageName) {
         setTimeout(() => { if (typeof initNonWorkPage === 'function') initNonWorkPage(); }, 100);
     } else if (pageName === 'bom-import') {
         setTimeout(() => { if (typeof initBomImportPage === 'function') initBomImportPage(); }, 100);
+    } else if (pageName === 'bom-viewer') {
+        setTimeout(function() { if (typeof initBomViewerPage === 'function') initBomViewerPage(); }, 100);
     } else if (pageName === 'acceptance') {
         setTimeout(() => { if (typeof initAcceptancePage === 'function') initAcceptancePage(); }, 100);
     } else if (pageName === 'estimate-request') {
