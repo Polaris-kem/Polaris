@@ -5975,8 +5975,7 @@ async function loadTables() {
             return;
         }
 
-        // availableTablesを初期化（既存の値をクリア）
-        availableTables = [];
+        // OpenAPI取得結果で追加テーブルを補完（既存をクリアしない）
         
         // REST APIからOpenAPI仕様を取得してテーブル一覧を取得
         try {
