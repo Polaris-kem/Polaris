@@ -1609,10 +1609,8 @@ async function initializeApp() {
             return;
         }
         
-        // テーブル一覧を読み込む（先に実行）
-        console.log('テーブル一覧の読み込みを開始します...');
-        await loadTables();
-        console.log('テーブル一覧の読み込みが完了しました');
+        // テーブル一覧はバックグラウンドで読み込む（起動をブロックしない）
+        loadTables();
         
         // KPIカードのイベントリスナーを設定
         setupKPICards();
