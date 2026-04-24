@@ -6784,8 +6784,7 @@ let deleteTargetRow = null;
 // 行の削除
 function deleteRow(row) {
     deleteTargetRow = row;
-    const modal = document.getElementById('delete-confirm-modal');
-    modal.style.display = 'flex';
+    showDeleteConfirm('削除の確認', 'この操作は取り消せません。本当に削除しますか？', confirmDelete);
 }
 
 // 削除の確定
