@@ -1587,12 +1587,8 @@ function authenticateUser(loginId, password) {
     return user.passwordHash === inputHash;
 }
 
-// ログアウト処理
-function handleLogout() {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('rememberLogin');
-    checkLoginStatus();
-}
+// ログアウト処理（後方互換）
+function handleLogout() { doLogout(); }
 
 // ログアウト確認モーダルを表示
 function showLogoutConfirm() {
