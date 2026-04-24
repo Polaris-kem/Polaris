@@ -15,8 +15,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
+
+    <!-- ログイン画面 -->
+    <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#1e3a5f 100%);display:flex;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:20px;padding:40px 48px;width:360px;box-shadow:0 25px 60px rgba(0,0,0,0.4);">
+            <div style="text-align:center;margin-bottom:28px;">
+                <div style="width:64px;height:64px;border-radius:16px;overflow:hidden;margin:0 auto 12px;box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+                    <img src="assets/polaris-logo.png" style="width:130%;height:130%;margin:-15%;display:block;object-fit:cover;">
+                </div>
+                <h1 style="margin:0;font-size:24px;font-weight:800;color:#1e1b4b;letter-spacing:1px;">Polaris</h1>
+                <p style="margin:4px 0 0;font-size:13px;color:#64748b;">製造業向け社内管理システム</p>
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="font-size:12px;color:#64748b;font-weight:600;display:block;margin-bottom:6px;">ログインID</label>
+                <input id="login-id" class="form-input" style="width:100%;box-sizing:border-box;" placeholder="ログインIDを入力" autocomplete="username" />
+            </div>
+            <div style="margin-bottom:24px;">
+                <label style="font-size:12px;color:#64748b;font-weight:600;display:block;margin-bottom:6px;">パスワード</label>
+                <input id="login-password" type="password" class="form-input" style="width:100%;box-sizing:border-box;" placeholder="パスワードを入力" autocomplete="current-password" />
+            </div>
+            <div id="login-error" style="display:none;background:#fee2e2;color:#ef4444;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;"></div>
+            <button id="login-btn" onclick="doLogin()" style="width:100%;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.5px;">
+                <i class="fas fa-sign-in-alt"></i> ログイン
+            </button>
+        </div>
+    </div>
+
     <!-- メインアプリケーション -->
-    <div id="main-app" class="main-app">
+    <div id="main-app" class="main-app" style="display:none;">
     <!-- ヘッダー -->
     <header class="top-header">
         <div class="header-content">
