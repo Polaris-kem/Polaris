@@ -549,15 +549,81 @@ function getTableDisplayName(tableName) {
     return tableName;
 }
 
-// ログイン状態の確認（常にログイン済みとして扱う）
+// セッション取得
+function getPolarisSession() {
+    try { return JSON.parse(localStorage.getItem('polaris_session') || 'null'); }
+    catch(e) { return null; }
+}
+
+// ログイン状態の確認
 function checkLoginStatus() {
+    const session = getPolarisSession();
+    const loginScreen = document.getElementById('login-screen');
     const mainApp = document.getElementById('main-app');
-    if (mainApp) {
-        mainApp.style.display = 'block';
+    if (session && session.staffcode) {
+        if (loginScreen) loginScreen.style.display = 'none';
+        if (mainApp) mainApp.style.display = 'block';
+        // ヘッダーにユーザー名表示
+        const nameEl = document.getElementById('login-user-name');
+        if (nameEl) nameEl.textContent = session.staffname || session.loginid;
+        if (typeof updateSidebarUserDisplay === 'function') updateSidebarUserDisplay();
+        if (typeof renderAllCustomLinks === 'function') renderAllCustomLinks();
+        return true;
+    } else {
+        if (loginScreen) loginScreen.style.display = 'flex';
+        if (mainApp) mainApp.style.display = 'none';
+        // Enterキーでログイン
+        setTimeout(() => {
+            const pw = document.getElementById('login-password');
+            if (pw) pw.onkeydown = (e) => { if (e.key === 'Enter') doLogin(); };
+            const id = document.getElementById('login-id');
+            if (id) id.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('login-password')?.focus(); };
+        }, 100);
+        return false;
     }
-    if (typeof updateSidebarUserDisplay === 'function') updateSidebarUserDisplay();
-    if (typeof renderAllCustomLinks === 'function') renderAllCustomLinks();
-    return true; // 常にログイン済みとして扱う
+}
+
+// ログイン実行
+async function doLogin() {
+    const loginId = (document.getElementById('login-id')?.value || '').trim();
+    const password = (document.getElementById('login-password')?.value || '').trim();
+    const errEl = document.getElementById('login-error');
+    const btn = document.getElementById('login-btn');
+    if (!loginId || !password) {
+        if (errEl) { errEl.textContent = 'ログインIDとパスワードを入力してください'; errEl.style.display = ''; }
+        return;
+    }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 確認中...'; }
+    try {
+        const sb = window.supabaseClient;
+        if (!sb) throw new Error('DB未接続');
+        const { data, error } = await sb.rpc('polaris_login', { p_loginid: loginId, p_password: password });
+        if (error) throw error;
+        if (!data || data.length === 0) {
+            if (errEl) { errEl.textContent = 'ログインIDまたはパスワードが正しくありません'; errEl.style.display = ''; }
+            return;
+        }
+        const user = data[0];
+        localStorage.setItem('polaris_session', JSON.stringify({
+            staffcode: user.out_staffcode,
+            staffname: user.out_staffname,
+            depacode:  user.out_depacode,
+            position:  user.out_position,
+            loginid:   user.out_loginid
+        }));
+        checkLoginStatus();
+    } catch(e) {
+        if (errEl) { errEl.textContent = 'エラー: ' + e.message; errEl.style.display = ''; }
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> ログイン'; }
+    }
+}
+
+// ログアウト
+function doLogout() {
+    if (!confirm('ログアウトしますか？')) return;
+    localStorage.removeItem('polaris_session');
+    checkLoginStatus();
 }
 
 // パスワードをハッシュ化（簡易版 - 本番環境ではbcryptなどを使用）
