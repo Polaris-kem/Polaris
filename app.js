@@ -39,6 +39,7 @@ const TABLE_NAME_MAP = {
     't_staffcode': '社員管理',
     't_workcode': '作業コード管理',
     't_worktime': '作業実績管理',
+    't_worktime_kako': '加工作業実績（過去）',
     't_companycode': '会社コード管理',
     't_workdepartment': '部署・職種管理',
     // テーブル名は英語のまま表示するため、マッピングを削除
