@@ -37,15 +37,26 @@
         var client = getClient();
         if (!client) return [];
         try {
-            var q = client.from('t_sagyofl')
-                .select('kojino,zuban,jugyo,scode,stime,sdate,kakosu');
-            if (filters.dateFrom) q = q.gte('sdate', filters.dateFrom);
-            if (filters.dateTo)   q = q.lte('sdate', filters.dateTo);
-            if (filters.kojino)   q = q.ilike('kojino', '%' + filters.kojino + '%');
-            if (filters.scode)    q = q.eq('scode', filters.scode);
+            var q = client.from('t_worktime_kako')
+                .select('constructionno,drawingno,workcode,staffcode,worktime,workdate,qty');
+            if (filters.dateFrom) q = q.gte('workdate', filters.dateFrom);
+            if (filters.dateTo)   q = q.lte('workdate', filters.dateTo);
+            if (filters.kojino)   q = q.ilike('constructionno', '%' + filters.kojino + '%');
+            if (filters.scode)    q = q.eq('staffcode', filters.scode);
             var res = await q.limit(5000);
             if (res.error) throw res.error;
-            return res.data || [];
+            // カラム名を内部処理用に統一（kojino/zuban/jugyo/scode/stime/sdate）
+            return (res.data || []).map(function(r) {
+                return {
+                    kojino: r.constructionno,
+                    zuban:  r.drawingno,
+                    jugyo:  r.workcode,
+                    scode:  r.staffcode,
+                    stime:  r.worktime,
+                    sdate:  r.workdate,
+                    kakosu: r.qty
+                };
+            });
         } catch (e) { return []; }
     }
 
