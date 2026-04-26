@@ -1,7 +1,7 @@
 /**
  * 工数実績・原価分析ダッシュボード
  * ページID: cost-summary-page（既存DIVを上書き）
- * データソース: t_sagyofl（実データ）
+ * データソース: t_worktime_kako
  */
 (function () {
     'use strict';
