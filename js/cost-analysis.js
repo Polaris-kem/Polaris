@@ -268,7 +268,7 @@
         html += '<div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap;">';
         html += '<button class="btn-secondary" onclick="showPage(\'aggregate\')" style="display:flex;align-items:center;gap:6px;"><i class="fas fa-arrow-left"></i> 戻る</button>';
         html += '<h2 style="margin:0;font-size:20px;font-weight:700;"><i class="fas fa-chart-pie" style="color:#6366f1;margin-right:8px;"></i>工数実績ダッシュボード</h2>';
-        html += '<span style="font-size:11px;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:3px 10px;border-radius:99px;font-weight:600;">✅ t_worktime_kako</span>';
+        html += '<span style="font-size:11px;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;padding:3px 10px;border-radius:99px;font-weight:600;">✅ t_worktime_kako + t_worktime</span>';
         html += '<span style="font-size:11px;color:#6b7280;margin-left:auto;">O-sys連携後：外注費・材料費・購入費も追加予定</span>';
         html += '</div>';
 
