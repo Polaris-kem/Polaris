@@ -313,7 +313,7 @@
         html += '<h3 style="margin:0 0 12px;font-size:15px;font-weight:700;">工事番号別 工数一覧 <span style="font-size:11px;font-weight:400;color:#94a3b8;">行クリックで図面別にドリルダウン</span></h3>';
         html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
         html += '<thead><tr style="background:#f8fafc;">';
-        ['工事番号','直接作業 (h)','間接作業 (h)','合計 (h)','直接率'].forEach(function (h) {
+        ['工事番号','加工作業 (h)','補助作業 (h)','合計 (h)','加工比率'].forEach(function (h) {
             var right = h !== '工事番号' && h !== '直接率';
             html += '<th style="padding:8px 12px;' + (right ? 'text-align:right;' : '') + 'border-bottom:2px solid #e2e8f0;font-weight:600;color:#374151;">' + h + '</th>';
         });
