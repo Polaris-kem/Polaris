@@ -33,30 +33,45 @@
     }
 
     // ── データ取得 ──────────────────────────────────
+    function normalize(r, src) {
+        return {
+            kojino: r.constructionno,
+            zuban:  r.drawingno || null,
+            jugyo:  r.workcode,
+            scode:  r.staffcode,
+            stime:  r.worktime,
+            sdate:  r.workdate,
+            kakosu: r.qty || null,
+            _src:   src
+        };
+    }
+
     async function loadData(filters) {
         var client = getClient();
         if (!client) return [];
+
+        function applyFilters(q, dateCol, kojinoCol, scodeCol) {
+            if (filters.dateFrom) q = q.gte(dateCol,   filters.dateFrom);
+            if (filters.dateTo)   q = q.lte(dateCol,   filters.dateTo);
+            if (filters.kojino)   q = q.ilike(kojinoCol, '%' + filters.kojino + '%');
+            if (filters.scode)    q = q.eq(scodeCol,   filters.scode);
+            return q;
+        }
+
         try {
-            var q = client.from('t_worktime_kako')
-                .select('constructionno,drawingno,workcode,staffcode,worktime,workdate,qty');
-            if (filters.dateFrom) q = q.gte('workdate', filters.dateFrom);
-            if (filters.dateTo)   q = q.lte('workdate', filters.dateTo);
-            if (filters.kojino)   q = q.ilike('constructionno', '%' + filters.kojino + '%');
-            if (filters.scode)    q = q.eq('staffcode', filters.scode);
-            var res = await q.limit(5000);
-            if (res.error) throw res.error;
-            // カラム名を内部処理用に統一（kojino/zuban/jugyo/scode/stime/sdate）
-            return (res.data || []).map(function(r) {
-                return {
-                    kojino: r.constructionno,
-                    zuban:  r.drawingno,
-                    jugyo:  r.workcode,
-                    scode:  r.staffcode,
-                    stime:  r.worktime,
-                    sdate:  r.workdate,
-                    kakosu: r.qty
-                };
-            });
+            var [r1, r2] = await Promise.all([
+                applyFilters(
+                    client.from('t_worktime_kako').select('constructionno,drawingno,workcode,staffcode,worktime,workdate,qty'),
+                    'workdate','constructionno','staffcode'
+                ).limit(5000),
+                applyFilters(
+                    client.from('t_worktime').select('constructionno,workcode,staffcode,worktime,workdate'),
+                    'workdate','constructionno','staffcode'
+                ).limit(5000)
+            ]);
+            var rows1 = r1.error ? [] : (r1.data || []).map(function(r){ return normalize(r, 'kako'); });
+            var rows2 = r2.error ? [] : (r2.data || []).map(function(r){ return normalize(r, 'wt'); });
+            return rows1.concat(rows2);
         } catch (e) { return []; }
     }
 
