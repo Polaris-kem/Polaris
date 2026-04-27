@@ -161,7 +161,7 @@
                 labels: agg.map(function (d) { return d.label; }),
                 datasets: [{ data: agg.map(function (d) { return +d.total.toFixed(2); }), backgroundColor: agg.map(function (d) { return NW_COLORS[d.jugyo] || '#94a3b8'; }), borderWidth: 2 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: '間接作業 内訳' } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: '補助作業 内訳（清掃・会議等）' } } }
         });
     }
 
