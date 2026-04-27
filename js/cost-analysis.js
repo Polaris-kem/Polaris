@@ -122,8 +122,8 @@
             data: {
                 labels: top.map(function (d) { return d.kojino; }),
                 datasets: [
-                    { label: '直接作業 (h)', data: top.map(function (d) { return +d.direct.toFixed(2); }), backgroundColor: 'rgba(99,102,241,0.85)', borderRadius: 5 },
-                    { label: '間接作業 (h)', data: top.map(function (d) { return +d.indirect.toFixed(2); }), backgroundColor: 'rgba(245,158,11,0.75)', borderRadius: 5 }
+                    { label: '加工作業（図番あり）(h)', data: top.map(function (d) { return +d.direct.toFixed(2); }), backgroundColor: 'rgba(99,102,241,0.85)', borderRadius: 5 },
+                    { label: '補助作業（清掃・会議等）(h)', data: top.map(function (d) { return +d.indirect.toFixed(2); }), backgroundColor: 'rgba(245,158,11,0.75)', borderRadius: 5 }
                 ]
             },
             options: {
