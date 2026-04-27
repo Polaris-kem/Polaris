@@ -145,7 +145,7 @@
         _chart2 = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['直接作業', '間接作業'],
+                labels: ['加工作業（図番あり）', '補助作業（清掃・会議等）'],
                 datasets: [{ data: [+direct.toFixed(2), +indirect.toFixed(2)], backgroundColor: ['rgba(99,102,241,0.85)', 'rgba(245,158,11,0.75)'], borderWidth: 2 }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: '直接 / 間接 比率' } } }
