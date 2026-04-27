@@ -191,7 +191,7 @@
     function renderDrillTable(agg) {
         var tbody = document.getElementById('ca-drill-tbody'); if (!tbody) return;
         if (!agg.length) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:16px;">直接作業データなし</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:16px;">加工作業データなし</td></tr>';
             return;
         }
         tbody.innerHTML = agg.slice(0, 50).map(function (r) {
