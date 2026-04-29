@@ -326,12 +326,8 @@
         var IS = 'box-sizing:border-box;padding:9px 12px;border:2px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;transition:border-color .2s;background:#fff;';
         var html = '';
 
-        // ヘッダー
-        html += '<div style="background:linear-gradient(135deg,#1e293b 0%,#334155 100%);border-radius:16px;padding:20px 24px;margin-bottom:18px;display:flex;align-items:center;gap:14px;">';
-        html += '<button onclick="showPage(\'aggregate\')" style="background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;transition:background .2s;" onmouseover="this.style.background=\'rgba(255,255,255,.2)\'" onmouseout="this.style.background=\'rgba(255,255,255,.12)\'"><i class="fas fa-arrow-left"></i> 戻る</button>';
-        html += '<div><h2 style="margin:0;font-size:20px;font-weight:900;color:#fff;letter-spacing:-.3px;"><i class="fas fa-chart-pie" style="margin-right:8px;color:#818cf8;"></i>工数実績ダッシュボード</h2>';
-        html += '<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;">t_worktime_kako + t_worktime</div></div>';
-        html += '</div>';
+        // ヘッダー（標準ページタイトル形式）
+        html += '<div class="page-title"><h2><i class="fas fa-chart-pie"></i> 工数実績ダッシュボード</h2></div>';
 
         // フィルター
         html += '<div style="background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);padding:16px 20px;margin-bottom:16px;border:1px solid #f1f5f9;">';
