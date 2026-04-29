@@ -481,13 +481,20 @@
 
         // ドリルダウン
         html += '<div id="ca-drill-panel" style="display:none;background:linear-gradient(135deg,#eff6ff,#f8faff);border:2px solid #bfdbfe;border-radius:14px;padding:16px;margin-bottom:16px;">';
-        html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">';
-        html += '<h3 id="ca-drill-title" style="margin:0;font-size:14px;font-weight:800;color:#1e40af;"></h3>';
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">';
+        html += '<h3 id="ca-drill-title" style="margin:0;font-size:15px;font-weight:800;color:#1e40af;display:flex;align-items:center;gap:6px;"><i class="fas fa-search-plus"></i></h3>';
         html += '<button onclick="window._caClose()" style="background:#dbeafe;color:#1d4ed8;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-weight:700;">✕ 閉じる</button>';
         html += '</div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">';
+        // 図面別
+        html += '<div><div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;"><i class="fas fa-drafting-compass"></i> 図面別 工数</div>';
         html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
-        html += '<thead><tr style="background:#dbeafe;"><th style="padding:8px 12px;text-align:left;border-radius:6px 0 0 6px;font-weight:700;color:#1e40af;">図面番号</th><th style="padding:8px 12px;text-align:right;font-weight:700;color:#1e40af;">工数合計</th><th style="padding:8px 12px;text-align:right;border-radius:0 6px 6px 0;font-weight:700;color:#1e40af;">件数</th></tr></thead>';
+        html += '<thead><tr style="background:#dbeafe;"><th style="padding:7px 10px;text-align:left;font-weight:700;color:#1e40af;">図面番号</th><th style="padding:7px 10px;text-align:right;font-weight:700;color:#1e40af;">工数</th><th style="padding:7px 10px;text-align:right;font-weight:700;color:#1e40af;">件数</th></tr></thead>';
         html += '<tbody id="ca-drill-tbody"></tbody></table></div></div>';
+        // 担当者別
+        html += '<div><div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;"><i class="fas fa-users"></i> 担当者 <span style="font-size:10px;opacity:.7;">（クリックで詳細）</span></div>';
+        html += '<div id="ca-drill-staff"></div></div>';
+        html += '</div></div>';
 
         // 工事番号テーブル
         html += '<div style="background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);padding:18px;border:1px solid #f1f5f9;">';
