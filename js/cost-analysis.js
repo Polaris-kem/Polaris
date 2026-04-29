@@ -231,22 +231,133 @@
         var panel = document.getElementById('ca-drill-panel');
         var title = document.getElementById('ca-drill-title');
         if (panel) panel.style.display = 'block';
-        if (title) title.textContent = '工事番号 '+kojino+' — 図面別詳細';
+        if (title) title.textContent = '工事番号 '+kojino;
+
+        // 図面別
         var agg = byZuban(_currentData, kojino);
-        var tbody = document.getElementById('ca-drill-tbody'); if (!tbody) return;
-        if (!agg.length) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:16px;">図面番号データなし</td></tr>';
-        } else {
-            tbody.innerHTML = agg.slice(0,50).map(function(r) {
-                return '<tr><td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#6366f1;">'+r.zuban+'</td>'+
-                    '<td style="padding:8px 12px;text-align:right;font-weight:800;color:#1e293b;">'+r.total.toFixed(1)+' h</td>'+
-                    '<td style="padding:8px 12px;text-align:right;color:#94a3b8;">'+r.cnt+'件</td></tr>';
-            }).join('');
+        var tbody = document.getElementById('ca-drill-tbody');
+        if (tbody) {
+            if (!agg.length) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:16px;">図面番号データなし</td></tr>';
+            } else {
+                tbody.innerHTML = agg.slice(0,50).map(function(r) {
+                    return '<tr><td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#6366f1;">'+r.zuban+'</td>'+
+                        '<td style="padding:8px 12px;text-align:right;font-weight:800;color:#1e293b;">'+r.total.toFixed(1)+' h</td>'+
+                        '<td style="padding:8px 12px;text-align:right;color:#94a3b8;">'+r.cnt+'件</td></tr>';
+                }).join('');
+            }
         }
+
+        // 担当者別
+        var kojiRows = _currentData.filter(function(r){ return r.kojino === kojino; });
+        var staffAgg = byStaff(kojiRows);
+        var staffEl = document.getElementById('ca-drill-staff');
+        if (staffEl) {
+            if (!staffAgg.length) {
+                staffEl.innerHTML = '<div style="color:#94a3b8;padding:8px;text-align:center;">担当者データなし</div>';
+            } else {
+                staffEl.innerHTML = staffAgg.map(function(s, i) {
+                    var color = PALETTE[i % PALETTE.length];
+                    var wc = Object.entries(s.workcodes).sort(function(a,b){return b[1]-a[1];}).slice(0,3).map(function(w){return w[0];}).join(' / ');
+                    var days = Object.keys(s.days).length;
+                    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border-radius:10px;border-left:4px solid '+color+';margin-bottom:6px;cursor:pointer;transition:box-shadow .15s;" onclick="window._caStaffDrill(\''+s.scode+'\')" title="クリックで詳細" onmouseover="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.12)\'" onmouseout="this.style.boxShadow=\'\'">'+
+                        '<div style="width:36px;height:36px;background:'+color+'20;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+
+                        '<i class="fas fa-user" style="color:'+color+';font-size:14px;"></i></div>'+
+                        '<div style="flex:1;min-width:0;">'+
+                        '<div style="font-weight:700;font-size:13px;color:#1e293b;">'+(s.name||s.scode)+'</div>'+
+                        (wc?'<div style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">作業: '+wc+'</div>':'')+'</div>'+
+                        '<div style="text-align:right;flex-shrink:0;">'+
+                        '<div style="font-weight:800;color:'+color+';font-size:15px;">'+s.total.toFixed(1)+'h</div>'+
+                        '<div style="font-size:10px;color:#94a3b8;">'+days+'日間</div></div>'+
+                        '</div>';
+                }).join('');
+            }
+        }
+
         if (panel) panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
     }
     function closeDrill() {
         var p = document.getElementById('ca-drill-panel'); if (p) p.style.display='none';
+    }
+
+    // ── 社員ドリルダウン（モーダル）──────────────────
+    function staffDrillDown(scode) {
+        var staffData = _currentData.filter(function(r){ return r.scode === scode; });
+        var name = _staffMap[scode] || scode;
+        var totalH = staffData.reduce(function(s,r){ return s+r.stime; },0);
+        var dates = {}; staffData.forEach(function(r){ if(r.sdate) dates[r.sdate]=1; });
+        var dayCount = Object.keys(dates).length;
+
+        // 工事別
+        var byK = {};
+        staffData.forEach(function(r) {
+            var k = r.kojino||'不明';
+            if (!byK[k]) byK[k] = { kojino:k, total:0, workcodes:{}, dates:{} };
+            byK[k].total += r.stime;
+            if (r.workcode) byK[k].workcodes[r.workcode] = (byK[k].workcodes[r.workcode]||0)+r.stime;
+            if (r.sdate)    byK[k].dates[r.sdate] = 1;
+        });
+        var projects = Object.values(byK).sort(function(a,b){ return b.total-a.total; });
+
+        // 作業コード別
+        var byW = {};
+        staffData.forEach(function(r){ if (r.workcode) byW[r.workcode]=(byW[r.workcode]||0)+r.stime; });
+        var workcodes = Object.entries(byW).sort(function(a,b){ return b[1]-a[1]; });
+
+        var ex = document.getElementById('ca-staff-modal'); if (ex) ex.remove();
+        var html = '<div id="ca-staff-modal" style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)window._caStaffClose()">';
+        html += '<div style="background:#fff;border-radius:20px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.35);">';
+        // ヘッダー
+        html += '<div style="background:linear-gradient(135deg,#6366f1,#818cf8);padding:20px 24px;border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:space-between;">';
+        html += '<div style="display:flex;align-items:center;gap:12px;">';
+        html += '<div style="width:48px;height:48px;background:rgba(255,255,255,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="fas fa-user" style="color:#fff;font-size:20px;"></i></div>';
+        html += '<div><div style="font-size:18px;font-weight:900;color:#fff;">'+name+'</div>';
+        html += '<div style="font-size:12px;color:rgba(255,255,255,.75);">社員コード: '+scode+'</div></div></div>';
+        html += '<button onclick="window._caStaffClose()" style="background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-weight:700;font-size:16px;">✕</button>';
+        html += '</div>';
+        // サマリー
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;background:#f8fafc;border-bottom:1px solid #e2e8f0;">';
+        [['総工数',totalH.toFixed(1)+'h','#6366f1'],['工事数',projects.length+'件','#10b981'],['稼働日数',dayCount+'日','#f59e0b']].forEach(function(c){
+            html += '<div style="text-align:center;padding:14px 8px;">';
+            html += '<div style="font-size:22px;font-weight:900;color:'+c[2]+';">'+c[1]+'</div>';
+            html += '<div style="font-size:11px;color:#64748b;font-weight:600;">'+c[0]+'</div></div>';
+        });
+        html += '</div>';
+        // 工事一覧
+        html += '<div style="padding:16px 20px;">';
+        html += '<div style="font-size:13px;font-weight:800;color:#1e293b;margin-bottom:10px;display:flex;align-items:center;gap:6px;"><i class="fas fa-briefcase" style="color:#6366f1;"></i> 担当工事一覧</div>';
+        if (!projects.length) {
+            html += '<div style="color:#94a3b8;text-align:center;padding:16px;">データなし</div>';
+        } else {
+            projects.forEach(function(p, i) {
+                var color = PALETTE[i%PALETTE.length];
+                var wc = Object.entries(p.workcodes).sort(function(a,b){return b[1]-a[1];}).slice(0,3).map(function(w){return w[0];}).join(' / ');
+                var days = Object.keys(p.dates).length;
+                html += '<div style="background:#f8fafc;border-radius:10px;padding:10px 14px;margin-bottom:8px;border-left:4px solid '+color+';">';
+                html += '<div style="display:flex;align-items:center;justify-content:space-between;">';
+                html += '<div><span style="font-weight:800;color:'+color+';font-size:15px;">'+p.kojino+'</span>';
+                if (wc) html += '<span style="font-size:11px;color:#94a3b8;margin-left:8px;">'+wc+'</span>';
+                html += '</div><div style="text-align:right;"><div style="font-weight:800;color:#1e293b;">'+p.total.toFixed(1)+'h</div>';
+                html += '<div style="font-size:10px;color:#94a3b8;">'+days+'日</div></div></div></div>';
+            });
+        }
+        // 作業コード
+        if (workcodes.length) {
+            html += '<div style="font-size:13px;font-weight:800;color:#1e293b;margin:14px 0 10px;display:flex;align-items:center;gap:6px;"><i class="fas fa-tools" style="color:#f59e0b;"></i> 作業内容別 工数</div>';
+            html += '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+            workcodes.forEach(function(w, i) {
+                var color = PALETTE[i%PALETTE.length];
+                html += '<div style="background:'+color+'12;border:1px solid '+color+'40;border-radius:8px;padding:7px 12px;">';
+                html += '<span style="font-weight:700;color:'+color+';">'+w[0]+'</span>';
+                html += '<span style="font-size:12px;color:#64748b;margin-left:6px;">'+w[1].toFixed(1)+'h</span></div>';
+            });
+            html += '</div>';
+        }
+        html += '</div></div></div>';
+        document.body.insertAdjacentHTML('beforeend', html);
+    }
+    function closeStaffModal() {
+        var m = document.getElementById('ca-staff-modal'); if (m) m.remove();
     }
 
     // ── 集計実行 ──────────────────────────────────
