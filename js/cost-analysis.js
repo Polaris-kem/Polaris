@@ -523,9 +523,11 @@
         container.className = 'page active';
         container.style.cssText = 'flex-direction:column;padding:0;overflow:hidden;';
         container.innerHTML = '<div style="padding:20px;height:100%;overflow-y:auto;box-sizing:border-box;">' + buildHTML() + '</div>';
-        window._caSearch = runSearch;
-        window._caDrill  = drillDown;
-        window._caClose  = closeDrill;
+        window._caSearch    = runSearch;
+        window._caDrill     = drillDown;
+        window._caClose     = closeDrill;
+        window._caStaffDrill = staffDrillDown;
+        window._caStaffClose = closeStaffModal;
         loadStaff().then(function(){ runSearch(); });
     }
 
