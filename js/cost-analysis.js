@@ -164,7 +164,7 @@
             var projects = Object.entries(s.projects).sort(function(a,b){ return b[1]-a[1]; }).slice(0,4);
             var topWork  = Object.entries(s.workcodes).sort(function(a,b){ return b[1]-a[1]; }).slice(0,2);
 
-            return '<div style="background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:18px;border-top:4px solid '+color+';transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,.14)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.08)\'">' +
+            return '<div style="background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:18px;border-top:4px solid '+color+';transition:transform .2s,box-shadow .2s;cursor:pointer;" onclick="window._caStaffDrill(\''+s.scode+'\')" title="クリックで詳細表示" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,.14)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 2px 12px rgba(0,0,0,.08)\'">' +
                 // ヘッダー
                 '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">' +
                 '<div style="display:flex;align-items:center;gap:10px;">' +
